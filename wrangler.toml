@@ -1,0 +1,4 @@
+name = "neko-cf"
+main = "./dist/main.js"
+compatibility_date = "2023-10-22"
+node_compat = true

@@ -1,0 +1,35 @@
+{
+  "name": "neko-cf",
+  "version": "0.0.1",
+  "description": "neko, but written to work in workers",
+  "main": "src/main",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "sync": "slash-up sync",
+    "sync:dev": "slash-up sync -e development",
+    "build": "node src/build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/NekoOfficial/Neko.cf.git"
+  },
+  "keywords": [
+    "discord",
+    "discord-bot",
+    "serverless",
+    "cloudflare-workers"
+  ],
+  "author": "hashima.rin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/NekoOfficial/Neko.cf/issues"
+  },
+  "homepage": "https://github.com/NekoOfficial/Neko.cf#readme",
+  "dependencies": {
+    "esbuild": "^0.19.12",
+    "esbuild-plugin-polyfill-node": "^0.3.0",
+    "yor.ts": "^0.0.8"
+  }
+}
