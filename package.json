@@ -7,8 +7,6 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "sync": "slash-up sync",
-    "sync:dev": "slash-up sync -e development",
     "build": "node src/build"
   },
   "repository": {
@@ -28,8 +26,11 @@
   },
   "homepage": "https://github.com/NekoOfficial/Neko.cf#readme",
   "dependencies": {
-    "esbuild": "^0.19.12",
-    "esbuild-plugin-polyfill-node": "^0.3.0",
+    "date-fns": "^3.3.1",
     "yor.ts": "^0.0.8"
+  },
+  "devDependencies": {
+    "esbuild": "^0.19.12",
+    "esbuild-plugin-polyfill-node": "^0.3.0"
   }
 }

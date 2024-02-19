@@ -3,18 +3,18 @@
 // there's no import core packages because it's not node
 // but packages we use does not prefix the core modules with node:*
 // so we have to polyfill them so everything works
-import { polyfillNode } from 'esbuild-plugin-polyfill-node';
-import esbuild from 'esbuild';
+import { polyfillNode } from "esbuild-plugin-polyfill-node";
+import esbuild from "esbuild";
 esbuild.build({
   minify: true,
   bundle: true,
-  format: 'esm',
-  entryPoints: ['src/main.js'],
-  outdir: 'dist',
-  platform: 'browser',
-  target: 'esnext',
+  format: "esm",
+  entryPoints: ["src/main.js"],
+  outdir: "dist",
+  platform: "browser",
+  target: "esnext",
   sourcemap: true,
-  logLevel: 'info',
+  logLevel: "info",
   plugins: [
     polyfillNode({
       polyfills: {

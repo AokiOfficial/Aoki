@@ -1,0 +1,58 @@
+[
+  {
+    "message": "fixed Jikan commands",
+    "type": "Listening"
+  },
+  {
+    "message": "with {{guilds}} guilds",
+    "type": "Playing"
+  },
+  {
+    "message": "{{guilds}} guilds",
+    "type": "Listening"
+  },
+  {
+    "message": "osu!",
+    "type": "Competing"
+  },
+  {
+    "message": "you",
+    "type": "Watching"
+  },
+  {
+    "message": "TikTok videos",
+    "type": "Watching"
+  },
+  {
+    "message": "anime",
+    "type": "Watching"
+  },
+  {
+    "message": "keyboard sounds",
+    "type": "Listening"
+  },
+  {
+    "message": "meow~",
+    "type": "Playing"
+  },
+  {
+    "message": "my sensei",
+    "type": "Listening"
+  },
+  {
+    "message": "around",
+    "type": "Playing"
+  },
+  {
+    "message": "awawwawa",
+    "type": "Listening"
+  },
+  {
+    "message": "with other bots",
+    "type": "Playing"
+  },
+  {
+    "message": "YouTube",
+    "type": "Watching"
+  }
+]

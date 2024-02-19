@@ -12,7 +12,7 @@
 ---
 ## About this project
 
-Serious, I'm writing Neko to be compatible with Cloudflare Workers. I use a library, of course, [yor.ts](https://github.com/OreOreki/yor.ts). The package itself is not perfect, so I still use the old-school extend methods. You can find the extensions I frequently use in my code in [src/extends]().
+Serious, I'm writing Neko to be compatible with Cloudflare Workers. I use a library, of course, [yor.ts](https://github.com/OreOreki/yor.ts). The package itself is not perfect *just yet* for me, so I still use the old-school extend methods. You can find the extensions I frequently use in my code in [src/extends](/src/extends/).
 
 I initially wrote this in CommonJS, but many and many and many problems arised about incompatibility, most of them came from Workers. Therefore I changed to ESModule.
 
@@ -20,9 +20,11 @@ It took me about a week just to understand the logic in writing Workers-compatib
 
 ---
 
-## Code license
+## About the code & license
 
-[MIT license](), read that file. I don't have any other requirements, this is a learning project pushed to production. A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
+I don't expect the code to be readable or clean, a lot of logic stays behind an util function in one single settings file. To ease out the process of maintaining and reading, I put comments on every functions in there.
+
+License, [MIT license](), read that file. I don't have any other requirements, this is a learning project pushed to production. A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
 
 ---
 
@@ -32,7 +34,7 @@ You should be able to notice a build script lying in the source folder. That's m
 
 For local development, make a file and name it `.dev.vars`. Your secret keys stay in there with this format:
 
-```json
+```
 KEY: "value"
 ```
 
@@ -71,13 +73,14 @@ A new `.workers.dev` domain will be there for the Interactions Endpoint field.
 
 **Q:** Why not `slash-create`?
 
-- It is very troublesome figuring out how to write a Workers-compatible with that library. I continuously receive errors about Workers complaining nothing is polyfilled, when there's not a single polyfill for it!
+- It is very troublesome figuring out how to write a Workers-compatible bot with that library. I continuously receive errors about Workers complaining nothing is polyfilled, when there's not a single polyfill for it!
 - That issue persists *within* the library itself no matter if you choose to write with **CommonJS or ESModule**! Only when you write your code in TypeScript and include defining files, it will work. I personally don't like TypeScript as I never had time to properly type all types.
 
 **Q:** Why not any other serverless platforms, like Vercel or AWS Lambda?
 
 - You must have heard of **"cold starts"**. Serverless functions from there take time to turn their service up, *only then* it runs your code. That is not good for a Dicord bot where it requires you to initially respond to an interaction within 3 seconds.
 - Cloudflare instead uses **V8 Isolates**, developed by Google. This is a game changer as we say goodbye to cold starts. Code runs within *miliseconds*.
+- There is a very big downside though, you are very limited in dependencies. This project uses very raw files like the entire `jimp` library in one file. That's a hassle to commit, so you can just install `jimp` instead.
 
 **Q:** Why so terrible code writing?
 
@@ -85,7 +88,11 @@ A new `.workers.dev` domain will be there for the Interactions Endpoint field.
 - I'm known for my terrible code optimizations, and I lean towards readable code. I make my code even more readable with lots, lots of comments, so that when I read back, I know what did I think.
 - Note that I lowercase and use abbr. in most of my comments. I'm usually in a tired state when writing code, because I write code before going to bed. And I go to bed at around 1AM.
 
-**Q:** Why hide so many details?
+**Q:** I wanna ask questions!
 
-- I do be like that, work with it. I'm not here to spoonfeed any code, I'm not obligated to do so. Help yourself!
 - Maybe file an issue, I might be able to answer a clear concern. I want to make sure you know what to do.
+
+**Q:** I wanna contribute! How to do that?
+
+- That's great! There's a template ready for you to write a proper PR when you get on the tab, so there should be no major issues!
+- I appreciate even tiny fixes about basically anything, so get going and jump right on it!

@@ -1,7 +1,7 @@
 // a test command
 // this use nothing complex
-import { YorSlashCommand } from 'yor.ts';
-import { SlashCommandBuilder, ButtonBuilder, ActionRowBuilder } from 'yor.ts/builders'
+import { YorSlashCommand } from "yor.ts";
+import { SlashCommandBuilder, ButtonBuilder, ActionRowBuilder } from "yor.ts/builders"
 
 // unlike server neko where we construct data options
 // now we have to explicitly specify the builder and the execute context
@@ -37,6 +37,33 @@ export default class Test extends YorSlashCommand {
         .setRequired(true)
       )
     )
+    .addSubcommand(cmd => cmd
+      .setName("user")
+      .setDescription("user mention test")
+      .addUserOption(option => option
+        .setName("mention")
+        .setDescription("the user")  
+        .setRequired(true)
+      )  
+    )
+    .addSubcommand(cmd => cmd
+      .setName("role")
+      .setDescription("role test")
+      .addRoleOption(option => option
+        .setName("mention")
+        .setDescription("the role")  
+        .setRequired(true)
+      )  
+    )
+    .addSubcommand(cmd => cmd
+      .setName("channel")
+      .setDescription("channel mention test")
+      .addChannelOption(option => option
+        .setName("mention")
+        .setDescription("the channel")  
+        .setRequired(true)
+      )  
+    )
     .addSubcommandGroup(cmd => cmd
       .setName("group")
       .setDescription("group sub test")
@@ -59,38 +86,53 @@ export default class Test extends YorSlashCommand {
       )
     )
   execute = async (ctx) => {
-    // shorcut to use client methods
-    const util = ctx.client.settings;
+    // get subcommand group info
+    const group = ctx.getSubcommandGroup();
     // get subcommand info
-    const sub = util.trimSubcommand(ctx);
-    console.log(sub)
-    if (sub.name == "one") {
-      await ctx.defer();
-      await ctx.editReply({ content: "Hi!" });
-    } else if (sub.name == "two") {
-      await ctx.defer();
-      const string = util.getOption(sub, "string");
-      await ctx.editReply({ content: string });
-    } else if (sub.name == "three") {
-      await ctx.defer();
-      const first = util.getOption(sub, "first");
-      const second = util.getOption(sub, "second");
-      await ctx.editReply({ content: (first + second) });
-    }
-    // for group subcommands we can be rest assured it'll be prefixed
-    // we can still use sub.name normally and nothing will happen
-    else if (sub.name == "group_one") {
-      await ctx.defer();
-      await ctx.editReply({ content: "Hi from a subcommandGroup!" });
-    } else if (sub.name == "group_two") {
-      await ctx.defer();
-      const confirm = new ButtonBuilder()
-        .setCustomId('confirm')
-        .setLabel('Confirm Ban')
-        .setStyle(1);
-      const actionRow = new ActionRowBuilder().addComponents(confirm);
-      const string = util.getOption(sub, "string");
-      await ctx.editReply({ content: string, components: [actionRow] });
+    const sub = ctx.getSubcommand();
+    if (!group) {
+      if (sub == "one") {
+        await ctx.defer();
+        await ctx.editReply({ content: "Hi!" });
+      } else if (sub == "two") {
+        await ctx.defer();
+        const string = ctx.getString("string");
+        await ctx.editReply({ content: string });
+      } else if (sub == "three") {
+        await ctx.defer();
+        const first = ctx.getString("first");
+        const second = ctx.getString("second");
+        await ctx.editReply({ content: (first + second) });
+      } else if (sub == "user") {
+        await ctx.defer();
+        const user = await ctx.getUser("mention");
+        console.log(user);
+        await ctx.editReply({ content: `<@${user.id}>` });
+      } else if (sub == "role") {
+        await ctx.defer();
+        const user = await ctx.getRole("mention");
+        console.log(user);
+        await ctx.editReply({ content: `<@${user.id}>` });
+      } else if (sub == "channel") {
+        await ctx.defer();
+        const user = await ctx.getChannel("mention");
+        console.log(user);
+        await ctx.editReply({ content: `<@${user.id}>` });
+      }
+    } else if (group == "group") {
+      if (sub == "one") {
+        await ctx.defer();
+        await ctx.editReply({ content: "Hi from a subcommandGroup!" });
+      } else if (sub == "two") {
+        await ctx.defer();
+        const confirm = new ButtonBuilder()
+          .setCustomId("confirm")
+          .setLabel("Confirm")
+          .setStyle(1);
+        const actionRow = new ActionRowBuilder().addComponents(confirm);
+        const string = ctx.getString("string");
+        await ctx.editReply({ content: string, components: [actionRow] });
+      }
     }
   }
 }
