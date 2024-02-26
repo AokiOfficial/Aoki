@@ -71,11 +71,14 @@ A new `.workers.dev` domain will be there for the Interactions Endpoint field.
 ---
 ## Database
 
-Neko uses MongoDB, just like how it used to be.
+Neko uses the new open-beta Workers D1 database, which is a SQL database.
 
 Workers KV (key-value) proves to be useless for our use case as we're dealing with collections of data in tables/queries.
 
-Make sure to supply all database keys and work accordingly.
+It's built-in, so there's no need to install anything. Check it out by doing:
+```bash
+wrangler d1
+```
 
 ---
 ## Common questions
