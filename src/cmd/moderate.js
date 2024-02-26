@@ -163,7 +163,7 @@ export default class Moderate extends YorSlashCommand {
       };
       // currently we only support wiping a text or voice channel
       // return no for others
-      if (!["0", "2"].includes(channel.raw.type.toString())) return await ctx.editReply({ content: "Only text channels can be cloned by now, sorry." });
+      if (!["0", "2"].includes(channel.raw.type.toString())) return await ctx.editReply({ content: "Only text and voice channels can be wiped by now, sorry." });
       // check if this channel is of a special type
       // fetch guild first
       const guild = await util.call({

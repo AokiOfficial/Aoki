@@ -302,6 +302,80 @@ export default class Anime extends YorSlashCommand {
       // simple
       const res = await fetch('https://animechan.xyz/api/random').then(res => res.json());
       await ctx.editReply({ content: `**${res.character}** from **${res.anime}**:\n\n*${res.quote}*` });
+    } else if (sub == "random") {
+      // fetch user query
+      const type = ctx.getString("type");
+      const res = (await fetch(`https://api.jikan.moe/v4/random/${encodeURIComponent(type)}`).then(res => res.json())).data;
+      // if request error
+      if (!res) return await ctx.editReply({ content: "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||." });
+      // shortcuts
+      const anime_stats = {
+        "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
+        "Source": res.source || "No data",
+        "Episodes": res.episodes || "No data",
+        "Status": res.status || "No data",
+        "Schedule": res.broadcast ? "Every " + res.broadcast.day : "No data",
+        "Duration": res.duration ? res.duration.replace(/ per /g, "/") : "No data",
+        "Rated": res.rating ? util.textTruncate(res.rating, 5, "") : "No data"
+      };
+      const anime_scores = {
+        "Average Score": res.score || "No data",
+        "Scored By": res.scored_by ? res.scored_by + " people" : "No data",
+        "Mean Rank": res.rank || "No data",
+        "Popularity Rank": res.popularity || "No data",
+        "Favorites": res.favorites || "No data",
+        "Subscribed": res.members + " people" || "No data"
+      }
+      const manga_stats = {
+        "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
+        "Chapters": res.chapters || "No data",
+        "Volumes": res.volumes || "No data",
+        "Status": res.status || "No data"
+      };
+      const manga_scores = {
+        "Average Score": res.score || "No data",
+        "Scored By": res.scored_by ? res.scored_by + " people" : "No data",
+        "Mean Rank": res.rank || "No data",
+        "Popularity Rank": res.popularity || "No data",
+        "Favorites": res.favorites || "No data",
+        "Subscribed": res.members + " people" || "No data"
+      };
+      // make the embed
+      // braindead code incoming
+      const malRandomEmbed = new EmbedBuilder()
+        .setColor(util.color)
+        .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+        .setAuthor({ name: `${res.title}`, iconURL: res.images.jpg.image_url })
+        .setTimestamp()
+        .setDescription([
+          util.textTruncate((res.synopsis || '').replace(/(<([^>]+)>)/ig, ''), 350, `... *[read more here](${res.url})*`),
+          `\n• **Main Theme:** ${res.themes[0]?.name || 'Unspecified'}`,
+          `• **Demographics:** ${res.demographics[0]?.name || 'Unspecified'}`,
+          `• **Air Season:** ${res.season || "Unknown"}`,
+          `\n*More about the ${type} can be found [here](${res.url}), and the banner can be found [here](${res.images.jpg.image_url}).*`
+        ].join('\n'))
+        .addFields([
+          {
+            name: `${util.toProperCase(type)} Info`, inline: true,
+            value: '```fix\n' + Object.entries(type == "anime" ? anime_stats : manga_stats).map(([key, value]) => {
+              const cwidth = 28;
+              const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+              const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+              return ' • ' + name + ':' + spacing + value;
+            }).join('\n') + '```'
+          }, {
+            name: `${util.toProperCase(type)} Scorings`, inline: true,
+            value: '```fix\n' + Object.entries(type == "anime" ? anime_scores : manga_scores).splice(0, 10).map(([key, value]) => {
+              const cwidth = 28;
+              const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+              const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+              return ' • ' + name + ':' + spacing + value;
+            }).join('\n') + '```'
+          }
+        ]);
+      await ctx.editReply({ embeds: [malRandomEmbed] });
     }
   }
 }

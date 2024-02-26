@@ -226,6 +226,19 @@ const anime = new SlashCommandBuilder()
       ])
     )
   )
+  .addSubcommand(cmd => cmd
+    .setName("random")
+    .setDescription("gets a random anime or manga info")
+    .addStringOption(option => option
+      .setName("type")
+      .setDescription("whether to get an anime or manga")
+      .setRequired(true)
+      .addChoices(...[
+        { name: "anime", value: "anime" },
+        { name: "manga", value: "manga" }
+      ]) 
+    )
+  )
 
 const moderate = new SlashCommandBuilder()
   .setName("moderate")
