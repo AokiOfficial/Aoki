@@ -12,7 +12,7 @@
 ---
 ## About this project
 
-Serious, I'm writing Neko to be compatible with Cloudflare Workers. I use a library, of course, [yor.ts](https://github.com/OreOreki/yor.ts). The package itself is not perfect *just yet* for me, so I still use the old-school extend methods. You can find the extensions I frequently use in my code in [src/extends](/src/extends/).
+Serious, I'm writing Neko to be compatible with Cloudflare Workers. I use a library, of course, [yor.ts](https://github.com/OreOreki/yor.ts). The package itself is not perfect *just yet* for me, so I still use the old-school extend methods. You can find the extensions I frequently use in my code in [src/struct/extends](/src/struct/extends/).
 
 I initially wrote this in CommonJS, but many and many and many problems arised about incompatibility, most of them came from Workers. Therefore I changed to ESModule.
 
