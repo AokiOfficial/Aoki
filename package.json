@@ -27,6 +27,8 @@
   "homepage": "https://github.com/NekoOfficial/Neko.cf#readme",
   "dependencies": {
     "date-fns": "^3.3.1",
+    "he": "^1.2.0",
+    "lodash.chunk": "^4.2.0",
     "yor.ts": "^0.0.8"
   },
   "devDependencies": {

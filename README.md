@@ -69,6 +69,15 @@ $ npm run deploy
 A new `.workers.dev` domain will be there for the Interactions Endpoint field.
 
 ---
+## Database
+
+Neko uses MongoDB, just like how it used to be.
+
+Workers KV (key-value) proves to be useless for our use case as we're dealing with collections of data in tables/queries.
+
+Make sure to supply all database keys and work accordingly.
+
+---
 ## Common questions
 
 **Q:** Why not `slash-create`?
