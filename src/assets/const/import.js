@@ -11,14 +11,16 @@ const fun = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName('fact')
     .setDescription("gives you a random fact. Mostly useless though.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName("catfact")
-    .setDescription("gives you a fact about cats... which you might not know.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName("dogfact")
-    .setDescription("gives you a fact about dogs... which you might not know.")
+    .addStringOption(option => option
+      .setName("about")
+      .setDescription("whether to give facts about dogs, cats, or random")
+      .addChoices(...[
+        { name: "cat", value: "cat" },
+        { name: "dog", value: "dog" },
+        { name: "random", value: "random" }
+      ])  
+      .setRequired(true)
+    )
   )
   .addSubcommand(cmd => cmd
     .setName("owo")
@@ -26,6 +28,7 @@ const fun = new SlashCommandBuilder()
     .addStringOption(option => option
       .setName("query")
       .setDescription("the text you wanna owoify")
+      .setRequired(true)
     )
   )
   .addSubcommand(cmd => cmd
@@ -105,7 +108,7 @@ const util = new SlashCommandBuilder()
   )
   .addSubcommand(cmd => cmd
     .setName("server")
-    .setDescription("dsplay this server's information.")
+    .setDescription("display this server's information.")
   )
   .addSubcommand(cmd => cmd
     .setName("urban")
@@ -118,4 +121,177 @@ const util = new SlashCommandBuilder()
     .addStringOption(option => option.setName("question").setDescription("thing you wanna ask").setRequired(true))
   )
 
-export { fun, util };
+const my = new SlashCommandBuilder()
+  .setName("my")
+  .setDescription("Commands directly related to me or my development.")
+  .addSubcommand(cmd => cmd
+    .setName("ping")
+    .setDescription("check latency... or it's you wanting to be insulted.")  
+  )
+  .addSubcommand(cmd => cmd
+    .setName("terms")
+    .setDescription("read my neat version of Terms of Service.")
+  )
+  .addSubcommand(cmd => cmd
+    .setName("vote")
+    .setDescription("vote for me on top.gg to show some support!")
+  )
+  .addSubcommand(cmd => cmd
+    .setName("fault")
+    .setDescription("is anything wrong? Having good ideas? Share it!")
+    .addStringOption(option => option
+      .setName("type")
+      .setDescription("the type of this feedback")
+      .setRequired(true)
+      .addChoices(...[
+        { name: "issue", value: "Issue" },
+        { name: "suggestion", value: "Suggestion" }
+      ])
+      .setRequired(true)
+    )
+    .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
+    .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
+  )
+
+const anime = new SlashCommandBuilder()
+  .setName("anime")
+  .setDescription("I'm also someone fictional... you know, but not like I wanted to talk to you about it!")
+  .addSubcommand(cmd => cmd
+    .setName("profile")
+    .setDescription("finds someone's profile on either MyAnimeList or AniList")
+    .addStringOption(option => option
+      .setName("platform")
+      .setDescription("the platform you want to search for")
+      .addChoices(...[
+        { name: "AniList", value: "al" },
+        { name: "MyAnimeList", value: "mal" }
+      ])  
+      .setRequired(true)
+    )  
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("the profile username to search for")  
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("search")
+    .setDescription("finds an anime, a manga, a character, or a seiyuu")
+    .addStringOption(option => option
+      .setName("type")
+      .setDescription("whether to search for an anime, a manga, a character, or a seiyuu")
+      .addChoices(...[
+        { name: "anime", value: "anime" },
+        { name: "manga", value: "manga" },
+        { name: "character", value: "character" },
+        { name: "seiyuu", value: "seiyuu" }
+      ])  
+      .setRequired(true)
+    )  
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("the name to search for")  
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("meme")
+    .setDescription("peaceful command, it won't cancel you like what /fun meme do")
+  )
+  .addSubcommand(cmd => cmd
+    .setName("quote")
+    .setDescription("anime quotes, best stuff ever.")
+  )
+  .addSubcommand(cmd => cmd
+    .setName("action")
+    .setDescription("spams you with images where anime characters do stuff")
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("the thing that you want to be spammed with")
+      .setRequired(true)
+      .addChoices(...[
+        { name: 'bully', value: 'bully' }, { name: 'cry', value: 'cry' },
+        { name: 'awoo', value: 'awoo' }, { name: 'bonk', value: 'bonk' },
+        { name: 'yeet', value: 'yeet' }, { name: 'hug', value: 'hug' },
+        { name: 'lick', value: 'lick' }, { name: 'neko', value: 'neko' },
+        { name: 'pat', value: 'pat' }, { name: 'blush', value: 'blush' },
+        { name: 'slap', value: 'Slap' }, { name: 'wave', value: 'wave' },
+        { name: 'smile', value: 'smile' }, { name: 'smug', value: 'smug' },
+        { name: 'highfive', value: 'highfive' }, { name: 'wink', value: 'wink' },
+        { name: 'handhold', value: 'handhold' }, { name: "nom", value: "nom" },
+        { name: 'bite', value: 'bite' }, { name: "glomp", value: "glomp" },
+        { name: "kick", value: "kick" }, { name: 'happy', value: 'happy' },
+        { name: "poke", value: "poke" }, { name: 'dance', value: 'dance' },
+        { name: "cringe", value: "cringe" }
+      ])
+    )
+  )
+
+const moderate = new SlashCommandBuilder()
+  .setName("moderate")
+  .setDescription("moderation tools.")
+  .addSubcommand(cmd => cmd
+    .setName("warn")
+    .setDescription("warn a user, and log their infraction.")
+    .addUserOption(option => option
+      .setName("member")
+      .setDescription("...just the server member to warn.")
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName("reason")
+      .setDescription("...well, this is recommended to put in.")
+    )
+    .addBooleanOption(option => option
+      .setName("notify")
+      .setDescription("should I notify the user? Defaults to no.")
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("ban")
+    .setDescription("ban a user, and log it to their infraction data.")
+    .addUserOption(option => option
+      .setName("member")
+      .setDescription("...just the server member to ban.")
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName("reason")
+      .setDescription("...well, this is now enforced.")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("clear")
+    .setDescription("clear messages in this channel.")
+    .addIntegerOption(option => option
+      .setName("number")
+      .setDescription("...just the number of messages to delete. Max 99, least 1.")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("wipe")
+    .setDescription("deletes a channel, then clone that channel with NO CONTENT in it.")
+    .addChannelOption(option => option
+      .setName("channel")
+      .setDescription("...literally the channel to wipe.")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("kick")
+    .setDescription("kick a user, and log it to their infraction data.")
+    .addUserOption(option => option
+      .setName("member")
+      .setDescription("...just the server member to kick.")
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName("reason")
+      .setDescription("...well, this is now enforced.")
+      .setRequired(true)
+    )
+  )
+
+export { fun, util, my, anime, moderate };

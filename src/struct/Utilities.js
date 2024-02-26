@@ -1,16 +1,32 @@
 // settings and utils in one place for ease of access
-// if we need to use the settings just init this class and we're done
+// if we need to use the utils just init this class and we're done
 import { Routes, RouteBases, CDNRoutes } from "discord-api-types/v10";
 import { DiscordSnowflake } from "@sapphire/snowflake";
 
-export default class Settings {
+export default class Utilities {
   constructor(client, env) {
+    // the client initialized this
     this.client = client;
+    // the id of the application
     this.id = "838729358041677856";
+    // database connection settings
+    // embed color
+    // as we can't use hex code
+    this.color = 16777215;
+    // the env of the request
     this.env = env;
-    this.collections = ["discovery", "economy", "memes", "xp"];
+    // d1 database bindings
+    this.db = env.database;
+    // default log channel
+    this.logChannel = "864096602952433665";
+    // base osuimage
+    // unused for now
     this.baseImgUrl = "https://iili.io/";
+    // owner of the application
+    // can be an array
     this.owners = ["586913853804249090", "809674940994420736"];
+    // osucard properties
+    // unused for now
     this.osu_card = [
       { "id": "16688499", "name": "njshift1", "card": "JYdgIHX", "star": "JYd4vta", "halfstar": "JYd4UMv" },
       { "id": "9623142", "name": "davidminh0111", "card": "JYdrqmu" },
@@ -36,6 +52,8 @@ export default class Settings {
       { "id": "18782185", "name": "SplexBiTe", "card": "JYdguNs" },
       { "id": "24042710", "name": "RandomNameIdk", "card": "JYdrK79" },
     ];
+    // osuscore rank emoji
+    // unused for now
     this.rank_emote = {
       XH: "<:xh:1184870634124226620>",
       X: "<:x:1184870631372750871>",
@@ -47,7 +65,9 @@ export default class Settings {
       D: "<:d:1184870615572824154>",
       F: "<:f_:1184872548337451089>"
     };
+    // anilist media genres
     this.mediaGenres = ["Action", "Adventure", "Comedy", "Drama", "Sci-Fi", "Mystery", "Supernatural", "Fantasy", "Sports", "Romance", "Slice of Life", "Horror", "Psychological", "Thriller", "Ecchi", "Mecha", "Music", "Mahou Shoujo", "Hentai"];
+    // anilist media format
     this.mediaFormat = {
       TV: "TV",
       TV_SHORT: "TV Shorts",
@@ -60,6 +80,7 @@ export default class Settings {
       NOVEL: "Light Novel",
       ONE_SHOT: "One Shot Manga"
     };
+    // language flags
     this.langflags = [
       { lang: "Hungarian", flag: "🇭🇺" },
       { lang: "Japanese", flag: "🇯🇵" },
@@ -73,8 +94,10 @@ export default class Settings {
       { lang: "Chinese", flag: "🇨🇳" },
       { lang: "Brazilian", flag: "🇧🇷" }
     ];
+    // months weeks
     this.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     this.weeks = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+    // myanimelist genres
     this.malGenres = {
       action: 1,
       adventure: 2,
@@ -164,7 +187,6 @@ export default class Settings {
       }
     }).then(async res => await res.json());
     data = data[0].data;
-    console.log(data.children[0].data)
     let permalink = data.children[0].data.permalink;
     let url = `https://reddit.com${permalink}`;
     let upVotes = data.children[0].data.ups;
@@ -197,6 +219,54 @@ export default class Settings {
   clean(text) {
     return String(text).replace(/`/g, `\`${String.fromCharCode(8203)}`).replace(/@/g, `@${String.fromCharCode(8203)}`)
   };
+  /**
+   * Joins an array and limits the string output
+   * @param { Array } array The array to join and limit
+   * @param { Number } limit The limit to limit the string output
+   * @param { String } connector Value connector like that of `array.join()`
+   * @returns `String` The joined and limited string
+   */
+  joinArrayAndLimit(array = [], limit = 1000, connector = '\n') {
+    return array.reduce((a, c, i, x) => a.text.length + String(c).length > limit
+      ? { text: a.text, excess: a.excess + 1 }
+      : { text: a.text + (!!i ? connector : '') + String(c), excess: a.excess }
+      , { text: '', excess: 0 });
+  };
+  /**
+   * Returns the ordinalized format of a number, e.g. `1st`, `2nd`, etc.
+   * @param {Number} n Number to properly format
+   * @returns `String` Formatted number
+   */
+  ordinalize(n = 0) {
+    return Number(n) + [, 'st', 'nd', 'rd'][n / 10 % 10 ^ 1 && n % 10] || Number(n) + 'th';
+  };
+  /**
+   * Properly uppercase a string
+   * @param { String } str The string to format
+   * @returns `String` The reformatted string
+   */
+  toProperCase(str) {
+    return str.replace(/([^\W_]+[^\s-]*) */g, (txt) => txt.charAt(0).toUpperCase() + txt.substring(1).toLowerCase());
+  };
+  /**
+   * Fetch AniList API data
+   * @param { String } query GraphQL presentation of the query
+   * @param { Object } variables Variables to throw into the graphql
+   * @returns `Object` Fetched API data
+   */
+  async anilist(query, variables) {
+    return await fetch('https://graphql.anilist.co', {
+      method: "POST",
+      body: JSON.stringify({
+        query,
+        variables
+      }),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      }
+    }).then(res => res.json());
+  }
   /**
    * Gets a user avatar URL
    * @param { Object } user The user object
@@ -253,8 +323,10 @@ export default class Settings {
   getCreatedAt(timestamp) {
     return new Date(this.getCreatedTimestamp(timestamp));
   }
-  // sometimes we'll have to reach out to raw api calls as a fallback solution
-  // in that case we'll have to import Routes and RouteBases from d-api-types
+  // sometimes we'll have to reach out to raw api calls 
+  // as a fallback solution when yor.ts does not support something
+  // in that case we'll have to import Routes and RouteBases 
+  // from d-api-types
   // and do RouteBases.api + Route...
   // and then ask fetch to do the job, etc. etc.
   // we want to simplify that
@@ -267,7 +339,7 @@ export default class Settings {
    * @returns `Object` response
    */
   async call(method, options = {}) {
-    const apiCallURL = `${RouteBases.api}${Routes[method.method](method.param)}`;
+    const apiCallURL = `${RouteBases.api}${Routes[method.method](...method.param)}`;
     // stringify payloads
     if (options.body) options.body = JSON.stringify(options.body);
     // make request
@@ -281,10 +353,9 @@ export default class Settings {
     // throw API errors
     if (!res.ok) {
       const data = await res.json();
-      console.log(res.status);
       throw new Error(JSON.stringify(data));
     }
     // return original response
-    return await res.json();
+    if (options.method == "DELETE") return true; else return await res.json();
   }
 }

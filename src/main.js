@@ -1,7 +1,7 @@
 // entry file
 import Client from "./struct/Client";
-import "./extends";
-const dev = process.argv.includes("--dev");
+import "./struct/extends";
+const dev = process.argv.includes("dev");
 
 // expose a client variable
 // we will only make a new client when no client is available
@@ -14,6 +14,7 @@ export default {
   fetch: async (request, env, ctx) => {
     // make a new client when no client is available
     if (!client) { client = new Client(dev, env); client.start() };
+    // then run the main thing
     return await client.fetch(request, env, ctx);
   }
 };

@@ -1,7 +1,6 @@
 import { YorSlashCommand } from "yor.ts";
-import { EmbedBuilder, AttachmentBuilder } from "yor.ts/builders";
+import { EmbedBuilder } from "yor.ts/builders";
 import { format, formatDistance, parseISO } from "date-fns";
-import { Routes, RouteBases } from "discord-api-types/v10";
 import { util } from "../assets/const/import";
 
 export default class Utility extends YorSlashCommand {
@@ -10,7 +9,7 @@ export default class Utility extends YorSlashCommand {
     // defer reply
     await ctx.defer();
     // define util
-    const util = ctx.client.settings;
+    const util = ctx.client.util;
     // get subgroup
     const subGroup = ctx.getSubcommandGroup();
     // get subcommand
@@ -25,10 +24,11 @@ export default class Utility extends YorSlashCommand {
         if (!user) return ctx.editReply({ content: "You baka, that's not a valid user." });
         // get avatar
         // use variable size so user has many options to pick from
-        const img = (s) => util.getUserAvatar(user, s);
+        const img = (s) => util.getUserAvatar(user.raw, s);
         // reply
         const avatarEmbed = new EmbedBuilder()
-          .setAuthor({ name: `${user.username}'s Avatar` })
+          .setColor(util.color)
+          .setAuthor({ name: `${user.raw.username}'s Avatar` })
           .setImage(img(2048)).setTimestamp()
           .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
           .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
@@ -42,7 +42,7 @@ export default class Utility extends YorSlashCommand {
         // as documented in the d.js repo
         const fetchedUser = await util.call({
           method: "user",
-          param: user.id
+          param: [user.raw.id]
         });
         user = fetchedUser;
         // check if user has banner
@@ -51,6 +51,7 @@ export default class Utility extends YorSlashCommand {
         const img = (s) => util.getUserBanner(user, s);
         // reply
         const bannerEmbed = new EmbedBuilder()
+          .setColor(util.color)
           .setAuthor({ name: `${user.username}'s Avatar` })
           .setImage(img(2048)).setTimestamp()
           .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
@@ -87,6 +88,7 @@ export default class Utility extends YorSlashCommand {
           // else do like normal
           .setAuthor({ name: `${channel.name}${channel.name.endsWith("s") ? "'" : "'s"} Information` })
           .setThumbnail(icon)
+          .setColor(util.color)
           .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
           .setTimestamp()
           .addFields([
@@ -108,18 +110,18 @@ export default class Utility extends YorSlashCommand {
         // therefore we have to make another one
         let guildInfo = await util.call({
           method: "guild",
-          param: guildID
+          param: [guildID]
         });
         // get it in the guildinfo object to avoid polluting
         guildInfo.channels = await util.call({
           method: "guildChannels",
-          param: guildID
+          param: [guildID]
         });
         // shortcuts
         // get owner
         const owner = await util.call({
           method: "user",
-          param: guildInfo.owner_id
+          param: [guildInfo.owner_id]
         });
         // get icon
         const icon = util.getGuildIcon(guildInfo);
@@ -132,6 +134,7 @@ export default class Utility extends YorSlashCommand {
         const news = guildInfo.channels.filter(channel => channel.type == 5).length;
         // make the embed
         const guildEmbed = new EmbedBuilder()
+          .setColor(util.color)
           .setAuthor({ name: `${guildInfo.name}`, iconURL: icon })
           .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
           .setTimestamp()
@@ -176,6 +179,7 @@ export default class Utility extends YorSlashCommand {
         const license = repoData.license && repoData.license.name && repoData.license.url ? `[${repoData.license.name}](${repoData.license.url})` : repoData.license && repoData.license.name || "None";
         // make embed
         const embed = new EmbedBuilder()
+          .setColor(util.color)
           .setAuthor({ name: "GitHub", iconURL: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' })
           .setTitle(`${repoData.full_name}`)
           .setURL(repoData.html_url)
@@ -218,6 +222,7 @@ export default class Utility extends YorSlashCommand {
         const keywords = npmData.keywords.map(k => `\`${k}\``).join(', ');
         // make embed
         const npmEmbed = new EmbedBuilder()
+          .setColor(util.color)
           .setAuthor({ name: "npm Registry", iconURL: 'https://i.imgur.com/24yrZxG.png' })
           .setTitle(`${npmData.name}`)
           .setURL(`https://www.npmjs.com/package/${npmData.name}`)
@@ -251,6 +256,7 @@ export default class Utility extends YorSlashCommand {
         if (data.list && data.list.length > 0) {
           const definition = data.list[0];
           const embed = new EmbedBuilder()
+            .setColor(util.color)
             .setTitle(`Definition of ${definition.word}`)
             .setURL(definition.urbanURL)
             .setThumbnail("https://files.catbox.moe/kkkxw3.png")
@@ -276,10 +282,9 @@ export default class Utility extends YorSlashCommand {
               },
               {
                 name: 'Profane Word?',
-                value: 'Yell at my sensei through `/me feedback`, the patch should be added in a few working days.',
+                value: 'Yell at my sensei through `/my fault`, the patch should be added in a few working days.',
               },
             ]);
-
           return await ctx.editReply({ embeds: [embed] });
         } else {
           return await ctx.editReply({ content: "Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means." });
@@ -299,6 +304,9 @@ export default class Utility extends YorSlashCommand {
           body: JSON.stringify({
             contents: [{
               parts: [{
+                // match personality tho
+                // it's more fun than normal repetitive ai tone
+                // y'know, you'll see things like baka and science in one same reply
                 text: `${question}, reply as a tsundere scientist and make it short`
               }]
             }],
@@ -312,7 +320,7 @@ export default class Utility extends YorSlashCommand {
         }).then(res => res.json());
         await ctx.editReply({ content: data.candidates[0].content.parts[0].text }).catch(async err => {
           console.log(err);
-          await ctx.editReply({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/me feedback`." });
+          await ctx.editReply({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/my fault`." });
         });
       }
     }

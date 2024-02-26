@@ -17,7 +17,7 @@ export default class Fun extends YorSlashCommand {
   builder = fun
   execute = async ctx => {
     // util
-    const util = ctx.client.settings;
+    const util = ctx.client.util;
     // get subcommand
     const sub = ctx.getSubcommand();
     // defer reply 
@@ -42,10 +42,21 @@ export default class Fun extends YorSlashCommand {
         await ctx.editReply({ content: eightball[Math.floor(Math.random() * eightball.length)] });
         break;
       case "fact":
-        // literally free command
-        await fetch("https://uselessfacts.jsph.pl/random.json?language=en").then(async res => {
+        // get category
+        const about = ctx.getString("about");
+        let url, type;
+        if (about == "cat") {
+          url = "https://catfact.ninja/fact";
+          type = "fact"
+        } else if (about == "dog") {
+          url = "https://dog-api.kinduff.com/api/facts?number=1"
+        } else {
+          url = "https://uselessfacts.jsph.pl/random.json?language=en",
+          type = "text"
+        };
+        await fetch(url).then(async res => {
           res = await res.json();
-          await ctx.editReply({ content: res.text });
+          await ctx.editReply({ content: type == "dog" ? res.facts[0] : res[type] });
         });
         break;
       case "today":
@@ -81,6 +92,7 @@ export default class Fun extends YorSlashCommand {
           return await ctx.editReply({ content: cancelled + "\n\n||This meme is NSFW.||" });
         }
         const meme = new EmbedBuilder()
+          .setColor(util.color)
           .setTitle(`**${response.title}**`)
           .setURL(response.url)
           .setDescription(`*Posted in **r/${query ? query : response.randomKey}** by **${response.author}***`)
@@ -92,8 +104,8 @@ export default class Fun extends YorSlashCommand {
       case "ship":
         const first = ctx.getUser("first");
         const second = ctx.getUser("second");
-        if (first.id == util.id || second.id == util.id) return await ctx.editReply({ content: "Ew, I'm not a fan of shipping. Choose someone else!" })
-        if (first.id == second.id) return await ctx.editReply({ content: "Pfft. No one does that, baka." })
+        if (first.raw.id == util.id || second.raw.id == util.id) return await ctx.editReply({ content: "Ew, I'm not a fan of shipping. Choose someone else!" })
+        if (first.raw.id == second.raw.id) return await ctx.editReply({ content: "Pfft. No one does that, baka." })
         // lucky wheel strikes again
         const luckyWheelRate = util.probability(5);
         // roll again, but only 40% outputting true
@@ -111,11 +123,12 @@ export default class Fun extends YorSlashCommand {
         else if (normalRate <= 90) finalShipResponse = `Hey! That's pretty good, I rarely see a couple scoring this nicely. A whopping **${normalRate}%**!`;
         else if (normalRate == 100) finalShipResponse = "Holy cow. Perfect couple right here duh? **100%** ship rate!";
         // then check if we have a lucky wheel instance
-        if (luckyWheelRate) return await ctx.editReply({ content: "Lucky wheel time! Let's see if you two are lucky!" }).then(() => {
-          setTimeout(async () => {
-            await ctx.followUp({ content: `${result == 100 ? "Hey, good couple! You rolled **100%**!" : "Baka, you two lost. **0%** rate."}` })
-          }, 3000)
-        }); else await ctx.editReply({ content: finalShipResponse })
+        if (luckyWheelRate) {
+          // triple awaito
+          await ctx.editReply({ content: "Lucky wheel time! Let's see if you two are lucky!" });
+          await new Promise(resolve => setTimeout(resolve, 3000));
+          await ctx.followUp({ content: `${result == 100 ? "Hey, good couple! You rolled **100%**!" : "Baka, you two lost. **0%** rate."}` })
+        } else await ctx.editReply({ content: finalShipResponse });
         break;
       case "fortune":
         const fortune = cookies[Math.floor(Math.random() * cookies.length)]
@@ -146,6 +159,7 @@ export default class Fun extends YorSlashCommand {
         })
         finalMemeRes = (await finalMemeRes.json()).data;
         const finalMemeEmbed = new EmbedBuilder()
+          .setColor(util.color)
           .setDescription(`Here you go. Not like I wanted to waste my time.`)
           .setImage(finalMemeRes.url).setTimestamp()
           .setFooter({ text: "Powered by Imgflip", iconURL: util.getUserAvatar(ctx.member.raw.user) });
@@ -158,14 +172,6 @@ export default class Fun extends YorSlashCommand {
         if (query.length > 200) return await ctx.editReply({ content: "Less than 200 characters please, baka." });
         const owoRes = await fetch(`https://nekos.life/api/v2/owoify?text=${encodeURIComponent(query)}`).then(res => res.json());
         await ctx.editReply({ content: owoRes.owo });
-        break;
-      case "catfact": 
-        const catfact = await fetch(`https://catfact.ninja/fact`).then(res => res.json());
-        await ctx.editReply({ content: catfact.fact });
-        break;
-      case "dogfact": 
-        const dogfact = await fetch(`https://dog-api.kinduff.com/api/facts?number=1`).then(res => res.json());
-        await ctx.editReply({ content: dogfact.facts[0] });
         break;
     }
   }

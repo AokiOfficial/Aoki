@@ -1,5 +1,7 @@
 // yor.ts just kinda handled 90% of this file
 // I just want to work the way I did with djs
+import { Member } from "yor.ts";
+
 export default {
   /**
    * Gets a subcommand from API raw data
@@ -11,7 +13,7 @@ export default {
     } else if (this.subcommand) {
       return this.subcommand?.name;
     }
-    return this.raw?.data?.options?.name;
+    return this.raw?.data?.options?.name || undefined;
   },
   /**
    * Gets a subcommand group from API raw data
@@ -34,7 +36,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getStringOption(string, 2);
     }
-    return option;
+    return option || undefined;
   },
   /**
    * Finds a number option from API raw data
@@ -50,7 +52,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getNumberOption(string, 2);
     }
-    return option;
+    return option || undefined;
   },
   /**
    * Finds an integer option from API raw data
@@ -66,7 +68,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getIntegerOption(string, 2);
     }
-    return option;
+    return option || undefined;
   },
   /**
    * Finds a boolean option from API raw data
@@ -82,7 +84,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getBooleanOption(string, 2);
     }
-    return option;
+    return option || undefined;
   },
   /**
    * Finds a user option from API raw data
@@ -98,7 +100,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getUserOption(string, 2);
     }
-    return option.raw;
+    return option || undefined;
   },
   /**
    * Finds a role option from API raw data
@@ -114,7 +116,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getRoleOption(string, 2);
     }
-    return option.raw;
+    return option || undefined;
   },
   /**
    * Finds a channel option from API raw data
@@ -130,23 +132,32 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getChannelOption(string, 2);
     }
-    return option.raw;
+    return option || undefined;
   },
   /**
    * Finds a member option from API raw data
    * @param { String } string The member option's name
    * @returns `Member | undefined`
    */
-  getMember(string) {
+  async getMember(string) {
     let option;
     if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getMemberOption(string);
+      option = this.getUserOption(string);
     } else if (this.subcommand) {
-      option = this.getMemberOption(string, 1);
+      option = this.getUserOption(string, 1);
     } else if (this.subcommandGroup) {
-      option = this.getMemberOption(string, 2);
+      option = this.getUserOption(string, 2);
     }
-    return option.raw;
+    // the internal getMemberOption is broken
+    // because it does not return user object
+    // therefore we do not know what's the member id
+    // learnt this the hard way
+    let member = await this.client.util.call({
+      method: "guildMember",
+      param: [this.member.raw.guildID, option.raw.id]
+    });
+    member = new Member(this.client, this.member.raw.guildID, member)
+    return member || undefined;
   },
   /**
    * Finds an attachment option from API raw data
@@ -162,6 +173,6 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getAttachmentOption(string, 2);
     }
-    return option.raw;
+    return option || undefined;
   }
 }
