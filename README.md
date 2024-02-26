@@ -1,7 +1,7 @@
 <h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/fd49d4d9006710f8b9b5bdc027e6440a.png?size=128' height='100'><br>Neko</br></h1>
 <p align="center">A multi-purpose bot to spice up your Discord experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
-  <a href="http://forthebadge.com/">
+  <a href="https://forthebadge.com/">
     <img src="https://i.imgur.com/JJkdjKu.png" height="36"/>
   </a>
   <a href="https://workers.cloudflare.com/">
