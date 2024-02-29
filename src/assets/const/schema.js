@@ -52,6 +52,8 @@ const schema = async (pool) => {
       userBlacklist TEXT
     );`)
 
+  // future plans
+  // for now just make a table so I don't forget lol
   const store = pool.prepare(`
     CREATE TABLE IF NOT EXISTS store (
       id TEXT PRIMARY KEY NOT NULL UNIQUE,
