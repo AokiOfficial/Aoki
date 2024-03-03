@@ -54,10 +54,12 @@ export default class Fun extends YorSlashCommand {
           url = "https://uselessfacts.jsph.pl/random.json?language=en",
           type = "text"
         };
-        await fetch(url).then(async res => {
-          res = await res.json();
-          await ctx.editReply({ content: type == "dog" ? res.facts[0] : res[type] });
-        });
+        const res = await fetch(url, { 
+          headers: {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
+          }
+        }).then(res => res.json());
+        await ctx.editReply({ content: `${about == "dog" ? res.facts[0] : res[type]}` });
         break;
       case "today":
         // yet another api command
@@ -67,7 +69,7 @@ export default class Fun extends YorSlashCommand {
         const [month, day] = trimmedDate;
 
         const todayRes = await fetch(`https://history.muffinlabs.com/date/${month}/${day}`);
-        const todayJs = todayRes.json();
+        const todayJs = await todayRes.json();
 
         const ranInt = Math.floor(Math.random() * todayJs.data.Events.length);
         const { text, year } = todayJs.data.Events[ranInt];
@@ -88,7 +90,7 @@ export default class Fun extends YorSlashCommand {
           return await ctx.editReply({ content: "U-Uh, just coming here to say that this subreddit has no posts or doesn't exist." });
         }
         // pseudo cancel if a nsfw meme gets in the way
-        if (response.nsfw === true && !ctx.channel.nsfw) {
+        if (response.nsfw == true && !ctx.channel.nsfw) {
           return await ctx.editReply({ content: cancelled + "\n\n||This meme is NSFW.||" });
         }
         const meme = new EmbedBuilder()

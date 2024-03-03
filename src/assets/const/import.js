@@ -67,7 +67,6 @@ const fun = new SlashCommandBuilder()
         { name: "Ancient Aliens", value: '101470' },
         { name: "Tuxedo Winnie The Pooh", value: '178591752' },
         { name: "Leonardo Dicaprio Cheers", value: '5496396' },
-        { name: "Panik Kalm Panik", value: '226297822' },
         { name: "Always Has Been", value: '252600902' },
         { name: "Doge", value: '8072285' },
         { name: "Third World Skeptical Kid", value: '101288' }

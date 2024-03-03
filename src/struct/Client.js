@@ -18,10 +18,10 @@ export default class NekoClient extends YorClient {
     // init the client
     super({
       application: {
-        id: env.APPID,
-        publicKey: env.PUBKEY
+        id: env.APPID_DEV,
+        publicKey: env.PUBKEY_DEV
       },
-      token: env.TOKEN
+      token: env.TOKEN_DEV
     });
     // env sent by the request
     this.env = env;
@@ -48,14 +48,20 @@ export default class NekoClient extends YorClient {
   }
   async fetch(request, env, ctx) {
     // disallow any other method than post
-    if (request.method !== "POST") return new Response("Method not allowed", { status: 405 })
+    if (request.method != "POST") return new Response("Method not allowed", { status: 405 })
     const url = new URL(request.url)
     const pathname = url.pathname;
     // if we need to configure anything extra later
     // we can just make a file and serve it on a different endpoint
     // very convenient setup
     if (pathname.startsWith("/interactions")) {
-      // init our db
+      // handle interactions
+      const promise = this.handleInteraction(request)
+      ctx.waitUntil(promise)
+      // before handling any command, parse this client's properties into ctx
+      // so we can use these properties in any command
+      ctx.client = this;
+      // init our db ONLY AFTER we validate the interaction (L62) 
       // populate the db with our schema
       // useful line when migrating or initializing a new one
       // because we only create tables if they don't exist anyway
@@ -64,12 +70,6 @@ export default class NekoClient extends YorClient {
       for (const [name, settings] of Object.entries(this.settings)) {
         await settings.init();
       };
-      // handle interactions
-      const promise = this.handleInteraction(request)
-      ctx.waitUntil(promise)
-      // before handling any command, parse this client's properties into ctx
-      // so we can use these properties in any command
-      ctx.client = this;
       // handle the command
       const response = await promise;
       return new Response(JSON.stringify(response));
