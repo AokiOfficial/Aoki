@@ -315,8 +315,7 @@ export default class Anime extends YorSlashCommand {
         "Episodes": res.episodes || "No data",
         "Status": res.status || "No data",
         "Schedule": res.broadcast ? "Every " + res.broadcast.day : "No data",
-        "Duration": res.duration ? res.duration.replace(/ per /g, "/") : "No data",
-        "Rated": res.rating ? util.textTruncate(res.rating, 5, "") : "No data"
+        "Duration": res.duration ? res.duration.replace(/ per /g, "/") : "No data"
       };
       const anime_scores = {
         "Average Score": res.score || "No data",
@@ -333,8 +332,7 @@ export default class Anime extends YorSlashCommand {
         "Status": res.status || "No data"
       };
       const manga_scores = {
-        "Average Score": res.score || "No data",
-        "Scored By": res.scored_by ? res.scored_by + " people" : "No data",
+        // manga on mal has no average score
         "Mean Rank": res.rank || "No data",
         "Popularity Rank": res.popularity || "No data",
         "Favorites": res.favorites || "No data",
@@ -351,7 +349,7 @@ export default class Anime extends YorSlashCommand {
           util.textTruncate((res.synopsis || '').replace(/(<([^>]+)>)/ig, ''), 350, `... *[read more here](${res.url})*`),
           `\n• **Main Theme:** ${res.themes[0]?.name || 'Unspecified'}`,
           `• **Demographics:** ${res.demographics[0]?.name || 'Unspecified'}`,
-          `• **Air Season:** ${res.season || "Unknown"}`,
+          `• **Air Season:** ${res.season ? util.toProperCase(res.season) : "Unknown"}`,
           `\n*More about the ${type} can be found [here](${res.url}), and the banner can be found [here](${res.images.jpg.image_url}).*`
         ].join('\n'))
         .addFields([
