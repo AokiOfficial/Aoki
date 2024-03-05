@@ -21,7 +21,8 @@ esbuild.build({
         // these are for yor.ts
         // this is also in their docs
         url: true,
-        util: true
+        util: true,
+        buffer: true
       },
     }),
 

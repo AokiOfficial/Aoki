@@ -11,17 +11,19 @@ import Util from "../cmd/utility";
 import My from "../cmd/my";
 import Anime from "../cmd/anime";
 import Moderate from "../cmd/moderate";
+import OsuGame from "../cmd/osugame";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
   constructor(dev, env) {
     // init the client
+    // check dev mode
     super({
       application: {
-        id: env.APPID_DEV,
-        publicKey: env.PUBKEY_DEV
+        id: dev ? env.APPID_DEV : env.APP_ID,
+        publicKey: dev ? env.PUBKEY_DEV : env.PUBKEY
       },
-      token: env.TOKEN_DEV
+      token: dev ? env.TOKEN_DEV : env.TOKEN
     });
     // env sent by the request
     this.env = env;
@@ -44,17 +46,24 @@ export default class NekoClient extends YorClient {
   async start() {
     // because using fs is against cfworkers' global async i/o rule
     // we have to call every single command in here
-    this.registerCommands([new Moderate(), new Fun(), new Util(), new My(), new Anime()]);
+    this.registerCommands([
+      new Moderate(),
+      new Fun(), 
+      new Util(), 
+      new My(), 
+      new Anime(), 
+      new OsuGame
+    ]);
   }
   async fetch(request, env, ctx) {
-    // disallow any other method than post
-    if (request.method != "POST") return new Response("Method not allowed", { status: 405 })
     const url = new URL(request.url)
     const pathname = url.pathname;
     // if we need to configure anything extra later
     // we can just make a file and serve it on a different endpoint
     // very convenient setup
     if (pathname.startsWith("/interactions")) {
+      // disallow any other method than post
+      if (request.method != "POST") return new Response("Method not allowed", { status: 405 })  
       // handle interactions
       const promise = this.handleInteraction(request)
       ctx.waitUntil(promise)
@@ -74,12 +83,11 @@ export default class NekoClient extends YorClient {
       const response = await promise;
       return new Response(JSON.stringify(response));
     }
-    // we have to pass this to discord interactions endpoint field
-    // when we update our commands
-    // this will not work elsewhere
+    // update commands
     if (pathname.startsWith("/deploy")) {
       try {
-        const response = await this.deployCommands();
+        // if we're in dev move, deploy in test guild only
+        const response = this.dev ? await this.deployCommands("847396000343654411") : await this.deployCommands();
         return new Response(JSON.stringify(response));
       }
       catch (error) {

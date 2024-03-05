@@ -306,4 +306,43 @@ const moderate = new SlashCommandBuilder()
     )
   )
 
-export { fun, util, my, anime, moderate };
+const osugame = new SlashCommandBuilder()
+  .setName("osu")
+  .setDescription("the bizzare game that you react to whatever appears on the screen.")
+  .addSubcommand(cmd => cmd
+    .setName("set")
+    .setDescription("sets your in-game name and main gamemode.")
+    .addStringOption(option => option
+      .setName("username")
+      .setDescription("your in-game name")
+      .setRequired(true)  
+    )  
+    .addStringOption(option => option
+      .setName("mode")
+      .setDescription("your main gamemode")
+      .setRequired(true)  
+      .addChoices(...[
+        { name: "standard", value: "0" },
+        { name: "taiko", value: "1" },
+        { name: "catch", value: "2" },
+        { name: "mania", value: "3" }
+      ])
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("profile")
+    .setDescription("check out your in-game profile")
+    .addStringOption(option => option.setName("username").setDescription("your in-game username. Not required if you have one saved"))
+    .addStringOption(option => option
+      .setName("mode")
+      .setDescription("the mode you wish to check out. Not required if you have one saved")
+      .addChoices(...[
+        { name: "standard", value: "0" },
+        { name: "taiko", value: "1" },
+        { name: "catch", value: "2" },
+        { name: "mania", value: "3" }
+      ])
+    )
+  )
+
+export { fun, util, my, anime, moderate, osugame };

@@ -1,7 +1,7 @@
 // entry file
 import Client from "./struct/Client";
 import "./struct/extends";
-const dev = process.argv.includes("dev");
+const dev = true;
 
 // expose a client variable
 // we will only make a new client when no client is available

@@ -33,7 +33,7 @@ const schema = async (pool) => {
   const users = pool.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL UNIQUE,
-      osuIgn TEXT NOT NULL, 
+      inGameName TEXT NOT NULL, 
       defaultMode INTEGER DEFAULT 0
     );`)
 

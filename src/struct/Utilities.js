@@ -27,7 +27,7 @@ export default class Utilities {
     this.owners = ["586913853804249090", "809674940994420736"];
     // osucard properties
     // unused for now
-    this.osu_card = [
+    this.osuCards = [
       { "id": "16688499", "name": "njshift1", "card": "JYdgIHX", "star": "JYd4vta", "halfstar": "JYd4UMv" },
       { "id": "9623142", "name": "davidminh0111", "card": "JYdrqmu" },
       { "id": "22698999", "name": "hi_there_osu", "card": "JYdgMOu" },
@@ -54,7 +54,7 @@ export default class Utilities {
     ];
     // osuscore rank emoji
     // unused for now
-    this.rank_emote = {
+    this.rankEmotes = {
       XH: "<:xh:1184870634124226620>",
       X: "<:x:1184870631372750871>",
       SH: "<:sh:1184870626394128518>",
@@ -266,6 +266,19 @@ export default class Utilities {
         'Accept': 'application/json',
       }
     }).then(res => res.json());
+  };
+  /**
+   * Converts mode represented by number to mode represented by string.
+   * 
+   * Exclusively for osugame commands
+   * @param {Number} int the number to convert to mode name
+   * @returns `String` mode name `| undefined`
+   */
+  osuModeFormat(int) {
+    if (int == 0) return "standard";
+    if (int == 1) return "taiko";
+    if (int == 2) return "catch";
+    if (int == 3) return "mania";
   }
   /**
    * Gets a user avatar URL
