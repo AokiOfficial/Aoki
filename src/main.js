@@ -1,7 +1,6 @@
 // entry file
 import Client from "./struct/Client";
 import "./struct/extends";
-const dev = true;
 
 // expose a client variable
 // we will only make a new client when no client is available
@@ -13,7 +12,7 @@ let client;
 export default {
   fetch: async (request, env, ctx) => {
     // make a new client when no client is available
-    if (!client) { client = new Client(dev, env); client.start() };
+    if (!client) { client = new Client(env); client.start() };
     // then run the main thing
     return await client.fetch(request, env, ctx);
   }

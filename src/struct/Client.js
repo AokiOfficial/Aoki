@@ -15,15 +15,15 @@ import OsuGame from "../cmd/osugame";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
-  constructor(dev, env) {
+  constructor(env) {
     // init the client
     // check dev mode
     super({
       application: {
-        id: dev ? env.APPID_DEV : env.APP_ID,
-        publicKey: dev ? env.PUBKEY_DEV : env.PUBKEY
+        id: env.APPID,
+        publicKey: env.PUBKEY
       },
-      token: dev ? env.TOKEN_DEV : env.TOKEN
+      token: env.TOKEN
     });
     // env sent by the request
     this.env = env;
@@ -37,8 +37,6 @@ export default class NekoClient extends YorClient {
       users: new Database(this, "users"),
       store: new Database(this, "store")
     };
-    // whether we're in dev mode
-    this.dev = dev;
     // util
     // init this class and then use it everywhere
     this.util = new Utility(this, env);
@@ -58,6 +56,15 @@ export default class NekoClient extends YorClient {
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
     const pathname = url.pathname;
+    // init our db
+    // populate the db with our schema
+    // useful line when migrating or initializing a new one
+    // because we only create tables if they don't exist anyway
+    await schema(env.database);
+    // write settings in cache
+    for (const [name, settings] of Object.entries(this.settings)) {
+      await settings.init();
+    };
     // if we need to configure anything extra later
     // we can just make a file and serve it on a different endpoint
     // very convenient setup
@@ -70,15 +77,6 @@ export default class NekoClient extends YorClient {
       // before handling any command, parse this client's properties into ctx
       // so we can use these properties in any command
       ctx.client = this;
-      // init our db ONLY AFTER we validate the interaction (L62) 
-      // populate the db with our schema
-      // useful line when migrating or initializing a new one
-      // because we only create tables if they don't exist anyway
-      await schema(env.database);
-      // write settings in cache
-      for (const [name, settings] of Object.entries(this.settings)) {
-        await settings.init();
-      };
       // handle the command
       const response = await promise;
       return new Response(JSON.stringify(response));
@@ -86,8 +84,7 @@ export default class NekoClient extends YorClient {
     // update commands
     if (pathname.startsWith("/deploy")) {
       try {
-        // if we're in dev move, deploy in test guild only
-        const response = this.dev ? await this.deployCommands("847396000343654411") : await this.deployCommands();
+        const response = await this.deployCommands();
         return new Response(JSON.stringify(response));
       }
       catch (error) {
