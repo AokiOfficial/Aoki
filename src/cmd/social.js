@@ -195,12 +195,12 @@ export default class Social extends YorSlashCommand {
         const lastStealLevel = settings.lastStealLevel;
         if (lastStealLevel == "failed" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("10m")) 
           return await ctx.editReply({ content: `Baka, you cannot steal yet. You last failed and therefore you have to wait **10 minutes** before trying again.` });
-        if (lastStealLevel == "ez" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("12h")) 
-          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Snitch\` and therefore you have to wait **12 hours** before trying again.` });
-        else if (lastStealLevel == "normal" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("8h")) 
-          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Commit\` and therefore you have to wait **8 hours** before trying again.` });
-        else if (lastStealLevel == "hard" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("6h")) 
-          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Insane\` and therefore you have to wait **6 hours** before trying again.` }); 
+        if (lastStealLevel == "ez" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("6h")) 
+          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Snitch\` and therefore you have to wait **6 hours** before trying again.` });
+        else if (lastStealLevel == "normal" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("4h")) 
+          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Commit\` and therefore you have to wait **4 hours** before trying again.` });
+        else if (lastStealLevel == "hard" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("2h")) 
+          return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Insane\` and therefore you have to wait **2 hours** before trying again.` }); 
         // if victim has no pocket money, or too little, reject
         // we put it here because the 10 minutes can override any long duration, just execute on a bot
         if (!stealee.settings) {

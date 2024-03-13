@@ -8,7 +8,7 @@ export default class Utilities {
     // the client initialized this
     this.client = client;
     // the id of the application
-    this.id = "838729358041677856";
+    this.id = "704992714109878312";
     // database connection settings
     // embed color
     // as we can't use hex code

@@ -20,11 +20,15 @@ export default class Fun extends YorSlashCommand {
     const util = ctx.client.util;
     // get subcommand
     const sub = ctx.getSubcommand();
+    // query
+    let query;
     // defer reply 
     await ctx.defer();
     // handle commands
     switch (sub) {
       case "8ball":
+        // get query
+        const query = ctx.getString("query");
         const eightball = [
           "It is certain.", "It is decidedly so.", "Without a doubt.", "Yes, definitely.",
           "Rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.",
@@ -168,11 +172,11 @@ export default class Fun extends YorSlashCommand {
         await ctx.editReply({ embeds: [finalMemeEmbed] });
         break;
       case "owo":
-        const query = ctx.getString("query");
+        const q = ctx.getString("query");
         // check ourselves - we don't like asking workers to do too many things in simple commands
         // more complex structures in other files
-        if (query.length > 200) return await ctx.editReply({ content: "Less than 200 characters please, baka." });
-        const owoRes = await fetch(`https://nekos.life/api/v2/owoify?text=${encodeURIComponent(query)}`).then(res => res.json());
+        if (q.length > 200) return await ctx.editReply({ content: "Less than 200 characters please, baka." });
+        const owoRes = await fetch(`https://nekos.life/api/v2/owoify?text=${encodeURIComponent(q)}`).then(res => res.json());
         await ctx.editReply({ content: owoRes.owo });
         break;
     }
