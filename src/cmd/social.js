@@ -32,36 +32,23 @@ export default class Social extends YorSlashCommand {
         // make an embed with detailed instructions on how to start and get going
         const introEmbed = new EmbedBuilder()
           .setTitle("Nya Global Trading Center | Welcome ticket")
-          .setDescription("*You successfully **opened** a bank account.*")
-          .addFields({
-            name: "What is this?",
-            value: "Welcome to the Nya Global Trading Center! Note, this is based off virtual money, not withdrawable into real money, and is free-to-play. You start off your bank with **¥100**, and by working, trading, or even doing nothing, you earn money to buy perks, stickers on your card, using certain commands, and more!"
-          }, {
-            name: "Woah, okay. How do I start?",
-            value: 
-              "The logic behind all this is simple. You make money, that money goes to your pocket. You then gatekeep money from stealers and bad actors (which basically are users around you also playing this) by **depositing** your pocket money to the bank.\n\n" +
-              "To buy goods which are purchasable by using this money, you have to **withdraw** it from your bank, right? That's right! You use the money you just withdrawn to buy cool things to show off, or get extra perks, or to use on some commands. *(however, items are not available right now, so you'll have to wait for some time)*\n\n" +
-              "- To start working, do `/social work`. You can work once per minute.\n" +
-              "- To claim your daily allowances, do `/social daily`. You can claim every 24 hours.\n" +
-              "- To attempt stealing money from someone's pocket, do `/social steal`. Failed stealing attempts will last 7 days and deduct your earnings as you fail more, so think twice!\n" +
-              "- To try saving from a piggy bank, first, make sure your bank has more than **¥5,000**, then try `/social piggy open`. More about the piggy bank below.\n" + 
-              "- To transfer money to others, do `/social transfer`. You can transfer **¥5,000** at a time, with a **1%** fee after transfer.\n" +
-              "- To deposit pocket money to your bank, do `/social deposit`.\n" +
-              "- To withdraw bank money to your pocket, do `/social withdraw`."
-          }, {
-            name: "So, what's with the piggy bank?",
-            value: 
-              "Piggy bank is a way to earn passively! Each month, when you perform a paycheck by doing `/social piggy paycheck`, the initiated money will be calculated and put in the piggy bank.\n" +
-              "- The monthly earning rate is **3%**.\n" +
-              "- Your earnings **have to be claimed manually**. If the next paycheck is coming and you haven't checked this month, the money will be lost and considered *abandoned*.\n" +
-              "- You can freely withdraw from the piggy bank, but if it holds less than **¥2,500** when you perform a paycheck, you gain no money from the paycheck, and all money from the piggy bank will be returned to your bank.\n" + 
-              "- You can freely add more money to the piggy bank. As the piggy bank grows, you earn more from it.\n" +
-              "- Sometimes, when the database encounter errors, if you lost your piggy bank in that occasion, please notify my sensei using `/my fault`, and include a screenshot of your piggy bank.\n" +
-              "- To display this piggy bank info again later, do `/social piggy about`."
-          }, {
-            name: "That's it!",
-            value: "Start doing fun activites now and have fun earning!"
-          })
+          .setDescription(
+            "*You successfully **opened** a bank account.*\n\n" +
+            "**What is this?**\n" +
+            "Welcome to the Nya Global Trading Center! Note, this is based off virtual money, not withdrawable into real money, and is free-to-play. You start off your bank with **¥100**, and by working, trading, or even doing nothing, you earn money to buy perks, stickers on your card, using certain commands, and more!\n\n" +
+            "**Woah, okay. How do I start?**\n" + 
+            "The logic behind all this is simple. You make money, that money goes to your pocket. You then gatekeep money from stealers and bad actors (which basically are users around you also playing this) by **depositing** your pocket money to the bank.\n\n" +
+            "To buy goods which are purchasable by using this money, you have to **withdraw** it from your bank, right? That's right! You use the money you just withdrawn to buy cool things to show off, or get extra perks, or to use on some commands. *(however, items are not available right now, so you'll have to wait for some time)*\n\n" +
+            "- To start working, do `/social work`. You can work once per minute.\n" +
+            "- To claim your daily allowances, do `/social daily`. You can claim every 24 hours.\n" +
+            "- To attempt stealing money from someone's pocket, do `/social steal`. Failed stealing attempts will last 7 days and deduct your earnings as you fail more, so think twice!\n" +
+            "- To try saving from a piggy bank, first, make sure your bank has more than **¥5,000**, then try `/social piggy open`. More about the piggy bank in `/social piggy info`.\n" + 
+            "- To transfer money to others, do `/social transfer`. You can transfer **¥5,000** at a time, with a **1%** fee after transfer.\n" +
+            "- To deposit pocket money to your bank, do `/social deposit`.\n" +
+            "- To withdraw bank money to your pocket, do `/social withdraw`.\n\n" +
+            "**That's it!**\n" +
+            "Start doing fun activites now and have fun earning!"
+          )
           .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
           .setTimestamp()
           .setColor(util.color)

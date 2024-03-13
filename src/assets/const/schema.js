@@ -7,9 +7,9 @@ const schema = async (pool) => {
   //   DROP TABLE guilds
   //   ;`)
 
-  const drop2 = pool.prepare(`
-    DROP TABLE users
-    ;`)
+  // const drop2 = pool.prepare(`
+  //   DROP TABLE users
+  //   ;`)
 
   // const drop3 = pool.prepare(`
   //   DROP TABLE members
