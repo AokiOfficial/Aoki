@@ -345,4 +345,94 @@ const osugame = new SlashCommandBuilder()
     )
   )
 
-export { fun, util, my, anime, moderate, osugame };
+const social = new SlashCommandBuilder()
+  .setName("social")
+  .setDescription("collecting some yens, buying some stuff, all that.")
+  .addSubcommand(cmd => cmd
+    .setName("register")
+    .setDescription("if you don't have a bank account yet, start here.")  
+  )
+  .addSubcommand(cmd => cmd
+    .setName("daily")
+    .setDescription("claim your daily allowance.")  
+  )
+  .addSubcommand(cmd => cmd
+    .setName("deposit") 
+    .setDescription("deposit money from your pocket to the bank.")
+    .addIntegerOption(option => option
+      .setName("amount")
+      .setDescription("the amount you want to deposit.")
+      .setRequired(true)
+    ) 
+  )
+  .addSubcommand(cmd => cmd
+    .setName("withdraw") 
+    .setDescription("withdraw money from your bank to your pocket.")
+    .addIntegerOption(option => option
+      .setName("amount")
+      .setDescription("the amount you want to withdraw.")
+      .setRequired(true)
+    ) 
+  )
+  .addSubcommand(cmd => cmd
+    .setName("bank")
+    .setDescription("see how much you currently possess.")  
+  )
+  .addSubcommand(cmd => cmd
+    .setName("work")
+    .setDescription("make money, buy things, make more money, buy more things.")  
+  )
+  .addSubcommand(cmd => cmd
+    .setName("steal")
+    .setDescription("steal money from people. Not intended, so much more strict when you fail.")
+    .addUserOption(option => option
+      .setName("user")
+      .setDescription("the user you want to steal from. Could be anyone, this system is global.")
+      .setRequired(true)  
+    )  
+    .addStringOption(option => option
+      .setName("level")
+      .setDescription("set the difficulty level of the mission. Defaults to Commit.")
+      .addChoices(...[
+        { name: "Snitch", value: "ez" },
+        { name: "Commit", value: "normal" },
+        { name: "Insane", value: "hard" }
+      ])  
+    )
+  )
+  .addSubcommandGroup(group => group
+    .setName("piggy")
+    .setDescription("start saving today.")
+    .addSubcommand(cmd => cmd
+      .setName("open")
+      .setDescription("open a piggy bank. Make sure your bank has more than ¥5,000.")  
+    )  
+    .addSubcommand(cmd => cmd
+      .setName("withdraw")
+      .setDescription("withdraw money from your piggy bank.")
+      .addIntegerOption(option => option
+        .setName("amount")
+        .setDescription("the amount you want to withdraw")
+        .setRequired(true)  
+      )
+      .addBooleanOption(option => option
+        .setName("force")
+        .setDescription("whether to force close the bank if piggy has less than ¥2,500.")
+      )
+    )
+    .addSubcommand(cmd => cmd
+      .setName("deposit")
+      .setDescription("deposit money from your bank to the piggy bank.")
+      .addIntegerOption(option => option
+        .setName("amount")
+        .setDescription("the amount you want to deposit.")
+        .setRequired(true)  
+      )
+    )
+    .addSubcommand(cmd => cmd
+      .setName("paycheck")
+      .setDescription("perform a monthly paycheck.")  
+    )
+  )
+
+export { fun, util, my, anime, moderate, osugame, social };

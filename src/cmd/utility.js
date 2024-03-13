@@ -259,7 +259,7 @@ export default class Utility extends YorSlashCommand {
             .setColor(util.color)
             .setTitle(`Definition of ${definition.word}`)
             .setURL(definition.urbanURL)
-            .setThumbnail("https://files.catbox.moe/kkkxw3.png")
+            .setThumbnail("https://static.wikia.nocookie.net/logopedia/images/a/a7/UDAppIcon.jpg")
             .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
             .addFields([
               {

@@ -7,9 +7,9 @@ const schema = async (pool) => {
   //   DROP TABLE guilds
   //   ;`)
 
-  // const drop2 = pool.prepare(`
-  //   DROP TABLE users
-  //   ;`)
+  const drop2 = pool.prepare(`
+    DROP TABLE users
+    ;`)
 
   // const drop3 = pool.prepare(`
   //   DROP TABLE members
@@ -33,8 +33,22 @@ const schema = async (pool) => {
   const users = pool.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL UNIQUE,
-      inGameName TEXT NOT NULL, 
-      defaultMode INTEGER DEFAULT 0
+      inGameName TEXT DEFAULT NULL, 
+      defaultMode INTEGER DEFAULT 0,
+      bankOpened BOOLEAN DEFAULT false,
+      pocketBalance INTEGER DEFAULT 0,
+      bankBalance INTEGER DEFAULT 100,
+      lastWorkTime TEXT DEFAULT "0",
+      lastClaimTime TEXT DEFAULT "0",
+      failedSteal INTEGER DEFAULT 0,
+      firstFailedStealTime TEXT DEFAULT "0",
+      lastStealTime TEXT DEFAULT "0",
+      lastStealLevel TEXT DEFAULT "normal",
+      lastPaycheck TEXT DEFAULT "0",
+      piggyBalance INTEGER DEFAULT 0,
+      haveVoted BOOLEAN DEFAULT false,
+      lastVotedTime TEXT DEFAULT "0",
+      dailyStreak INTEGER DEFAULT 0
     );`)
 
   const members = pool.prepare(`

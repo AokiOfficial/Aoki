@@ -12,6 +12,7 @@ import My from "../cmd/my";
 import Anime from "../cmd/anime";
 import Moderate from "../cmd/moderate";
 import OsuGame from "../cmd/osugame";
+import Social from "../cmd/social";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
@@ -50,7 +51,8 @@ export default class NekoClient extends YorClient {
       new Util(), 
       new My(), 
       new Anime(), 
-      new OsuGame
+      new OsuGame(),
+      new Social()
     ]);
   }
   async fetch(request, env, ctx) {
