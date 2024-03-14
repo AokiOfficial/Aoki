@@ -76,6 +76,24 @@ const fun = new SlashCommandBuilder()
     .addStringOption(option => option.setName('top').setDescription('first text field (or top text)').setRequired(true))
     .addStringOption(option => option.setName("bottom").setDescription("second text field (or bottom text)").setRequired(true))
   )
+  .addSubcommand(cmd => cmd
+    .setName("toss")
+    .setDescription("test your chance to win some money off a randomizer.")
+    .addIntegerOption(option => option
+      .setName("amount")
+      .setDescription("the amount you want to place.")
+      .setRequired(true)  
+    )  
+    .addStringOption(option => option
+      .setName("level")
+      .setDescription("set the difficulty. The higher the difficulty, the more you earn.")
+      .addChoices(...[
+        { name: "Game", value: "ez" },
+        { name: "Bet", value: "normal" },
+        { name: "Double or Nothing", value: "hard" }
+      ])  
+    )
+  )
 
 const util = new SlashCommandBuilder()
   .setName("utility")
@@ -379,6 +397,20 @@ const social = new SlashCommandBuilder()
     .setDescription("see how much you currently possess.")  
   )
   .addSubcommand(cmd => cmd
+    .setName("transfer")
+    .setDescription("transfer money to other people.")
+    .addIntegerOption(option => option
+      .setName("amount")
+      .setDescription("the amount you want to transfer")
+      .setRequired(true)  
+    )  
+    .addUserOption(option => option
+      .setName("user")
+      .setDescription("whoever will receive this money.")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
     .setName("work")
     .setDescription("make money, buy things, make more money, buy more things.")  
   )
@@ -403,6 +435,10 @@ const social = new SlashCommandBuilder()
   .addSubcommandGroup(group => group
     .setName("piggy")
     .setDescription("start saving today.")
+    .addSubcommand(cmd => cmd
+      .setName("info")
+      .setDescription("read the piggy bank information before opening one.")  
+    )
     .addSubcommand(cmd => cmd
       .setName("open")
       .setDescription("open a piggy bank. Make sure your bank has more than ¥5,000.")  

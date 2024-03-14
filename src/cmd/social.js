@@ -45,7 +45,8 @@ export default class Social extends YorSlashCommand {
             "- To try saving from a piggy bank, first, make sure your bank has more than **¥5,000**, then try `/social piggy open`. More about the piggy bank in `/social piggy info`.\n" + 
             "- To transfer money to others, do `/social transfer`. You can transfer **¥5,000** at a time, with a **1%** fee after transfer.\n" +
             "- To deposit pocket money to your bank, do `/social deposit`.\n" +
-            "- To withdraw bank money to your pocket, do `/social withdraw`.\n\n" +
+            "- To withdraw bank money to your pocket, do `/social withdraw`.\n" +
+            "- To play games, head to the `/fun` command and see what you wanna play!\n\n" +
             "**That's it!**\n" +
             "Start doing fun activites now and have fun earning!"
           )
@@ -274,8 +275,7 @@ export default class Social extends YorSlashCommand {
           "- Your earnings **have to be claimed manually**. If the next paycheck is coming and you haven't checked this month, the money will be lost and considered *abandoned*.\n" +
           "- You can freely withdraw from the piggy bank, but if it holds less than **¥2,500** when you perform a paycheck, you gain no money from the paycheck, and all money from the piggy bank will be returned to your bank.\n" + 
           "- You can freely add more money to the piggy bank. As the piggy bank grows, you earn more from it.\n" +
-          "- Sometimes, when the database encounter errors, if you lost your piggy bank in that occasion, please notify my sensei using `/my fault`, and include a screenshot of your piggy bank.\n" +
-          "- To display this piggy bank info again later, do `/social piggy about`."
+          "- Sometimes, when the database encounter errors, if you lost your piggy bank in that occasion, please notify my sensei using `/my fault`, and include a screenshot of your piggy bank.\n"
         });
       } else if (sub == "open") {
         // check wallet
