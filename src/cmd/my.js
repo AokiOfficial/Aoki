@@ -8,7 +8,7 @@ const pingmsg = ["Ugh, again? You always wanna bother me. I responded in **{{ms}
 // we skip that command
 import { my } from "../assets/const/import";
 import { YorSlashCommand, Channel } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
+import { EmbedBuilder } from "@discordjs/builders";
 
 export default class My extends YorSlashCommand {
   builder = my

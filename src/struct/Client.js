@@ -13,6 +13,8 @@ import Anime from "../cmd/anime";
 import Moderate from "../cmd/moderate";
 import OsuGame from "../cmd/osugame";
 import Social from "../cmd/social";
+// import select menus
+import Custom from "../../menu/store";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
@@ -21,10 +23,10 @@ export default class NekoClient extends YorClient {
     // check dev mode
     super({
       application: {
-        id: env.APPID,
-        publicKey: env.PUBKEY
+        id: env.APPID_DEV,
+        publicKey: env.PUBKEY_DEV
       },
-      token: env.TOKEN
+      token: env.TOKEN_DEV
     });
     // env sent by the request
     this.env = env;
@@ -53,6 +55,10 @@ export default class NekoClient extends YorClient {
       new Anime(), 
       new OsuGame(),
       new Social()
+    ]);
+    // register components
+    this.registerComponents([
+      new Custom()
     ]);
   }
   async fetch(request, env, ctx) {

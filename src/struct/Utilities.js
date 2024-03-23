@@ -335,7 +335,37 @@ export default class Utilities {
    */
   getCreatedAt(timestamp) {
     return new Date(this.getCreatedTimestamp(timestamp));
-  }
+  };
+  /**
+   * Format string osu! mode to its numerical value
+   * @param {String} str Mode string to convert
+   * @returns `Number` Mode converted to number
+   */
+  requestModeFormat(str) {
+    if (str == "osu") return 0;
+    if (str == "taiko") return 1;
+    if (str == "fruits") return 2;
+    if (str == "mania") return 3;
+  };
+  /**
+   * Fetches static JSON asset stored on `npoint.io`.
+   * @param { String } name Asset name
+   * @returns `Object` response
+   */
+  async getStatic(name) {
+    // switch cases
+    let id;
+    switch (name) {
+      case "fortune": id = "581a1d8f207eebd37dce"; break
+      case "work": id = "ce24c6594944510ad47f"; break
+      case "caught": id = "db3797439edb317a3aac"; break
+      case "truth": id = "0cda95c7f398cec569dc"; break
+      case "store": id = "d9cede5ae3d6fc536af2"; break
+    };
+    // fetch data
+    const res = await fetch(`https://api.npoint.io/${id}`).then(async res => await res.json());
+    return res;
+  };
   // sometimes we'll have to reach out to raw api calls 
   // as a fallback solution when yor.ts does not support something
   // in that case we'll have to import Routes and RouteBases 

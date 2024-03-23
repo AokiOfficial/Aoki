@@ -1,6 +1,6 @@
 // the very first file we're interacting with the new db
 import { Emoji, YorSlashCommand, Channel, Guild } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
+import { EmbedBuilder } from "@discordjs/builders";
 import { moderate } from "../assets/const/import";
 import { DiscordSnowflake } from "@sapphire/snowflake";
 // permission flags

@@ -48,7 +48,11 @@ const schema = async (pool) => {
       piggyBalance INTEGER DEFAULT 0,
       haveVoted BOOLEAN DEFAULT false,
       lastVotedTime TEXT DEFAULT "0",
-      dailyStreak INTEGER DEFAULT 0
+      dailyStreak INTEGER DEFAULT 0,
+      background TEXT DEFAULT NULL,
+      pattern TEXT DEFAULT NULL,
+      emblem TEXT DEFAULT NULL,
+      profileColor TEXT DEFAULT NULL
     );`)
 
   const members = pool.prepare(`

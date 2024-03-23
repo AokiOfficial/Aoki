@@ -1,9 +1,12 @@
 import { YorSlashCommand } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
+import { 
+  EmbedBuilder, 
+  StringSelectMenuBuilder as MenuBuilder, 
+  StringSelectMenuOptionBuilder as MenuOptionBuilder,
+  ActionRowBuilder
+} from "@discordjs/builders";
 import { social } from "../assets/const/import";
 import { timeStringToMS } from "../assets/util/time-manipulation";
-import workMessages from "../assets/const/work.json";
-import stealFailMessages from "../assets/const/caught.json";
 
 // heavy db utilization
 export default class Social extends YorSlashCommand {
@@ -149,6 +152,7 @@ export default class Social extends YorSlashCommand {
         // if their cooldown has not passed
         if (Date.now() - settings.lastWorkTime < timeStringToMS("1m")) return await ctx.editReply({ content: `Baka, slow down. You can work again in **${60 - Math.floor((Date.now() - settings.lastWorkTime) / 1000)}** seconds.` });
         // roll custom responses
+        const workMessages = await util.getStatic("work");
         const work = workMessages[Math.floor(Math.random() * workMessages.length)];
         // currently we have about 300 work messages in store
         // adding more if we need more
@@ -232,6 +236,7 @@ export default class Social extends YorSlashCommand {
           if (hasFailedBefore) await ctx.user.update({ pocketBalance: pocket, failedSteal: settings.failedSteal++, lastStealTime: Date.now(), lastStealLevel: level });
           else await ctx.user.update({ pocketBalance: pocket, firstFailedStealTime: Date.now(), lastStealTime: Date.now(), lastStealLevel: level });
           // reply
+          const stealFailMessages = await util.getStatic("caught");
           await ctx.editReply({ content: `Baka, you got caught by ${stealFailMessages[Math.floor(Math.random() * stealFailMessages.length)]}, and got fined **¥${Math.floor(stealee.settings.pocketBalance * scalePercentage)}** for it.` });
         } else {
           // gain the money and deduct victim's money
@@ -265,7 +270,77 @@ export default class Social extends YorSlashCommand {
         await user.update({ pocketBalance: receiver });
         // reply
         await ctx.editReply({ content: `Received your ticket. **¥${amount}** has been transferred to the recipent, and the transfer fee is **1%** of your pocket after transfer, which is **¥${transferFee}**.` });
+      } else if (sub == "customize") {
+        const background = ctx.getString("background");
+        const color = ctx.getString("color");
+        // check both
+        if (!background && !color) return await ctx.editReply({ content: "Baka, what am I supposed to change then?" });
+        // regex to test
+        const bgRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png)/g;
+        const colorRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g
+        // check if valid
+        if (background && !bgRegex.test(background)) return await ctx.editReply({ content: "Baka, the background URL is invalid. It must end with either `JPG` or `PNG`." });
+        if (color && !colorRegex.test(color)) return await ctx.editReply({ content: "Baka, the color is invalid. It must be in `rgb` form, for instance, `rgb(101,231,133)`."});
+        // save each if it is available
+        if (background) await ctx.user.update({ background: background });
+        if (color) await ctx.user.update({ profileColor: color });
+        // reply
+        await ctx.editReply({ content: "Received your ticket. Your entry is updated, check your profile using `/utility profile`." });
       }
+      // THIS COMMAND IS NOT YET AVAILABLE - IT IS IN TESTING PHASE
+      // don't add this command to imports yet!
+      // -------------------------------------------------------------------------------------
+      else if (sub == "store") {
+        // working with select menu
+        // they have to be put in a different folder to handle seperately
+        // therefore information about database updates or anything does not persist
+        // through menu interactions
+        // so a "help" command is the only use case for this
+        const store = await util.getStatic("store");
+        // make a menu beforehand
+        // we handle them by their id
+        // their interactions are also handled by id in the new folder
+        const select = new MenuBuilder()
+          .setCustomId("store")
+          .setPlaceholder("🛒 Store Items")
+        // map all store items by rolling through store
+        // throw all of them into an object to use later
+        // should be an array of MenuOptionBuilder
+        let optionArray = [];
+        // define a function to convert id to string
+        const typeString = function(type) {
+          if (type == 0) return "Emblem"; else return "Pattern";
+        };
+        for (let i = 0; i < store.length; i++) {
+          optionArray.push(
+            new MenuOptionBuilder()
+              .setLabel(`${store[i].name} ${typeString(store[i].type)}`)
+              .setDescription(`${store[i].description}`)
+              .setValue(`${store[i].name.toLowerCase()}`)
+          );
+        };
+        // push the array into the MenuBuilder object
+        select.addOptions(optionArray);
+        // add it into the ActionRow
+        const action = new ActionRowBuilder().addComponents(select);
+        // make an embed to display information
+        const embed = new EmbedBuilder()
+          .setAuthor({ name: "Welcome to the Nya Store!", iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setTimestamp().setColor(util.color)
+          .setFooter({ text: `Requested by ${ctx.member.raw.user.username} `})
+          .setThumbnail("https://static-00.iconduck.com/assets.00/shopping-trolley-emoji-2048x2048-hl18pstw.png")
+          .setDescription(
+            "*This select menu **does not expire**.*\n\n" +
+            "To find out what kind of products I sell, use the select menu below and select what you're interested in! Information about that product will be shown as an ephemeral message.\n\n" +
+            "All items cannot be purchased yet, for now. The list only contains items you will be able to buy at a later point in time. Items are not refundable unless you decide to sell it." 
+          )
+        // send the message
+        await ctx.editReply({
+          embeds: [embed],
+          components: [action]
+        });
+      }
+    // ---------------------------------------------------------------------------------------
     } else if (subGroup == "piggy") {
       if (sub == "info") {
         await ctx.editReply({ content: 

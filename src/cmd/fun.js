@@ -2,9 +2,7 @@
 // great as a starting point for both native fetch and simple defer-reply structure used across all commands
 // there's a test file using a lot of methods located in assets - have a check there
 import { YorSlashCommand } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
-import cookies from "../assets/const/fortune.json";
-import question from "../assets/const/truth.json";
+import { EmbedBuilder } from "@discordjs/builders";
 import { fun } from "../assets/const/import"
 
 // unlike server neko where we construct data options
@@ -123,9 +121,11 @@ export default class Fun extends YorSlashCommand {
         await ctx.followUp({ content: `${result == 100 ? "Hey, good couple! You rolled **100%**!" : "Baka, you two lost. **0%** rate."}` })
       } else await ctx.editReply({ content: finalShipResponse });
     } else if (sub == "fortune") {
+      const cookies = await util.getStatic("fortune");
       const fortune = cookies[Math.floor(Math.random() * cookies.length)]
       await ctx.editReply({ content: fortune })
     } else if (sub == "truth") {
+      const question = await util.getStatic("truth");
       const truth = question[Math.floor(Math.random() * question.length)]
       await ctx.editReply({ content: truth })
     } else if (sub == "generator") {

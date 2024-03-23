@@ -1,7 +1,7 @@
 // a test command
 // this use nothing complex
 import { YorSlashCommand } from "yor.ts";
-import { SlashCommandBuilder, ButtonBuilder, ActionRowBuilder } from "yor.ts/builders"
+import { SlashCommandBuilder, ButtonBuilder, ActionRowBuilder } from "@discordjs/builders"
 
 // unlike server neko where we construct data options
 // now we have to explicitly specify the builder and the execute context

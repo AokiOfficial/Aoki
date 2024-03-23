@@ -1,4 +1,4 @@
-import { SlashCommandBuilder } from "yor.ts/builders";
+import { SlashCommandBuilder } from "@discordjs/builders";
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
@@ -136,6 +136,24 @@ const util = new SlashCommandBuilder()
     .setName("ask")
     .setDescription("you're just lazy, aren't you. Please only ask short questions, I will only read only 140 characters.")
     .addStringOption(option => option.setName("question").setDescription("thing you wanna ask").setRequired(true))
+  )
+  .addSubcommand(cmd => cmd
+    .setName("profile")
+    .setDescription("check out both your balance and osu! skills in one image.")
+    .addUserOption(option => option
+      .setName("user")
+      .setDescription("the user you wanna check out. Default you.")  
+    )  
+    .addStringOption(option => option
+      .setName("mode")
+      .setDescription("if you wanna check out another mode. Default yours.")
+      .addChoices(...[
+        { name: "standard", value: "osu" },
+        { name: "taiko", value: "taiko" },
+        { name: "catch", value: "fruits" },
+        { name: "mania", value: "mania" }
+      ])  
+    )
   )
 
 const my = new SlashCommandBuilder()
@@ -430,6 +448,18 @@ const social = new SlashCommandBuilder()
         { name: "Commit", value: "normal" },
         { name: "Insane", value: "hard" }
       ])  
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("customize")
+    .setDescription("customize your personal user card.")
+    .addStringOption(option => option
+      .setName("background")
+      .setDescription("set the image on your card. Must end with JPG or PNG.")  
+    )
+    .addStringOption(option => option
+      .setName("color")
+      .setDescription("set the color tint on your profile. Must be in rgb format.")  
     )
   )
   .addSubcommandGroup(group => group

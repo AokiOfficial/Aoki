@@ -1,5 +1,5 @@
-import { YorSlashCommand } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
+import { YorSlashCommand, User } from "yor.ts";
+import { EmbedBuilder } from "@discordjs/builders";
 import { format, formatDistance, parseISO } from "date-fns";
 import { util } from "../assets/const/import";
 
@@ -322,6 +322,109 @@ export default class Utility extends YorSlashCommand {
           console.log(err);
           await ctx.editReply({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/my fault`." });
         });
+      } else if (sub == "profile") {
+        // all of these information are not required
+        const user = ctx.getUser("user") || ctx.user;
+        // 1. use specified mode OR 2. use user mode OR 3. use default mode "osu"
+        const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "osu";
+        // check if user has osu profile
+        // if not we mock data to all 0
+        // we're gonna fetch a lot of things
+        let data, profile;
+        // only fetch plays if they have set their osu info
+        if (user.settings.inGameName) {
+          profile = await fetch(`https://osu.ppy.sh/api/get_user?k=${ctx.client.env["OSU_KEY"]}&u=${user.settings.inGameName}&m=${util.requestModeFormat(mode)}`).then(async res => await res.json());
+          profile = profile[0];
+          // if still no data
+          if (!profile.username) return await ctx.editReply({ content: "Baka, that user doesn't exist." });
+          // login with oapiv2
+          // to get top plays to push into
+          let loginCredentials = await fetch("https://osu.ppy.sh/oauth/token", {
+            method: "POST",
+            body: JSON.stringify({
+              grant_type: 'client_credentials',
+              client_id: '14095',
+              client_secret: ctx.client.env["OSU_AUTH"],
+              scope: 'public',
+            }), 
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          }).then(async res => await res.json());
+          // use that token to get user best
+          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${mode}&limit=51`, {
+            headers: {  
+              "Authorization": `Bearer ${loginCredentials.access_token}` 
+            }
+          }).then(async res => await res.json());
+          // check if best is less than 50
+          if (best.length < 50) return await ctx.editReply({ content: `Baka, you only have **${best.length}**/50 plays. You can't render a card for that mode yet.` });
+          // set to data
+          // define data to send to renderer
+          // as cfworkers cannot render images with canvas
+          // we're using this instead
+          data = {
+            avatar: util.getUserAvatar(ctx.getUser("user") || ctx.member.raw.user),
+            name: ctx.getUser("user") ? ctx.getUser("user").username : ctx.member.raw.user.username,
+            osu: {
+              name: profile.username,
+              best: best,
+              mode: util.requestModeFormat(mode)
+            },
+            color: user.settings.profileColor || "rgb(211, 211, 211)",
+            background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
+            pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
+            emblem: user.settings.emblem || undefined,
+            owns: user.settings.owns || "0",
+            bank: {
+              wallet: user.settings.pocketBalance || "0",
+              bank: user.settings.bankBalance || "0"
+            },
+          };
+        }
+        // if user has no osu profile
+        // mock it
+        else {
+          data = {
+            avatar: util.getUserAvatar(ctx.getUser("user") || ctx.member.raw.user),
+            name: ctx.getUser("user") ? ctx.getUser("user").username : ctx.member.raw.user.username,
+            osu: {
+              name: undefined,
+              best: undefined,
+              mode: undefined
+            },
+            color: user.settings.profileColor || "rgb(211, 211, 211)",
+            background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
+            pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
+            emblem: user.settings.emblem || undefined,
+            owns: user.settings.owns || "0",
+            bank: {
+              wallet: user.settings.pocketBalance || "0",
+              bank: user.settings.bankBalance || "0"
+            },
+          };
+        };
+        // ask renderer to process our data
+        // cfworkers does not count fetch() processes to cpu time
+        // (source: https://stackoverflow.com/questions/68720436/what-is-cpu-time-and-wall-time-in-the-context-of-cloudflare-worker-request)
+        // so we are good
+        const image = await fetch("https://unusual-tan-threads.cyclic.app/render", {
+          method: "POST",
+          body: JSON.stringify({
+            data: data
+          }), 
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).then(async res => await res.arrayBuffer());
+        // load image data
+        const attachment = {
+          contentType: "Buffer",
+          data: image,
+          name: "profile.png"
+        };
+        // send
+        await ctx.editReply({ files: [attachment] });
       }
     }
   }

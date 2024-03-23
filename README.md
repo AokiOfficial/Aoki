@@ -80,6 +80,11 @@ It's built-in, so there's no need to install anything. Check it out by doing:
 wrangler d1
 ```
 
+
+About where all the JSONs are, they are stored online as the ever-expanding need of custom responses. `n:point` serves as a very good and simple JSON bin - and you can directly access anything with only the ID that you can predefine. One thing to note though, you **must lock any JSON made there**.
+
+The function to access all of them are defined as `Util#getStatic()`.
+
 ---
 ## Common questions
 

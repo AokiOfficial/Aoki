@@ -1,6 +1,6 @@
 // this one's gonna be stressful as heck
 // be careful trying to implement complex things
-import { EmbedBuilder } from "yor.ts/builders";
+import { EmbedBuilder } from "@discordjs/builders";
 import { YorSlashCommand } from "yor.ts";
 import { decode } from "he";
 import { format, parseISO } from "date-fns";

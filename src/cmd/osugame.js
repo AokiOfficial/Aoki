@@ -1,5 +1,5 @@
 import { YorSlashCommand } from "yor.ts";
-import { EmbedBuilder } from "yor.ts/builders";
+import { EmbedBuilder } from "@discordjs/builders";
 import { osugame } from "../assets/const/import";
 // structures
 // import skillCalc from "../struct/osugame/Skills";
