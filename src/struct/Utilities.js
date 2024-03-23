@@ -275,10 +275,12 @@ export default class Utilities {
    * @returns `String` mode name `| undefined`
    */
   osuModeFormat(int) {
-    if (int == 0) return "standard";
+    // if int is a string ignore it
+    if (int == 0) return "osu";
     if (int == 1) return "taiko";
-    if (int == 2) return "catch";
+    if (int == 2) return "fruits";
     if (int == 3) return "mania";
+    else return int;
   }
   /**
    * Gets a user avatar URL
@@ -346,6 +348,7 @@ export default class Utilities {
     if (str == "taiko") return 1;
     if (str == "fruits") return 2;
     if (str == "mania") return 3;
+    else return Number(str);
   };
   /**
    * Fetches static JSON asset stored on `npoint.io`.

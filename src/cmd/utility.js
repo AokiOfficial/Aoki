@@ -325,8 +325,11 @@ export default class Utility extends YorSlashCommand {
       } else if (sub == "profile") {
         // all of these information are not required
         const user = ctx.getUser("user") || ctx.user;
+        console.log(user)
         // 1. use specified mode OR 2. use user mode OR 3. use default mode "osu"
         const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "osu";
+        // check wallet
+        if (!user.settings || !user.settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // check if user has osu profile
         // if not we mock data to all 0
         // we're gonna fetch a lot of things
@@ -352,7 +355,7 @@ export default class Utility extends YorSlashCommand {
             },
           }).then(async res => await res.json());
           // use that token to get user best
-          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${mode}&limit=51`, {
+          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${util.osuModeFormat(mode)}&limit=51`, {
             headers: {  
               "Authorization": `Bearer ${loginCredentials.access_token}` 
             }
@@ -408,7 +411,7 @@ export default class Utility extends YorSlashCommand {
         // cfworkers does not count fetch() processes to cpu time
         // (source: https://stackoverflow.com/questions/68720436/what-is-cpu-time-and-wall-time-in-the-context-of-cloudflare-worker-request)
         // so we are good
-        const image = await fetch("https://unusual-tan-threads.cyclic.app/render", {
+        const image = await fetch("https://unusual-tan-threads.cyclic.app//render", {
           method: "POST",
           body: JSON.stringify({
             data: data

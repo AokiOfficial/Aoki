@@ -96,7 +96,7 @@ export default class OsuGame extends YorSlashCommand {
       };
       // construct embed
       const embed = new EmbedBuilder()
-        .setAuthor({ name: `osu!${util.osuModeFormat(mode)} profile for ${profile.username}`, iconURL: `https://assets.ppy.sh/old-flags/${profile.country}.png`, url: `https://osu.ppy.sh/u/${profile.user_id}` })
+        .setAuthor({ name: `osu!${util.osuModeFormat(mode) == "osu" ? "" : util.osuModeFormat(mode)} profile for ${profile.username}`, iconURL: `https://assets.ppy.sh/old-flags/${profile.country}.png`, url: `https://osu.ppy.sh/u/${profile.user_id}` })
         .setColor(util.color)
         .setDescription(
           `**▸ Bancho Rank:** #${Number(profile.pp_rank).toLocaleString()} (${profile.country}#${Number(profile.pp_country_rank).toLocaleString()})\n` +

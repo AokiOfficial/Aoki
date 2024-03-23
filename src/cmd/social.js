@@ -194,6 +194,8 @@ export default class Social extends YorSlashCommand {
         const level = ctx.getString("level") || "normal";
         // get recipent
         const stealee = await ctx.getUser("user");
+        // if user is themselves
+        if (ctx.member.raw.user.id == stealee.raw.id) return await ctx.editReply({ content: "Baka, you're doing something very useless. Wake up." });
         // check wallet
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // check steal duration
@@ -251,6 +253,8 @@ export default class Social extends YorSlashCommand {
         const amount = ctx.getInteger("amount");
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
+        // if user is themselves
+        if (ctx.member.raw.user.id == user.raw.id) return await ctx.editReply({ content: "Baka, you're doing something very useless. Wake up." });
         // check wallet
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // check amount
@@ -369,7 +373,7 @@ export default class Social extends YorSlashCommand {
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
         // check if piggy exists
-        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy register\` to open one.` });
+        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy open\` to open one.` });
         // check if amount exceed piggy balance
         if (amount > settings.piggyBalance) return await ctx.editReply({ content: `Baka, you don't have that much money in your piggy bank yet. It is currently holding **¥${settings.piggyBalance}**.` });
         // check if amount will make piggy destroy
@@ -393,7 +397,7 @@ export default class Social extends YorSlashCommand {
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
         // check if piggy exists
-        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy register\` to open one.` });
+        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy open\` to open one.` });
         // check if bank has enough money
         if (settings.bankBalance < amount) return await ctx.editReply({ content: `Baka, you don't have that much money in your bank. You currently only possess **¥${settings.bankBalance}** in there.` });
         // transfer
@@ -408,7 +412,7 @@ export default class Social extends YorSlashCommand {
         await ctx.editReply({ content: `Received your ticket. Your piggy bank is now holding **¥${piggy}**, and your bank is holding **¥${bank}**.${paycheck}` });
       } else if (sub == "paycheck") {
         // check if piggy exists
-        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy register\` to open one.` });
+        if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy open\` to open one.` });
         // check if it's time
         let paycheckDate = new Date(settings.lastPaycheck + timeStringToMS("30d")).toLocaleDateString("en");
         if (!(Date.now() - settings.lastPaycheck > timeStringToMS("30d"))) return await ctx.editReply({ content: `Baka, it's not time for a paycheck yet. It's on **${paycheckDate}**.` });
