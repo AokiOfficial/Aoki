@@ -283,7 +283,7 @@ export default class Social extends YorSlashCommand {
         const bgRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png)/g;
         const colorRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g;
         // check if valid
-        if (background && !bgRegex.test(background)) return await ctx.editReply({ content: "Baka, the background URL is invalid. It must end with either `JPG` or `PNG`." });
+        if (background && !bgRegex.test(background)) return await ctx.editReply({ content: "Baka, the background URL is invalid. It must end with either `JPG` or `PNG`, and must not contain any **\"%\"** sign." });
         // remove all spaces from color string
         if (color && !colorRegex.test(color.replace(/ /g, ""))) return await ctx.editReply({ content: "Baka, the color is invalid. It must be in `rgb` form, for instance, `rgb(101,231,133)`."});
         // check if bg is available and is too big

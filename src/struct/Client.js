@@ -14,8 +14,8 @@ import Moderate from "../cmd/moderate";
 import OsuGame from "../cmd/osugame";
 import Social from "../cmd/social";
 // import select menus
-import Custom from "../../menu/store";
-import Buy from "../../menu/buy";
+import Custom from "../menu/store";
+import Buy from "../menu/buy";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
