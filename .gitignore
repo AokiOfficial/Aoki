@@ -5,3 +5,4 @@ dist
 .wrangler
 src/util
 wrangler.toml
+src/struct/Client.js

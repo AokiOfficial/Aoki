@@ -15,6 +15,7 @@ import OsuGame from "../cmd/osugame";
 import Social from "../cmd/social";
 // import select menus
 import Custom from "../../menu/store";
+import Buy from "../../menu/buy";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
@@ -23,10 +24,10 @@ export default class NekoClient extends YorClient {
     // check dev mode
     super({
       application: {
-        id: env.APPID_DEV,
-        publicKey: env.PUBKEY_DEV
+        id: env.APPID,
+        publicKey: env.PUBKEY
       },
-      token: env.TOKEN_DEV
+      token: env.TOKEN
     });
     // env sent by the request
     this.env = env;
@@ -58,7 +59,8 @@ export default class NekoClient extends YorClient {
     ]);
     // register components
     this.registerComponents([
-      new Custom()
+      new Custom(),
+      new Buy()
     ]);
   }
   async fetch(request, env, ctx) {

@@ -325,11 +325,11 @@ export default class Utility extends YorSlashCommand {
       } else if (sub == "profile") {
         // all of these information are not required
         const user = ctx.getUser("user") || ctx.user;
-        console.log(user)
         // 1. use specified mode OR 2. use user mode OR 3. use default mode "osu"
         const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "osu";
         // check wallet
-        if (!user.settings || !user.settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
+        // make user entry if something happens
+        if (!user.settings || !user.settings.bankOpened) return await ctx.editReply({ content: `You baka, ${user == ctx.user ? "you" : "they"} haven't opened a bank account yet. ${user == ctx.user ? "Do" : "Ask them to do"} \`/social register\` to open one.` });
         // check if user has osu profile
         // if not we mock data to all 0
         // we're gonna fetch a lot of things
@@ -367,18 +367,18 @@ export default class Utility extends YorSlashCommand {
           // as cfworkers cannot render images with canvas
           // we're using this instead
           data = {
-            avatar: util.getUserAvatar(ctx.getUser("user") || ctx.member.raw.user),
-            name: ctx.getUser("user") ? ctx.getUser("user").username : ctx.member.raw.user.username,
+            avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")).raw : ctx.member.raw.user),
+            name: user != ctx.user ? (ctx.getUser("user")).raw.username : ctx.member.raw.user.username,
             osu: {
               name: profile.username,
               best: best,
               mode: util.requestModeFormat(mode)
             },
-            color: user.settings.profileColor || "rgb(211, 211, 211)",
+            color: user.settings.profileColor || "rgb(105, 105, 105)",
             background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
             pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
             emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns || "0",
+            owns: user.settings.owns ? user.settings.owns.split(",").length : "0",
             bank: {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
@@ -389,18 +389,18 @@ export default class Utility extends YorSlashCommand {
         // mock it
         else {
           data = {
-            avatar: util.getUserAvatar(ctx.getUser("user") || ctx.member.raw.user),
-            name: ctx.getUser("user") ? ctx.getUser("user").username : ctx.member.raw.user.username,
+            avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")).raw : ctx.member.raw.user),
+            name: user != ctx.user ? (ctx.getUser("user")).raw.username : ctx.member.raw.user.username,
             osu: {
               name: undefined,
               best: undefined,
               mode: undefined
             },
-            color: user.settings.profileColor || "rgb(211, 211, 211)",
+            color: user.settings.profileColor || "rgb(105, 105, 105)",
             background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
             pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
             emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns || "0",
+            owns: user.settings.owns ? user.settings.owns.split(",").length : "0",
             bank: {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
@@ -411,7 +411,7 @@ export default class Utility extends YorSlashCommand {
         // cfworkers does not count fetch() processes to cpu time
         // (source: https://stackoverflow.com/questions/68720436/what-is-cpu-time-and-wall-time-in-the-context-of-cloudflare-worker-request)
         // so we are good
-        const image = await fetch("https://unusual-tan-threads.cyclic.app//render", {
+        const image = await fetch("https://unusual-tan-threads.cyclic.app/render", {
           method: "POST",
           body: JSON.stringify({
             data: data

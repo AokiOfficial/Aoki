@@ -143,7 +143,7 @@ export default class Social extends YorSlashCommand {
         if (settings.piggyBalance) piggy = `, **¥${settings.piggyBalance}** in your piggy bank`;
         // temporarily reply with a message
         // later on an api will be implemented for a more helpful image
-        await ctx.editReply({ content: `You currently possess **¥${settings.pocketBalance}** in your pocket${piggy}, and **¥${settings.bankBalance}** in your bank.\n\n||**Tip:** Check back on this command often, because a new :magic_wand: UI is coming soon...||` })
+        await ctx.editReply({ content: `You currently possess **¥${settings.pocketBalance}** in your pocket${piggy}, and **¥${settings.bankBalance}** in your bank.` })
       } else if (sub == "work") {
         // work has a cooldown
         // making the cooldown about a minute and limit max earn to 30 yen (most are 10-15)
@@ -291,8 +291,7 @@ export default class Social extends YorSlashCommand {
         // reply
         await ctx.editReply({ content: "Received your ticket. Your entry is updated, check your profile using `/utility profile`." });
       }
-      // THIS COMMAND IS NOT YET AVAILABLE - IT IS IN TESTING PHASE
-      // don't add this command to imports yet!
+      // THIS COMMAND IS IN TESTING PHASE
       // -------------------------------------------------------------------------------------
       else if (sub == "store") {
         // working with select menu
@@ -336,7 +335,7 @@ export default class Social extends YorSlashCommand {
           .setDescription(
             "*This select menu **does not expire**.*\n\n" +
             "To find out what kind of products I sell, use the select menu below and select what you're interested in! Information about that product will be shown as an ephemeral message.\n\n" +
-            "All items cannot be purchased yet, for now. The list only contains items you will be able to buy at a later point in time. Items are not refundable unless you decide to sell it." 
+            "To buy the product shown, interact on that ephemeral message's select menu. Items are not refundable unless you decide to sell it." 
           )
         // send the message
         await ctx.editReply({

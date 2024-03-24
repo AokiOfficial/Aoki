@@ -429,6 +429,10 @@ const social = new SlashCommandBuilder()
     )
   )
   .addSubcommand(cmd => cmd
+    .setName("store")
+    .setDescription("check out what you can buy from the store.")  
+  )
+  .addSubcommand(cmd => cmd
     .setName("work")
     .setDescription("make money, buy things, make more money, buy more things.")  
   )

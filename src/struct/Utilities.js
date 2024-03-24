@@ -363,7 +363,7 @@ export default class Utilities {
       case "work": id = "ce24c6594944510ad47f"; break
       case "caught": id = "db3797439edb317a3aac"; break
       case "truth": id = "0cda95c7f398cec569dc"; break
-      case "store": id = "d9cede5ae3d6fc536af2"; break
+      case "store": id = "6f003bb9eaa9304ac36c"; break
     };
     // fetch data
     const res = await fetch(`https://api.npoint.io/${id}`).then(async res => await res.json());

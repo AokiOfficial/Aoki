@@ -52,7 +52,8 @@ const schema = async (pool) => {
       background TEXT DEFAULT NULL,
       pattern TEXT DEFAULT NULL,
       emblem TEXT DEFAULT NULL,
-      profileColor TEXT DEFAULT NULL
+      profileColor TEXT DEFAULT NULL,
+      owns TEXT DEFAULT NULL
     );`)
 
   const members = pool.prepare(`
