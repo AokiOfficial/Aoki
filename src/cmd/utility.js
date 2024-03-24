@@ -383,6 +383,7 @@ export default class Utility extends YorSlashCommand {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
             },
+            key: ctx.client.env["IMG_KEY"]
           };
         }
         // if user has no osu profile
@@ -405,6 +406,7 @@ export default class Utility extends YorSlashCommand {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
             },
+            key: ctx.client.env["IMG_KEY"]
           };
         };
         // ask renderer to process our data
