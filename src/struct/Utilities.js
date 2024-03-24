@@ -9,7 +9,6 @@ export default class Utilities {
     this.client = client;
     // the id of the application
     this.id = "704992714109878312";
-    // database connection settings
     // embed color
     // as we can't use hex code
     this.color = 16777215;
@@ -19,41 +18,10 @@ export default class Utilities {
     this.db = env.database;
     // default log channel
     this.logChannel = "864096602952433665";
-    // base osuimage
-    // unused for now
-    this.baseImgUrl = "https://iili.io/";
     // owner of the application
     // can be an array
     this.owners = ["586913853804249090", "809674940994420736"];
-    // osucard properties
-    // unused for now
-    this.osuCards = [
-      { "id": "16688499", "name": "njshift1", "card": "JYdgIHX", "star": "JYd4vta", "halfstar": "JYd4UMv" },
-      { "id": "9623142", "name": "davidminh0111", "card": "JYdrqmu" },
-      { "id": "22698999", "name": "hi_there_osu", "card": "JYdgMOu" },
-      { "id": "21290592", "name": "MyWifeMiku", "card": "JYdgllS" },
-      { "id": "17302272", "name": "Kurumiism", "card": "JYdgTRn" },
-      { "id": "10278890", "name": "Marota", "card": "JYdrCzb" },
-      { "id": "19817503", "name": "DeepInDark", "card": "JYdg7V4" },
-      { "id": "22515524", "name": "Creeperbrine303", "card": "JYdgGRe" },
-      { "id": "15429414", "name": "dots_", "card": "JYdgolI" },
-      { "id": "19207842", "name": "-[SnowFlakes]-", "card": "JYdgADG" },
-      { "id": "26012543", "name": "-M_A_T_C_H_A-", "card": "JYdgSOg" },
-      { "id": "22069182", "name": "nahieu2005", "card": "JYdgVDb" },
-      { "id": "19787040", "name": "-NTD-", "card": "JYdg5xf" },
-      { "id": "25076492", "name": "MEGALOFI", "card": "JYdgeUP" },
-      { "id": "16039831", "name": "buttermiilk", "card": "JYdgnKN" },
-      { "id": "21591099", "name": "PstormQT", "card": "JYdg0U7" },
-      { "id": "20161708", "name": "hx7ru0n9", "card": "JYdgYil" },
-      { "id": "20569770", "name": "NovaSeele", "card": "JYdgcf2" },
-      { "id": "20569770", "name": "[ Primakien ]", "card": "JYdgjiQ" },
-      { "id": "10494860", "name": "MashedPotato", "card": "JYdgxSt" },
-      { "id": "7844013", "name": "Mafuyu Kirisu", "card": "JYdrfee" },
-      { "id": "18782185", "name": "SplexBiTe", "card": "JYdguNs" },
-      { "id": "24042710", "name": "RandomNameIdk", "card": "JYdrK79" },
-    ];
     // osuscore rank emoji
-    // unused for now
     this.rankEmotes = {
       XH: "<:xh:1184870634124226620>",
       X: "<:x:1184870631372750871>",
