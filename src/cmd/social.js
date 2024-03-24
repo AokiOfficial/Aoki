@@ -281,10 +281,16 @@ export default class Social extends YorSlashCommand {
         if (!background && !color) return await ctx.editReply({ content: "Baka, what am I supposed to change then?" });
         // regex to test
         const bgRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png)/g;
-        const colorRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g
+        const colorRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g;
         // check if valid
         if (background && !bgRegex.test(background)) return await ctx.editReply({ content: "Baka, the background URL is invalid. It must end with either `JPG` or `PNG`." });
-        if (color && !colorRegex.test(color)) return await ctx.editReply({ content: "Baka, the color is invalid. It must be in `rgb` form, for instance, `rgb(101,231,133)`."});
+        // remove all spaces from color string
+        if (color && !colorRegex.test(color.replace(/ /g, ""))) return await ctx.editReply({ content: "Baka, the color is invalid. It must be in `rgb` form, for instance, `rgb(101,231,133)`."});
+        // check if bg is available and is too big
+        if (background) {
+          const bg = await fetch(background).then(async res => await res.arrayBuffer());
+          if (Buffer.byteLength(bg) > 5_242_880 /* 5MB */) return await ctx.editReply({ content: "Baka, that image is too big. Its size must be less than **5MB**, or less than **2400x3000** in resolution." });
+        };
         // save each if it is available
         if (background) await ctx.user.update({ background: background });
         if (color) await ctx.user.update({ profileColor: color });

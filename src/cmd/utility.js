@@ -427,7 +427,7 @@ export default class Utility extends YorSlashCommand {
           name: "profile.png"
         };
         // send
-        await ctx.editReply({ files: [attachment] });
+        await ctx.editReply({ content: "**Tip:** Background looks wrong? Try re-sizing it. Minimum resolution of the area is **475x300**.", files: [attachment] });
       }
     }
   }
