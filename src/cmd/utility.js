@@ -325,8 +325,9 @@ export default class Utility extends YorSlashCommand {
       } else if (sub == "profile") {
         // all of these information are not required
         const user = ctx.getUser("user") || ctx.user;
-        // 1. use specified mode OR 2. use user mode OR 3. use default mode "osu"
-        const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "osu";
+        // 1. use specified mode OR 2. use user mode OR 3. use default mode "taiko"
+        // not supporting std yet
+        const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "taiko";
         // check wallet
         // make user entry if something happens
         if (!user.settings || !user.settings.bankOpened) return await ctx.editReply({ content: `You baka, ${user == ctx.user ? "you" : "they"} haven't opened a bank account yet. ${user == ctx.user ? "Do" : "Ask them to do"} \`/social register\` to open one.` });

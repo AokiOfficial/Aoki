@@ -190,8 +190,9 @@ export default class Fun extends YorSlashCommand {
       let pocket = settings.pocketBalance;
       const change = Math.floor(amount * earn);
       // initial response
+      // we must move the response delay further down as data is not being saved right away
+      // making this command broken when executed along with other commands affecting on money
       await ctx.editReply({ content: `Your **¥${amount}** is on hold... let's see what do you get from this.` });
-      await new Promise(resolve => setTimeout(resolve, 5000));
       // if they lost
       if (lost) {
         // deduct money according to scaling
@@ -199,12 +200,14 @@ export default class Fun extends YorSlashCommand {
         // save
         await ctx.user.update({ pocketBalance: pocket });
         // notify
+        await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.followUp({ content: `Baka, you lost the game. You're losing **¥${change}** from your pocket.` });
       } else {
         pocket += change;
         // save
         await ctx.user.update({ pocketBalance: pocket });
         // notify
+        await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.followUp({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
       };
     }
