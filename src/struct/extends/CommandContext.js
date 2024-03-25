@@ -52,7 +52,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getNumberOption(string, 2);
     }
-    return option || undefined;
+    return option;
   },
   /**
    * Finds an integer option from API raw data
@@ -68,7 +68,7 @@ export default {
     } else if (this.subcommandGroup) {
       option = this.getIntegerOption(string, 2);
     }
-    return option || undefined;
+    return option;
   },
   /**
    * Finds a boolean option from API raw data

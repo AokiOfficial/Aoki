@@ -104,8 +104,7 @@ export default class Social extends YorSlashCommand {
         const responses = [" my cat. You should feed it too.", "... well, not really. It was under a rug.", " me. Use it wisely.", " the behind of a wallpaper. I think someone sneaked it past me.", " nowhere. It randomly popped up in your pocket.", " a friend of mine. Her name is Nya.", " me, be respectful!", " a nether portal.", " a random comic you have. Was it Pokémon?", " working.", "... well, I don't know.", " the bank itself.", " bad actors. Be sure to give it back to them!", "... wait, how did you find money in a trash can?!", " doing nothing."];
         await ctx.editReply({ content: `You got **¥${bonus}** as your free allowance from${responses[Math.floor(Math.random() * responses.length)]}` });
       } else if (sub == "deposit") {
-        // typeguard 0 as getInteger will return undefined if user input 0
-        // this is truly... dumb from yor.ts, but it is what it is!!
+        // typeguard 0
         const amount = ctx.getInteger("amount") || 0;
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
@@ -121,8 +120,7 @@ export default class Social extends YorSlashCommand {
         // tell them
         await ctx.editReply({ content: `Received your ticket. **¥${amount}** has been transferred to your bank.` });
       } else if (sub == "withdraw") {
-        // typeguard 0 as getInteger will return undefined if user input 0
-        // this is truly... dumb from yor.ts, but it is what it is!!
+        // typeguard 0
         const amount = ctx.getInteger("amount") || 0;
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
@@ -254,8 +252,7 @@ export default class Social extends YorSlashCommand {
         }
       } else if (sub == "transfer") {
         const user = ctx.getUser("user");
-        // typeguard 0 as getInteger will return undefined if user input 0
-        // this is truly... dumb from yor.ts, but it is what it is!!
+        // typeguard 0
         const amount = ctx.getInteger("amount") || 0;
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
@@ -380,8 +377,7 @@ export default class Social extends YorSlashCommand {
         await ctx.editReply({ content: "Received your ticket. A piggy bank is opened for you, and you're earning at a rate of **3%** a month. **¥5,000** from your bank has been transferred to your piggy bank." });
       } else if (sub == "withdraw") {
         const force = ctx.getBoolean("force");
-        // typeguard 0 as getInteger will return undefined if user input 0
-        // this is truly... dumb from yor.ts, but it is what it is!!
+        // typeguard 0
         const amount = ctx.getInteger("amount") || 0;
         // if amount is negative or 0
         if (amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
@@ -406,8 +402,7 @@ export default class Social extends YorSlashCommand {
           return await ctx.editReply({ content: `Received your ticket. Your piggy bank now has **¥${piggy}** left, and **¥${amount}** has been transferred to your bank.`});
         };
       } else if (sub == "deposit") {
-        // typeguard 0 as getInteger will return undefined if user input 0
-        // this is truly... dumb from yor.ts, but it is what it is!!
+        // typeguard 0
         const amount = ctx.getInteger("amount") || 0;
         // if amount is negative or 0
         if (amount == 0 || amount < 1) return await ctx.editReply({ content: "Baka, you must be joking. You can't sneak that past me!" });
