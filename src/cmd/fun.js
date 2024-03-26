@@ -189,7 +189,7 @@ export default class Fun extends YorSlashCommand {
         losing = 50/100;
         earn = 30/100;
       } else if (level == "hard") {
-        losing = 70/100;
+        losing = 65/100;
         earn = 1;
       };
       // roll losing probability  
@@ -230,8 +230,7 @@ export default class Fun extends YorSlashCommand {
       // if amount is too small
       if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
       // define rolls
-      // 4 fruits pose a very great threat of toss being completely irrelevant
-      const fruits = ["🍑", "🥝", "🍉", "🥥", "🍎"];
+      const fruits = ["🍑", "🥝", "🍉", "🍎"];
       // define array to roll
       let result = [];
       for (let i = 0; i < 3; i++) {
