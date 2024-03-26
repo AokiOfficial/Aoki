@@ -45,6 +45,7 @@ const schema = async (pool) => {
       lastStealTime TEXT DEFAULT "0",
       lastStealLevel TEXT DEFAULT "normal",
       lastPaycheck TEXT DEFAULT "0",
+      lastSlotMachine TEXT DEFAULT "0",
       piggyBalance INTEGER DEFAULT 0,
       haveVoted BOOLEAN DEFAULT false,
       lastVotedTime TEXT DEFAULT "0",

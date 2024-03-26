@@ -4,6 +4,7 @@
 import { YorSlashCommand } from "yor.ts";
 import { EmbedBuilder } from "@discordjs/builders";
 import { fun } from "../assets/const/import"
+import { timeStringToMS } from "../assets/util/time-manipulation";
 
 // unlike server neko where we construct data options
 // now we have to explicitly specify the builder and the execute context
@@ -214,13 +215,19 @@ export default class Fun extends YorSlashCommand {
     } else if (sub == "slot") {
       // typeguard 0
       const amount = ctx.getInteger("amount") || 0;
+      // add cooldown right away
+      // 6 seconds here includes also the 3 seconds of the response
+      if (Date.now() - ctx.user.settings.lastSlotMachine < timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      // save cooldown
+      await ctx.user.update({ lastSlotMachine: Date.now() });
       // if amount is too small
       if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
       // define rolls
-      const fruits = ["🍑", "🥝", "🍉", "🥥"];
+      // 4-5 fruits pose a very great threat of toss being completely irrelevant
+      const fruits = ["🍑", "🥝", "🍉", "🥥", "🍋", "🍎"];
       // define array to roll
       let result = [];
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < 6; i++) {
         const randomPick = fruits[Math.floor(Math.random() * fruits.length)];
         // typeguarding undef
         if (!randomPick) result.push(fruits[0]); else result.push(randomPick);
