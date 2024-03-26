@@ -171,6 +171,11 @@ export default class Fun extends YorSlashCommand {
       // typeguard 0
       const amount = ctx.getInteger("amount") || 0;
       const level = ctx.getString("level") || "ez";
+      // add cooldown right away
+      // 6 seconds here includes also the 3 seconds of the response
+      if (Date.now() - ctx.user.settings.lastSlotMachine < timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      // save cooldown
+      await ctx.user.update({ lastSlotMachine: Date.now() });
       // check if smaller than 20
       if (amount < 50) return await ctx.editReply({ content: "So weak, so weak... Higher than **¥50**, please." });
       // check if amount exceed pocket limit
@@ -202,15 +207,15 @@ export default class Fun extends YorSlashCommand {
         // save
         await ctx.user.update({ pocketBalance: pocket });
         // notify
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        await ctx.followUp({ content: `Baka, you lost the game. You're losing **¥${change}** from your pocket.` });
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        await ctx.editReply({ content: `Baka, you lost the game. You're losing **¥${change}** from your pocket.` });
       } else {
         pocket += change;
         // save
         await ctx.user.update({ pocketBalance: pocket });
         // notify
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        await ctx.followUp({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        await ctx.editReply({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
       };
     } else if (sub == "slot") {
       // typeguard 0
@@ -225,8 +230,8 @@ export default class Fun extends YorSlashCommand {
       // if amount is too small
       if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
       // define rolls
-      // 4-5 fruits pose a very great threat of toss being completely irrelevant
-      const fruits = ["🍑", "🥝", "🍉", "🥥", "🍋", "🍎"];
+      // 4 fruits pose a very great threat of toss being completely irrelevant
+      const fruits = ["🍑", "🥝", "🍉", "🥥", "🍎"];
       // define array to roll
       let result = [];
       for (let i = 0; i < 3; i++) {
