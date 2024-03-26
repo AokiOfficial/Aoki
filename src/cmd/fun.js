@@ -215,6 +215,8 @@ export default class Fun extends YorSlashCommand {
     } else if (sub == "slot") {
       // typeguard 0
       const amount = ctx.getInteger("amount") || 0;
+      // if amount exceeds their bank
+      if (amount > ctx.user.settings.pocketBalance) return await ctx.editReply({ content: "Baka, you don't have that much money. Work some more, or withdraw from your bank." });
       // add cooldown right away
       // 6 seconds here includes also the 3 seconds of the response
       if (Date.now() - ctx.user.settings.lastSlotMachine < timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
