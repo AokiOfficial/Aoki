@@ -227,7 +227,7 @@ export default class Fun extends YorSlashCommand {
       const fruits = ["🍑", "🥝", "🍉", "🥥", "🍋", "🍎"];
       // define array to roll
       let result = [];
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 3; i++) {
         const randomPick = fruits[Math.floor(Math.random() * fruits.length)];
         // typeguarding undef
         if (!randomPick) result.push(fruits[0]); else result.push(randomPick);
