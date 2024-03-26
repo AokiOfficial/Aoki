@@ -230,7 +230,8 @@ export default class Fun extends YorSlashCommand {
       // if amount is too small
       if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
       // define rolls
-      const fruits = ["🍑", "🥝", "🍉", "🍎"];
+      // 4 fruits pose a very great threat of toss being completely irrelevant
+      const fruits = ["🍑", "🥝", "🍉", "🥥", "🍎"];
       // define array to roll
       let result = [];
       for (let i = 0; i < 3; i++) {
