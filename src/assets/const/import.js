@@ -94,6 +94,15 @@ const fun = new SlashCommandBuilder()
       ])  
     )
   )
+  .addSubcommand(cmd => cmd
+    .setName("slot")
+    .setDescription("insert coin for slot machine gaming.")
+    .addIntegerOption(option => option
+      .setName("amount")
+      .setDescription("the amount you want to place.")
+      .setRequired(true)  
+    )  
+  )
 
 const util = new SlashCommandBuilder()
   .setName("utility")

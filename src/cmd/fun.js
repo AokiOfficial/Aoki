@@ -167,10 +167,11 @@ export default class Fun extends YorSlashCommand {
     const settings = ctx.user.settings;
     if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
     if (sub == "toss") {
-      const amount = ctx.getInteger("amount");
+      // typeguard 0
+      const amount = ctx.getInteger("amount") || 0;
       const level = ctx.getString("level") || "ez";
       // check if smaller than 20
-      if (amount < 20) return await ctx.editReply({ content: "So weak, so weak... Higher than **¥20**, please." });
+      if (amount < 50) return await ctx.editReply({ content: "So weak, so weak... Higher than **¥50**, please." });
       // check if amount exceed pocket limit
       if (amount > settings.pocketBalance) return await ctx.editReply({ content: `Baka, you don't have that much money in your pocket. You're holding **¥${settings.pocketBalance}** only.`});
       // level scaling
@@ -210,6 +211,42 @@ export default class Fun extends YorSlashCommand {
         await new Promise(resolve => setTimeout(resolve, 5000));
         await ctx.followUp({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
       };
+    } else if (sub == "slot") {
+      // typeguard 0
+      const amount = ctx.getInteger("amount") || 0;
+      // if amount is too small
+      if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
+      // define rolls
+      const fruits = ["🍑", "🥝", "🍉", "🥥"];
+      // define array to roll
+      let result = [];
+      for (let i = 0; i < 3; i++) {
+        const randomPick = fruits[Math.floor(Math.random() * fruits.length)];
+        // typeguarding undef
+        if (!randomPick) result.push(fruits[0]); else result.push(randomPick);
+      };
+      // check how many matches
+      // for each match reward 25% of amount
+      let matches = 0, pocket = settings.pocketBalance;
+      if (result[0] == result[1] && result[0] == result[2]) {
+        // this means they got 3 same
+        matches = 3;
+        pocket += Math.floor((amount * (25/100)) * 3); // 3 times 25% of their bet
+      } else if (result[0] == result[2] || result[1] == result[2] || result[0] == result[1]) {
+        // this means they got 2 same
+        matches = 2;
+        pocket += Math.floor(amount * (25/100)); // 25% of their bet
+      }
+      // else if match = 0 they lose 25% of their bet
+      else if (matches == 0) pocket -= Math.floor(amount * (25/100));
+      // save the earing
+      await ctx.user.update({ pocketBalance: pocket });
+      // map the result
+      result = `${matches == 0 ? "Baka, you" : "Nice, you"} got **${matches}** same fruits.\n\`\`\`fix\n${result.join(" | ")}\n\`\`\`\nAnd you ${matches == 0 ? "lost" : "won"} **¥${Math.abs(ctx.user.settings.pocketBalance - settings.pocketBalance)}**.`;
+      // reply
+      await ctx.editReply({ content: `Your **¥${amount}** have been placed in the slot machine... let's see what you'll get.` });
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      await ctx.editReply({ content: result });
     }
   }
 }
