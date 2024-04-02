@@ -1,4 +1,4 @@
-<h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/fd49d4d9006710f8b9b5bdc027e6440a.png?size=128' height='100'><br>Neko</br></h1>
+<h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Neko</br></h1>
 <p align="center">A multi-purpose bot to spice up your Discord experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
   <a href="https://forthebadge.com/">
@@ -24,7 +24,7 @@ It took me about a week just to understand the logic in writing Workers-compatib
 
 I don't expect the code to be readable or clean, a lot of logic stays behind an util function in one single settings file. To ease out the process of maintaining and reading, I put comments on every functions in there.
 
-License, [MIT license](), read that file. I don't have any other requirements, this is a learning project pushed to production. A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
+License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other requirements, this is a learning project pushed to production. A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
 
 ---
 
@@ -41,18 +41,12 @@ KEY: "value"
 When you finish filling in all secret values and things, go ahead and do:
 
 ```bash
-$ npm run build
-```
-
-Some files should be created in the newly made `dist` folder. If any errors occur, you edited the code. Otherwise, file an issue.
-
-After that, to locally develop and debug the code, go ahead and do:
-
-```bash
 $ npm run dev
 ```
 
-This runs `wrangler dev` under the hood. It simulates an environment similar to Cloudflare Workers'.
+This runs the build script and `wrangler dev` under the hood. It simulates an environment similar to Cloudflare Workers'.
+
+Some files should be created in the newly made `dist` folder. If any errors occur, you edited the code. Otherwise, file an issue.
 
 Becaue you're not passing `http://localhost:8787` to Discord Interactions Endpoint field, use some tool, such as `ngrok`, to open a public URL for local development. When you have initial things done for `ngrok`, go ahead and do:
 
