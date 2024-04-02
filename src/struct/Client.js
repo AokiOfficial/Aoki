@@ -4,6 +4,7 @@
 import { YorClient } from "yor.ts";
 import Utility from "./Utilities";
 import Database from "./Database";
+import AniSchedule from "./Schedule";
 import schema from "../assets/const/schema";
 // import commands
 import Fun from "../cmd/fun";
@@ -16,6 +17,7 @@ import Social from "../cmd/social";
 // import select menus
 import Custom from "../menu/store";
 import Buy from "../menu/buy";
+import Acknowledged from "../menu/acknowledged";
 
 export default class NekoClient extends YorClient {
   // we walk exactly like how we written server neko
@@ -24,10 +26,10 @@ export default class NekoClient extends YorClient {
     // check dev mode
     super({
       application: {
-        id: env.APPID,
-        publicKey: env.PUBKEY
+        id: env.APPID_DEV,
+        publicKey: env.PUBKEY_DEV
       },
-      token: env.TOKEN
+      token: env.TOKEN_DEV
     });
     // env sent by the request
     this.env = env;
@@ -39,7 +41,6 @@ export default class NekoClient extends YorClient {
       guilds: new Database(this, "guilds"),
       members: new Database(this, "members"),
       users: new Database(this, "users"),
-      store: new Database(this, "store")
     };
     // util
     // init this class and then use it everywhere
@@ -60,9 +61,32 @@ export default class NekoClient extends YorClient {
     // register components
     this.registerComponents([
       new Custom(),
-      new Buy()
+      new Buy(),
+      new Acknowledged
     ]);
-  }
+  };
+  async cron(event, env, ctx) {
+    if (event.cron == "0 */6 * * *") {
+      let { approximate_guild_count } = this.util.call("currentApplication");
+      const res = await fetch("https://top.gg/api/bots/stats", {
+        method: "POST",
+        headers: {
+          Authorization: env["DBL_TOKEN"],
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          server_count: approximate_guild_count,
+          shard_id: undefined,
+          shard_count: 1
+        })
+      }).then(async res => await res.json());
+      return new Response(JSON.stringify(res));
+    } else if (event.cron == "0 */1 * * *") {
+      const schedule = new AniSchedule(this);
+      ctx.waitUntil(await schedule.init());
+      return new Response(JSON.stringify("Done", { status: 200 }));
+    };
+  };
   async fetch(request, env, ctx) {
     const url = new URL(request.url)
     const pathname = url.pathname;

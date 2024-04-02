@@ -7,8 +7,13 @@ const pingmsg = ["Ugh, again? You always wanna bother me. I responded in **{{ms}
 // as cfworkers docs stated it is not secure
 // we skip that command
 import { my } from "../assets/const/import";
-import { YorSlashCommand, Channel } from "yor.ts";
-import { EmbedBuilder } from "@discordjs/builders";
+import { YorSlashCommand, Channel, Guild } from "yor.ts";
+import {
+  EmbedBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder as MenuBuilder,
+  StringSelectMenuOptionBuilder as MenuOptionBuilder
+} from "@discordjs/builders";
 
 export default class My extends YorSlashCommand {
   builder = my
@@ -56,10 +61,49 @@ export default class My extends YorSlashCommand {
         const voteTitle = ["Vote? Sweet.", "You finally decided to show up?", "Oh, hi. I'm busy, so get it done.", "Not like I'm not busy, but sure."]
         const voteResponse = voteTitle[Math.round(Math.random() * voteTitle.length)] + ` [Do that here.](<https://top.gg/bot/https://top.gg/bot/704992714109878312>)` + "\n\n||If you decided to vote, thank you. You'll get extra perks in the future.||";
         await ctx.editReply({ content: voteResponse });
+      } else if (sub == "beta") {
+        // check if they are already in beta
+        let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
+        guild = new Guild(ctx.client, guild);
+        if (guild.settings && guild.settings.beta) return await ctx.editReply({ content: "Your server is in beta." });
+        // send an info card
+        const infoCard = new EmbedBuilder()
+          .setColor(16711680)
+          .setTitle(`Special Terms of Neko Beta`)
+          .setThumbnail("https://i.imgur.com/1xMJ0Ew.png")
+          .setFooter({ text: "Please read this carefully.", iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setTimestamp()
+          .setDescription(
+            "*You are reading a **special Terms** for **Neko Beta**. Please read these carefully before proceeding.*\n\n" +
+            "Every single Standard Terms condition (readable by doing `/my terms`) applies while you use Neko Beta, along with some extra conditions listed below.\n\n" +
+            "- The owner of this server is **always** held responsible for all types of abusive behaviors of exploits/breaches/unintended behaviors (if any) of the Beta version investigated to be coming from this server.\n" +
+            "- Any member, shall they find any kind of exploits/breaches/unintended behaviors (if any), must send a description of them by doing `/my fault`. Failing to do so will lead to an investigation of data inconsistencies, leading to a possible End of Service on **any party** (server-wise, and/or user-wise).\n" +
+            "- As an owner, by agreeing to this Special Terms of Neko Beta and therefore enrolling in the Beta Program, also shall understand that the Beta may end at **any given point of time**, with the reason being explicitly stated on the Support Server.\n\n" +
+            "Failing to adhere to these Special Terms may lead to an investigation."
+          )
+        // make select menu
+        // this is to keep track of who clicked what
+        // which buttons cannot do
+        const confirm = new MenuBuilder()
+          .setCustomId("acknowledged")
+          .setPlaceholder("Confirm Box")
+          .addOptions([
+            new MenuOptionBuilder()
+              .setLabel("I understand and wish to continue")
+              .setDescription("I'll send the request to sensei.")
+              .setValue(`${ctx.member.raw.guildID}-${ctx.member.raw.user.id}`),
+            new MenuOptionBuilder()
+              .setLabel("Ignore")
+              .setDescription("So you don't misclick.")
+              .setValue("ignore")
+          ]);
+        const action = new ActionRowBuilder().addComponents(confirm);
+        // send both of them
+        await ctx.editReply({ embeds: [infoCard], components: [action] });
       } else if (sub == "fault") {
         // check query and attachment
         const attachment = ctx.getAttachment("attachment") || undefined;
-        if (!query && !attachment) return await ctx.editReply({ content: "Baka, I can't send empty stuff. Give me something!"});
+        if (!query && !attachment) return await ctx.editReply({ content: "Baka, I can't send empty stuff. Give me something!" });
         // making embed beforehand
         const type = ctx.getString("type");
         // get channel
@@ -72,7 +116,6 @@ export default class My extends YorSlashCommand {
         const channel = new Channel(ctx.client, channelRawData);
         // make embed
         const feedbackEmbed = new EmbedBuilder()
-          .setColor(util.color)
           .setTitle(`New ${type}!`)
           .setThumbnail(type == "Issue" ? "https://i.imgur.com/1xMJ0Ew.png" : "https://i.imgur.com/XWeIyTD.png")
           .setFooter({ text: "Helpful things for you, sensei!", iconURL: util.getUserAvatar(ctx.member.raw.user) })
@@ -112,7 +155,7 @@ export default class My extends YorSlashCommand {
           } else {
             // just send over the feedback
             await ctx.editReply({ content: "Thank you for your feedback. The note will be resolved after a few working days." });
-            return channel.send({ embeds: [feedbackEmbed] }).catch(() => {});
+            return channel.send({ embeds: [feedbackEmbed] }).catch(() => { });
           }
         } else if (attachment) {
           // as of now we have no way to filter out bad images
@@ -122,7 +165,7 @@ export default class My extends YorSlashCommand {
           if (!attachment.content_type.includes("image")) return await ctx.editReply({ content: "Appreciate your attachment, but for now we only support images." });
           await ctx.editReply({ content: "Thank you for your feedback. The note will be resolved after a few working days." });
           feedbackEmbed.setImage(attachment.url);
-          await channel.send({ embeds: [feedbackEmbed] }).catch(() => {});
+          await channel.send({ embeds: [feedbackEmbed] }).catch(() => { });
         }
       }
     }

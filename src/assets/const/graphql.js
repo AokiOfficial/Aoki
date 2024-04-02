@@ -82,13 +82,13 @@ const Character = `query ($search: String) {
   }
 }`;
 
-const Schedule = `query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $nextDay: Int!) {
+const Schedule = `query($page: Int = 0, $amount: Int = 50, $watched: [Int!]!, $episode: [Int!]!) {
   Page(page: $page, perPage: $amount) {
     pageInfo {
       currentPage
       hasNextPage
     }
-    airingSchedules(notYetAired: true, mediaId_in: $watched, sort: TIME, airingAt_lesser: $nextDay) {
+    airingSchedules(notYetAired: false, mediaId_in: $watched, sort: TIME_DESC, episode_in: $episode) {
       media {
         id
         siteUrl

@@ -177,6 +177,10 @@ const my = new SlashCommandBuilder()
     .setDescription("read my neat version of Terms of Service.")
   )
   .addSubcommand(cmd => cmd
+    .setName("beta")
+    .setDescription("enroll in the Neko Beta Program.")  
+  )
+  .addSubcommand(cmd => cmd
     .setName("vote")
     .setDescription("vote for me on top.gg to show some support!")
   )
@@ -281,6 +285,32 @@ const anime = new SlashCommandBuilder()
         { name: "anime", value: "anime" },
         { name: "manga", value: "manga" }
       ]) 
+    )
+  )
+  .addSubcommandGroup(group => group
+    .setName("schedule")
+    .setDescription("watchlist to notify you when a new anime episode airs.")
+    .addSubcommand(cmd => cmd
+      .setName("list")
+      .setDescription("list your watchlist. (BETA)")  
+    )
+    .addSubcommand(cmd => cmd
+      .setName("add")
+      .setDescription("adds an anime to watchlist.")
+      .addStringOption(option => option
+        .setName("query")
+        .setDescription("either an AniList URL or ID; or a MAL URL or MAL ID.")
+        .setRequired(true)  
+      )  
+      .addChannelOption(option => option
+        .setName("channel")
+        .setDescription("the channel to send announcements in.")  
+        .setRequired(true)
+      )
+    )
+    .addSubcommand(cmd => cmd
+      .setName("remove")
+      .setDescription("remove the server's watchlist.")  
     )
   )
 

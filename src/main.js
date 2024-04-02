@@ -15,5 +15,10 @@ export default {
     if (!client) { client = new Client(env); client.start() };
     // then run the main thing
     return await client.fetch(request, env, ctx);
+  },
+  scheduled: async (event, env, ctx) => {
+    // just some cron jobs here
+    if (!client) { client = new Client(env); client.start() };
+    return await client.cron(event, env, ctx);
   }
 };

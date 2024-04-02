@@ -1,35 +1,15 @@
+// file for table creations
+// these tables will automatically initialize themselves
+// when a very first request on a worker is called
+// we currently have some issues about d1 database
+/**
+ * 1: JSON handling is too complicated and it has too many methods
+ * 2: one of our missions is "no SQL anywhere else"
+ * 3: the current documentation is very technical (I'm not a native)
+ * 4: future issues will arise as we come closer to r/w limit
+ */ 
+// these tables will still have breaking changes
 const schema = async (pool) => {
-  // leaving this here as fallback debug solution
-  // wipe all table data and write new ones to sync id and data
-  // to use: add drop1 - drop5 to pool.batch()
-  // DO NOT combine these! pool.prepare() only accepts one query at a time
-  // const drop1 = pool.prepare(`
-  //   DROP TABLE guilds
-  //   ;`)
-
-  // const drop2 = pool.prepare(`
-  //   DROP TABLE users
-  //   ;`)
-
-  // const drop3 = pool.prepare(`
-  //   DROP TABLE members
-  //   ;`)
-
-  // const drop4 = pool.prepare(`
-  //   DROP TABLE store
-  //   ;`)
-
-  // const drop5 = pool.prepare(`
-  //   DROP TABLE client
-  //   ;`)
-
-  const guilds = pool.prepare(`
-    CREATE TABLE IF NOT EXISTS guilds (
-      id TEXT PRIMARY KEY NOT NULL UNIQUE,
-      anischedId INTEGER NOT NULL, 
-      anischedData TEXT
-    );`)
-
   const users = pool.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL UNIQUE,
@@ -65,23 +45,17 @@ const schema = async (pool) => {
       lastInfractionMessageId TEXT
     );`)
 
-  const client = pool.prepare(`
-    CREATE TABLE IF NOT EXISTS client (
-      id TEXT PRIMARY KEY NOT NULL UNIQUE,
-      guildBlacklist TEXT,
-      userBlacklist TEXT
-    );`)
+  const guilds = pool.prepare(`
+    CREATE TABLE IF NOT EXISTS guilds (
+      id TEXT PRIMARY KEY NOT NULL,
+      beta BOOLEAN DEFAULT false,
+      channelID TEXT DEFAULT "0",
+      anilistId INTEGER DEFAULT 0,
+      nextEp INTEGER DEFAULT 0
+    );`);
 
-  // future plans
-  // for now just make a table so I don't forget lol
-  const store = pool.prepare(`
-    CREATE TABLE IF NOT EXISTS store (
-      id TEXT PRIMARY KEY NOT NULL UNIQUE,
-      guild TEXT NOT NULL,
-      price INTEGER DEFAULT 0
-    );`)
 
-  await pool.batch([guilds, users, members, client, store]);
+  await pool.batch([guilds, users, members]); 
 }
 
 export default schema;

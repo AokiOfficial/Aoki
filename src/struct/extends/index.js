@@ -44,5 +44,7 @@ import NekoGuild from "./Guild";
 _defProp(Guild.prototype, {
   settings: { get: NekoGuild.settings },
   update: { value: NekoGuild.update },
-  syncSettings: { value: NekoGuild.syncSettings }
+  syncSettings: { value: NekoGuild.syncSettings },
+  schedules: { get: NekoGuild.schedules },
+  wipe: { value: NekoGuild.wipe }
 });

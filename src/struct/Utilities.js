@@ -2,6 +2,7 @@
 // if we need to use the utils just init this class and we're done
 import { Routes, RouteBases, CDNRoutes } from "discord-api-types/v10";
 import { DiscordSnowflake } from "@sapphire/snowflake";
+import AniSchedule from "./Schedule";
 
 export default class Utilities {
   constructor(client, env) {
@@ -318,6 +319,60 @@ export default class Utilities {
     if (str == "mania") return 3;
     else return Number(str);
   };
+  // TehNut @ GitHub written these getMediaID and getTitle in ts
+  /**
+   * Get AniList ID equivalent for MAL, or parse an AniList URL to ID
+   * @param {String} input The string to be parsed
+   * @returns `Number` The AniList equivalent of the provided media
+   */
+  async getMediaId(input) {
+    // if the input is already an id
+    const output = parseInt(input);
+    if (output) return output;
+    // else check url against the regex
+    const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
+    const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
+    // parse if match
+    let match = alIdRegex.exec(input);
+    if (match) return parseInt(match[1]);
+    // else try parsing with mal
+    match = malIdRegex.exec(input);
+    // if it still fail that means the provided input is invalid
+    if (!match) return null;
+    // else fetch anilist equivalent
+    const ani = new AniSchedule(this.client)
+    const res = await ani.fetch("query($malId: Int) { Media(idMal: $malId) { id } }", { malId: match[1] });
+    // if there's no res return null for handling later
+    if (!res) return null;
+    return res.data.Media.id;
+  }
+  /**
+   * Convert raw title key to proper title from AniList media object
+   * @param {Object} title The title object from fetched media
+   * @param {String} wanted The wanted format of the title
+   * @returns `String` The proper title
+   */
+  getTitle(title, wanted) {
+    switch (wanted) {
+      case "NATIVE": return title.native;
+      case "ROMAJI": return title.romaji;
+      case "ENGLISH": return title.english || title.romaji;
+      default: return title.romaji;
+    }
+  }
+  /**
+   * Remove an entry from an array
+   * @param {Array} array The array with the item to be removed
+   * @param {Number} key The index of the entry to be removed
+   * @returns `Array` with the specified entry removed
+   */
+  delete(array, key) {
+    const index = array.indexOf(key);
+    if (index > -1) {
+      array.splice(index, 1); // Remove one item only
+    };
+    return array;
+  }
   /**
    * Fetches static JSON asset stored on `npoint.io`.
    * @param { String } name Asset name

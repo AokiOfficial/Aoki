@@ -1,9 +1,0 @@
-name = "neko-cf"
-main = "./dist/main.js"
-compatibility_date = "2023-10-22"
-node_compat = true
-
-[[d1_databases]]
-binding = "database"
-database_name = "neko-d1"
-database_id = "64f2223b-68ce-47d8-8013-9fbb4e3f5922"
