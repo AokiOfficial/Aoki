@@ -14,6 +14,7 @@ import {
   StringSelectMenuBuilder as MenuBuilder,
   StringSelectMenuOptionBuilder as MenuOptionBuilder
 } from "@discordjs/builders";
+import PermissionsBitField from "../struct/discord/PermissionsBitField";
 
 export default class My extends YorSlashCommand {
   builder = my
@@ -66,6 +67,8 @@ export default class My extends YorSlashCommand {
         let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
         guild = new Guild(ctx.client, guild);
         if (guild.settings && guild.settings.beta) return await ctx.editReply({ content: "Your server is in beta." });
+        // check user permission
+        if (!(await ctx.member.permissions).has(PermissionsBitField.Flags.Administrator)) return await ctx.editReply({ content: "Baka, only server administrators can proceed on behalf of the server owner." });
         // send an info card
         const infoCard = new EmbedBuilder()
           .setColor(16711680)
