@@ -61,7 +61,7 @@ export default class AniSchedule {
      *   }, {...}, {...}, ...
      * ]
      */
-    const { results: schedules } = await this.ctx.client.db.prepare("SELECT * FROM guilds;").all();
+    const { results: schedules } = await this.client.db.prepare("SELECT * FROM guilds;").all();
     // if there's nothing don't do anything
     if (!schedules) return;
     // map all ids to an array
@@ -82,13 +82,13 @@ export default class AniSchedule {
     // iterate through the schedule list
     for (const schedule of schedules) {
       // filter the data to see which one we need to check out
-      const filtered = data.airingSchedules.filter(entry => {
-        if (entry.episode == schedule.episode && entry.media.id == schedule.anilistId) return true;
+      const filtered = data.Page.airingSchedules.filter(entry => {
+        if (entry.episode == schedule.nextEp && entry.media.id == schedule.anilistId) return true;
       });
       // if the filtered array has nothing
       // that means the episode is not airing yet
       // we simply ignore this schedule, move to the next
-      if (!filtered) continue;
+      if (!filtered || !filtered.length) continue;
       // else that means the episode is airing
       else {
         // define date
@@ -97,10 +97,12 @@ export default class AniSchedule {
         const embed = this._makeAnnouncementEmbed(filtered[0], date);
         // initialize a new channel
         // fetch the channel first then init a class to send messages
-        let channel = await this.client.util.call({ method: "channel", param: [schedule.channelId] });
+        let channel = await this.client.util.call({ method: "channel", param: [schedule.channelID] });
         channel = new Channel(this.client, channel);
         // send the embed in that channel
-        channel.send({ embeds: [embed] });
+        await channel.send({ embeds: [embed] });
+        // increment episode up
+        await this.client.db.prepare("UPDATE guilds SET nextEp = ?1 WHERE id = ?2;").bind(schedule.nextEp + 1, schedule.id).all();
       };
     };
   };
@@ -121,9 +123,6 @@ export default class AniSchedule {
       return `[${x.site}](${x.url})`;
     }).join(' • ') || [];
 
-    const durationInSeconds = entry.media.duration * 60;
-    const formattedDuration = formatDuration({ seconds: durationInSeconds }, { format: ['hours', 'minutes'] });
-
     return new EmbedBuilder()
       .setColor(this.client.util.color)
       .setThumbnail(entry.media.coverImage.large)
@@ -137,8 +136,8 @@ export default class AniSchedule {
       ].join('')}`)
       .setFooter({
         text: [
-          `${entry.media.format ? `Format: ${this.settings.mediaFormat[entry.media.format] || 'Unknown'}` : ''}`,
-          `${entry.media.duration ? `Duration: ${formattedDuration}  ` : ''}`,
+          `${entry.media.format ? `Format: ${this.info.mediaFormat[entry.media.format] || 'Unknown'}` : ''}`,
+          `${entry.media.duration ? `Duration: ${entry.media.duration + ' minutes' || 'Unknown'}` : ''}`,
           `${!!entry.media.studios.edges.length ? `Studio: ${entry.media.studios.edges[0].node.name}` : ''}`
         ].filter(Boolean).join('  •  ')
       });

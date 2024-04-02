@@ -5,9 +5,8 @@
   "main": "src/main",
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "build": "node src/build"
+    "dev": "node src/build & wrangler dev --test-scheduled",
+    "deploy": "node src/build & wrangler deploy"
   },
   "repository": {
     "type": "git",

@@ -26,10 +26,10 @@ export default class NekoClient extends YorClient {
     // check dev mode
     super({
       application: {
-        id: env.APPID_DEV,
-        publicKey: env.PUBKEY_DEV
+        id: env.APPID,
+        publicKey: env.PUBKEY
       },
-      token: env.TOKEN_DEV
+      token: env.TOKEN
     });
     // env sent by the request
     this.env = env;
