@@ -379,7 +379,7 @@ export default class Utility extends YorSlashCommand {
             background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
             pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
             emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns ? user.settings.owns.split(",").length : "0",
+            owns: user.settings.owns ? user.settings.owns.toString().split(",").length : "0",
             bank: {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
@@ -402,7 +402,7 @@ export default class Utility extends YorSlashCommand {
             background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
             pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
             emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns ? user.settings.owns.split(",").length : "0",
+            owns: user.settings.owns ? user.settings.owns.toString().split(",").length : "0",
             bank: {
               wallet: user.settings.pocketBalance || "0",
               bank: user.settings.bankBalance || "0"
