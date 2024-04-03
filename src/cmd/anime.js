@@ -3,7 +3,7 @@
 import { EmbedBuilder } from "@discordjs/builders";
 // yes, it has become so bad we have to call structures to initialize
 import { YorSlashCommand, Guild, Channel } from "yor.ts";
-import { decode } from "he";
+import he from "../assets/util/he";
 import { format, parseISO } from "date-fns";
 import { convert as toMarkdown } from "../assets/util/html-to-markdown";
 import { Watching, User, Seiyuu, Character } from "../assets/const/graphql";
@@ -60,7 +60,7 @@ export default class Anime extends YorSlashCommand {
             .setThumbnail(res.data.User.avatar.medium)
             .setTitle(res.data.User.name)
             .setURL(res.data.User.siteUrl)
-            .setDescription(`***About the user:** ${res.data.User.about ? util.textTruncate(decode(res.data.User.about.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided"}*` + `\n${topFields}`)
+            .setDescription(`***About the user:** ${res.data.User.about ? util.textTruncate(he.decode(res.data.User.about.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided"}*` + `\n${topFields}`)
             .setFooter({ text: "Data sent from AniList", iconURL: util.getUserAvatar(ctx.member.raw.user) })
             .setTimestamp();
           await ctx.editReply({ embeds: [alprofile] });
@@ -272,7 +272,7 @@ export default class Anime extends YorSlashCommand {
             })
             .setDescription(`${[
               util.langflags.find(f => f.lang.toLowerCase() === res.Staff.language?.toLowerCase())?.flag,
-              util.textTruncate(toMarkdown(decode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
+              util.textTruncate(toMarkdown(he.decode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
             ].join('\n')}`)
             .addFields([
               {
