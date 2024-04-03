@@ -238,7 +238,7 @@ export default class Social extends YorSlashCommand {
           // save the result
           const hasFailedBefore = settings.firstFailedStealTime;
           if (hasFailedBefore) await ctx.user.update({ pocketBalance: pocket, failedSteal: settings.failedSteal++, lastStealTime: Date.now(), lastStealLevel: level });
-          else await ctx.user.update({ pocketBalance: pocket, firstFailedStealTime: Date.now(), lastStealTime: Date.now(), lastStealLevel: level });
+          else await ctx.user.update({ pocketBalance: pocket, firstFailedStealTime: Date.now(), lastStealTime: Date.now(), lastStealLevel: level, failedSteal: 1 });
           // reply
           const stealFailMessages = await util.getStatic("caught");
           await ctx.editReply({ content: `Baka, you got caught by ${stealFailMessages[Math.floor(Math.random() * stealFailMessages.length)]}, and got fined **¥${Math.floor(stealee.settings.pocketBalance * scalePercentage)}** for it.` });
