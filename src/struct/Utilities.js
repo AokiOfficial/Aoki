@@ -408,7 +408,7 @@ export default class Utilities {
    * @returns `Object` response
    */
   async call(method, options = {}) {
-    const apiCallURL = `${RouteBases.api}${Routes[method.method](...method.param)}`;
+    const apiCallURL = `${RouteBases.api}${Routes[method.method](...(method.param ? method.param : []))}`;
     // stringify payloads
     if (options.body) options.body = JSON.stringify(options.body);
     // make request

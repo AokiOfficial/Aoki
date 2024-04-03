@@ -67,7 +67,7 @@ export default class NekoClient extends YorClient {
   };
   async cron(event, env, ctx) {
     if (event.cron == "0 */6 * * *") {
-      let { approximate_guild_count } = this.util.call({ method: "currentApplication" });
+      let { approximate_guild_count } = await this.util.call({ method: "currentApplication" });
       const res = await fetch("https://top.gg/api/bots/stats", {
         method: "POST",
         headers: {
