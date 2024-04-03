@@ -152,7 +152,7 @@ export default class Social extends YorSlashCommand {
         // check if they opened a bank
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // if their cooldown has not passed
-        if (Date.now() - settings.lastWorkTime < timeStringToMS("30s")) return await ctx.editReply({ content: `Baka, slow down. You can work again in **${60 - Math.floor((Date.now() - settings.lastWorkTime) / 1000)}** seconds.` });
+        if (Date.now() - settings.lastWorkTime < timeStringToMS("30s")) return await ctx.editReply({ content: `Baka, slow down. You can work again in **${30 - Math.floor((Date.now() - settings.lastWorkTime) / 1000)}** seconds.` });
         // roll custom responses
         const workMessages = await util.getStatic("work");
         const work = workMessages[Math.floor(Math.random() * workMessages.length)];
