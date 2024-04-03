@@ -46,7 +46,8 @@ export default class OsuGame extends YorSlashCommand {
       await ctx.user.update({ inGameName: profile.username, defaultMode: Number(mode) }).then(async settings => {
         if ((settings) && (settings.defaultMode == Number(mode)) && (settings.inGameName == profile.username)) {
           const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
-          const pickedReply = replies[Math.round(Math.random() * replies.length)]
+          let pickedReply = replies[Math.round(Math.random() * replies.length)];
+          if (!pickedReply) pickedReply = replies[0];
           const content = `${pickedReply}\n\nYour current username is **${profile.username}**, and your current mode is **${util.osuModeFormat(Number(mode))}**.`;
           // reply
           await ctx.editReply({ content });
