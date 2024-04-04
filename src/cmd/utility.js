@@ -435,7 +435,7 @@ export default class Utility extends YorSlashCommand {
         let replyContext;
         if (!initialSettings) replyContext = "**Tip:** A bank has already been opened for you upon this execution! You now have **¥100** in your bank.";
         else replyContext = "**Tip:** Background looks wrong? Try resizing it. The area's resolution is **475x250**."
-        await ctx.editReply({ content: `${initialSettings ? initialSettings.bankOpened ? "" : "" : ""}`, files: [attachment] });
+        await ctx.editReply({ content: `${replyContext}`, files: [attachment] });
       }
     }
   }
