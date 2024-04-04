@@ -330,7 +330,9 @@ export default class Utility extends YorSlashCommand {
         const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "taiko";
         // check wallet
         // make user entry if something happens
-        if (!user.settings || !user.settings.bankOpened) return await ctx.editReply({ content: `You baka, ${user == ctx.user ? "you" : "they"} haven't opened a bank account yet. ${user == ctx.user ? "Do" : "Ask them to do"} \`/social register\` to open one.` });
+        // create an initial settings variable to use along with reply
+        const initialSettings = user.settings;
+        if (!initialSettings || !initialSettings.bankOpened) user.update({ bankOpened: 1, bankBalance: 100 });
         // check if user has osu profile
         // if not we mock data to all 0
         // we're gonna fetch a lot of things
@@ -362,7 +364,7 @@ export default class Utility extends YorSlashCommand {
             }
           }).then(async res => await res.json());
           // check if best is less than 50
-          if (best.length < 50) return await ctx.editReply({ content: `Baka, you only have **${best.length}**/50 plays. You can't render a card for that mode yet.` });
+          if (best.length < 50) return await ctx.editReply({ content: `Baka, you only have **${best.length}**/50 plays (your username is set to **${profile.username}**). You can't render a card for **${mode}** yet.` });
           // set to data
           // define data to send to renderer
           // as cfworkers cannot render images with canvas
@@ -430,7 +432,10 @@ export default class Utility extends YorSlashCommand {
           name: "profile.png"
         };
         // send
-        await ctx.editReply({ content: "**Tip:** Background looks wrong? Try re-sizing it. Minimum resolution of the area is **475x300**.", files: [attachment] });
+        let replyContext;
+        if (!initialSettings) replyContext = "**Tip:** A bank has already been opened for you upon this execution! You now have **¥100** in your bank.";
+        else replyContext = "**Tip:** Background looks wrong? Try resizing it. The area's resolution is **475x250**."
+        await ctx.editReply({ content: `${initialSettings ? initialSettings.bankOpened ? "" : "" : ""}`, files: [attachment] });
       }
     }
   }
