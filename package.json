@@ -1,6 +1,6 @@
 {
   "name": "neko-cf",
-  "version": "0.0.1",
+  "version": "1.1.0",
   "description": "neko, but written to work in workers",
   "main": "src/main",
   "type": "module",
@@ -19,7 +19,7 @@
     "cloudflare-workers"
   ],
   "author": "hashima.rin",
-  "license": "MIT",
+  "license": "GPL-3.0-only",
   "bugs": {
     "url": "https://github.com/NekoOfficial/Neko.cf/issues"
   },

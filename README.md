@@ -30,37 +30,51 @@ License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other req
 
 ## Setup
 
-You should be able to notice a build script lying in the source folder. That's mainly for *polyfilling* core Node modules, as Workers' environment is not native Node, but browser JavaScript. The script will compile the project and create a `dist` folder where you'll run your code from, unlike old Neko where you can just `npm run start` and it runs.
+### Automated way
 
-For local development, make a file and name it `.dev.vars`. Your secret keys stay in there with this format:
+> [!IMPORTANT]
+> Before continuing, make sure you have all example files edited and with the word `example` removed from the file name.
 
-```
-KEY: "value"
-```
+The local setup process is automated in setup files provided in the root of this repository. Run the file appropriately depending on your system, e.g. Windows users should run `setup.bat`, and Linux users should run `setup`.
 
-When you finish filling in all secret values and things, go ahead and do:
+> [!CAUTION]
+> Linux users should modify the `setup` bash file to use the correct terminal command if you're not using the GNOME user interface, and grant the file execution permission.
 
-```bash
-$ npm run dev
-```
-
-This runs the build script and `wrangler dev` under the hood. It simulates an environment similar to Cloudflare Workers'.
-
-Some files should be created in the newly made `dist` folder. If any errors occur, you edited the code. Otherwise, file an issue.
-
-Becaue you're not passing `http://localhost:8787` to Discord Interactions Endpoint field, use some tool, such as `ngrok`, to open a public URL for local development. When you have initial things done for `ngrok`, go ahead and do:
+For production deployment, I *don't recommend* you to use this in production; but this option is available. Simply run:
 
 ```bash
-$ ngrok http 8787
+npm run deploy
 ```
 
-You should be good to go with local development preparations. To publish anything to Workers, go ahead and do:
+### What's next? I see a new terminal opening!
+
+<img src=https://i.imgur.com/a0MaNWA.png>
+
+It should look like this inside while developing locally. The URL in the `Forwarding` field, ending with `.ngrok-free.app`, is your local URL exposed to the Internet. You will use that URL to put inside the `Application Command URL` field, on your Discord Application page.
+
+**Why can't you use `localhost:8787`?** It's not exposed to Discord. Simply put, it can't see your local address.
+
+### So... what do I do with production?
+
+> [!WARNING]
+> Make sure to fill `wrangler.example.toml` completely, remove the `example` from the name and double-check to make sure the information are correct!
+
+Upon running `npm run deploy`, it will end with this line:
 
 ```bash
-$ npm run deploy
+Current deploy URL: https://something.fancy.workers.dev/
 ```
 
-A new `.workers.dev` domain will be there for the Interactions Endpoint field.
+That's the URL you'll be using to put inside the `Application Command URL` field, on your Discord Application page.
+
+### What's the `build.js` file in the `src` folder?
+
+Cloudflare Workers requires your entire script to be compiled into one single `.js` file. That `build` file serves that exact purpose.
+
+It will be compiled (and made compact) to a new folder named `dist`. Shorthand for `distribution`, by the way.
+
+> [!CAUTION]
+> DO NOT edit `/dist/main.js` and/or `/dist/main.js.map` directly! To make changes, edit the source code, and rebuild the project.
 
 ---
 ## Database
