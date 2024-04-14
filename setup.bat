@@ -7,7 +7,7 @@ if %errorlevel% neq 0 (
 )
 
 REM Install packages defined in package.json
-npm install
+call npm install
 
 REM Check if .dev.vars exists
 if not exist ".dev.vars" (
@@ -23,10 +23,10 @@ if %errorlevel% neq 0 (
 )
 
 REM Build project
-node src/build.js
+call node src/build.js
 
 REM Open new terminal and run ngrok
 start cmd /k ngrok http 8787
 
 REM Start project
-wrangler dev
+call wrangler dev
