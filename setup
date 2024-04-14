@@ -3,8 +3,7 @@
 # Check Node.js version
 node_version=$(node -v)
 if [[ $node_version != v16.* ]]; then
-  echo "Node.js version must be v16.16.0 or higher."
-  exit 1
+  echo "WARNING: not running with recommended Node version (v16)"
 fi
 
 # Install packages defined in package.json
@@ -12,22 +11,22 @@ npm install
 
 # Check if .dev.vars exists
 if [ ! -f ".dev.vars" ]; then
-  echo ".dev.vars not found."
+  echo "ERROR: .dev.vars not found."
   exit 1
 fi
 
 # Check if ngrok is installed
 if ! command -v ngrok &> /dev/null; then
-  echo "Ngrok is not installed."
+  echo "ERROR: ngrok is not installed."
   exit 1
 fi
 
 # Build project
 node src/build.js
 
-# Start project
-wrangler dev
-
 # Open new terminal and run ngrok
 # Edit this line if your terminal is not GNOME-based
 gnome-terminal -- ngrok http 8787
+
+# Start project
+wrangler dev
