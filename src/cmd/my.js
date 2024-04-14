@@ -63,6 +63,8 @@ export default class My extends YorSlashCommand {
         const voteResponse = voteTitle[Math.round(Math.random() * voteTitle.length)] + ` [Do that here.](<https://top.gg/bot/https://top.gg/bot/704992714109878312>)` + "\n\n||If you decided to vote, thank you. You'll get extra perks in the future.||";
         await ctx.editReply({ content: voteResponse });
       } else if (sub == "beta") {
+        // no new beta feature for now
+        return await ctx.editReply({ content: "There is no beta feature at the moment." });
         // check if they are already in beta
         let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
         guild = new Guild(ctx.client, guild);

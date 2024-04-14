@@ -382,14 +382,14 @@ export default class Anime extends YorSlashCommand {
       }
     } else if (subgroup == "schedule") {
       if (sub == "list") {
-        // if the server is not in beta 
-        // just reply before checking anything else
+        // stable release
+        // will still push to beta if needed
         let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
         guild = new Guild(ctx.client, guild);
-        if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
         const list = await guild.schedules;
-        if (!list || list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subsciptions." });
+        if (!list.length || list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subsciptions." });
         // do a full search
         // compile all ids into an array
         let watched = [];
@@ -445,15 +445,14 @@ export default class Anime extends YorSlashCommand {
         if (!(await ctx.member.permissions).has(PermissionsBitField.Flags.ManageGuild)) return await ctx.editReply({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
         // define some utils
         const ani = new AniSchedule(ctx.client);
-        // if the server is not in beta 
-        // just reply before checking anything else
+        // get guild settings
         let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
         guild = new Guild(ctx.client, guild);
-        if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
         let list = await guild.schedules;
         // if there's already one let them know
-        if (list[0].anilistId != 0) return await ctx.editReply({ content: "As this command is in beta, each server can only have **one schedule** running at a time to try this feature out.\n\nSorry for the inconvenience." });
+        if (list.length && list[0].anilistId != 0) return await ctx.editReply({ content: "For now, each server can only have **one schedule** running at a time for technical reasons.\n\nSorry for the inconvenience." });
         else {
           // check if query is a valid MAL or AniList url or id
           const anilistId = await util.getMediaId(query);
@@ -473,21 +472,19 @@ export default class Anime extends YorSlashCommand {
       } else if (sub == "remove") {
         // check perms
         if (!(await ctx.member.permissions).has(PermissionsBitField.Flags.ManageGuild)) return await ctx.editReply({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
-        // if the server is not in beta 
-        // just reply before checking anything else
+        // get guild settings
         let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
         guild = new Guild(ctx.client, guild);
-        if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
         let list = await guild.schedules;
         // if there's nothing
-        if (list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subscription." });
+        if (!list || list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subscription." });
         // define some utils
         const ani = new AniSchedule(ctx.client);
         // fetch media title
         const media = (await ani.fetch("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: list[0].anilistId })).data.Media;
         // remove the entry
-        // as they must be in beta to add one
         await guild.update({ channelId: '0', anilistId: 0, nextEp: 0 });
         // let them know
         return await ctx.editReply({ content: `Stopped tracking airing episodes for **${media.title.romaji}**.` });

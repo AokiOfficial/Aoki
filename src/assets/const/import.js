@@ -292,7 +292,7 @@ const anime = new SlashCommandBuilder()
     .setDescription("watchlist to notify you when a new anime episode airs.")
     .addSubcommand(cmd => cmd
       .setName("list")
-      .setDescription("list your watchlist. (BETA)")  
+      .setDescription("list your watchlist.")  
     )
     .addSubcommand(cmd => cmd
       .setName("add")
