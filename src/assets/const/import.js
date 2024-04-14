@@ -1,3 +1,6 @@
+// all commands and their options
+// constructed in only one file for maintenance
+// so when I have to check on a command I won't have to scroll 100 lines of code
 import { SlashCommandBuilder } from "@discordjs/builders";
 
 const fun = new SlashCommandBuilder()

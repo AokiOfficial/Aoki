@@ -22,6 +22,13 @@ export default class Utilities {
     // owner of the application
     // can be an array
     this.owners = ["586913853804249090", "809674940994420736"];
+    // anilist media genres
+    this.mediaGenres = ["Action", "Adventure", "Comedy", "Drama", "Sci-Fi", "Mystery", "Supernatural", "Fantasy", "Sports", "Romance", "Slice of Life", "Horror", "Psychological", "Thriller", "Ecchi", "Mecha", "Music", "Mahou Shoujo", "Hentai"];
+    // anilist media format
+    this.mediaFormat = { TV: "TV", TV_SHORT: "TV Shorts", MOVIE: "Movie", SPECIAL: "Special", ONA: "ONA", OVA: "OVA", MUSIC: "Music", MANGA: "Manga", NOVEL: "Light Novel", ONE_SHOT: "One Shot Manga" };
+    // months weeks
+    this.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    this.weeks = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     // osuscore rank emoji
     this.rankEmotes = {
       XH: "<:xh:1184870634124226620>",
@@ -33,21 +40,6 @@ export default class Utilities {
       C: "<:c:1184870613421150258>",
       D: "<:d:1184870615572824154>",
       F: "<:f_:1184872548337451089>"
-    };
-    // anilist media genres
-    this.mediaGenres = ["Action", "Adventure", "Comedy", "Drama", "Sci-Fi", "Mystery", "Supernatural", "Fantasy", "Sports", "Romance", "Slice of Life", "Horror", "Psychological", "Thriller", "Ecchi", "Mecha", "Music", "Mahou Shoujo", "Hentai"];
-    // anilist media format
-    this.mediaFormat = {
-      TV: "TV",
-      TV_SHORT: "TV Shorts",
-      MOVIE: "Movie",
-      SPECIAL: "Special",
-      ONA: "ONA",
-      OVA: "OVA",
-      MUSIC: "Music",
-      MANGA: "Manga",
-      NOVEL: "Light Novel",
-      ONE_SHOT: "One Shot Manga"
     };
     // language flags
     this.langflags = [
@@ -63,55 +55,6 @@ export default class Utilities {
       { lang: "Chinese", flag: "🇨🇳" },
       { lang: "Brazilian", flag: "🇧🇷" }
     ];
-    // months weeks
-    this.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-    this.weeks = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
-    // myanimelist genres
-    this.malGenres = {
-      action: 1,
-      adventure: 2,
-      cars: 3,
-      comedy: 4,
-      dementia: 5,
-      demons: 6,
-      mystery: 7,
-      drama: 8,
-      ecchi: 9,
-      fantasy: 10,
-      game: 11,
-      hentai: 12,
-      historical: 13,
-      horror: 14,
-      kids: 15,
-      magic: 16,
-      "martial arts": 17,
-      mecha: 18,
-      music: 19,
-      parody: 20,
-      samurai: 21,
-      romance: 22,
-      school: 23,
-      "sci-fi": 24,
-      shoujo: 25,
-      "shoujo ai": 26,
-      shounen: 27,
-      "shounen ai": 28,
-      space: 29,
-      sports: 30,
-      "super power": 31,
-      vampire: 32,
-      yaoi: 33,
-      yuri: 34,
-      harem: 35,
-      "slice of life": 36,
-      supernatural: 37,
-      military: 38,
-      police: 39,
-      psychological: 40,
-      thriller: 41,
-      seinen: 42,
-      josei: 43
-    };
   }
   /**
    * Search for profane words in a string.
@@ -234,23 +177,36 @@ export default class Utilities {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       }
-    }).then(res => res.json());
+    }).then(async res => await res.json());
   };
   /**
-   * Converts mode represented by number to mode represented by string.
-   * 
-   * Exclusively for osugame commands
+   * Format numerical osu! mode to its string equivalent
    * @param {Number} int the number to convert to mode name
    * @returns `String` mode name `| undefined`
    */
-  osuModeFormat(int) {
-    // if int is a string ignore it
-    if (int == 0) return "osu";
-    if (int == 1) return "taiko";
-    if (int == 2) return "fruits";
-    if (int == 3) return "mania";
-    else return int;
-  }
+  osuStringModeFormat(int) {
+    return (int instanceof String) ? int : ["osu", "taiko", "fruits", "mania"][int];
+  };
+  /**
+   * Takes human time input and outputs time in ms (eg: 5m 30s -> 330000 | 3d 5h 2m -> 277320000)
+   * @param {string} timeStr - Time input (eg: 1m 20s, 1s, 3h 20m)
+   */
+  timeStringToMS(timeString) {
+    return timeString.match(/\d+\s?\w/g).reduce((acc, cur) => {
+      var multiplier = 1000;
+      switch (cur.slice(-1)) {
+        case 'd':
+          multiplier *= 24;
+        case 'h':
+          multiplier *= 60;
+        case 'm':
+          multiplier *= 60;
+        case 's':
+          return ((parseInt(cur) ? parseInt(cur) : 0) * multiplier) + acc;
+      }
+      return acc;
+    }, 0);
+  };
   /**
    * Gets a user avatar URL
    * @param { Object } user The user object
@@ -312,7 +268,7 @@ export default class Utilities {
    * @param {String} str Mode string to convert
    * @returns `Number` Mode converted to number
    */
-  requestModeFormat(str) {
+  osuNumberModeFormat(str) {
     if (str == "osu") return 0;
     if (str == "taiko") return 1;
     if (str == "fruits") return 2;
@@ -359,19 +315,6 @@ export default class Utilities {
       case "ENGLISH": return title.english || title.romaji;
       default: return title.romaji;
     }
-  }
-  /**
-   * Remove an entry from an array
-   * @param {Array} array The array with the item to be removed
-   * @param {Number} key The index of the entry to be removed
-   * @returns `Array` with the specified entry removed
-   */
-  delete(array, key) {
-    const index = array.indexOf(key);
-    if (index > -1) {
-      array.splice(index, 1); // Remove one item only
-    };
-    return array;
   }
   /**
    * Fetches static JSON asset stored on `npoint.io`.

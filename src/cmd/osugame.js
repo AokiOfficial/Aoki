@@ -48,7 +48,7 @@ export default class OsuGame extends YorSlashCommand {
           const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
           let pickedReply = replies[Math.round(Math.random() * replies.length)];
           if (!pickedReply) pickedReply = replies[0];
-          const content = `${pickedReply}\n\nYour current username is **${profile.username}**, and your current mode is **${util.osuModeFormat(Number(mode))}**.`;
+          const content = `${pickedReply}\n\nYour current username is **${profile.username}**, and your current mode is **${util.osuStringModeFormat(Number(mode))}**.`;
           // reply
           await ctx.editReply({ content });
         } else await ctx.editReply({ content: "Sorry, the storage room is locked, so I can't store that for you right now.\n\nIf this still happens when you try again in 5 minutes, sensei lost the key. Do `/my fault` to send a report." });
@@ -97,7 +97,7 @@ export default class OsuGame extends YorSlashCommand {
       };
       // construct embed
       const embed = new EmbedBuilder()
-        .setAuthor({ name: `osu!${util.osuModeFormat(mode) == "osu" ? "" : util.osuModeFormat(mode)} profile for ${profile.username}`, iconURL: `https://assets.ppy.sh/old-flags/${profile.country}.png`, url: `https://osu.ppy.sh/u/${profile.user_id}` })
+        .setAuthor({ name: `osu!${util.osuStringModeFormat(mode) == "osu" ? "" : util.osuStringModeFormat(mode)} profile for ${profile.username}`, iconURL: `https://assets.ppy.sh/old-flags/${profile.country}.png`, url: `https://osu.ppy.sh/u/${profile.user_id}` })
         .setColor(util.color)
         .setDescription(
           `**▸ Bancho Rank:** #${Number(profile.pp_rank).toLocaleString()} (${profile.country}#${Number(profile.pp_country_rank).toLocaleString()})\n` +

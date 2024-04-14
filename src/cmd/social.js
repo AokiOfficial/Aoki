@@ -6,7 +6,6 @@ import {
   ActionRowBuilder
 } from "@discordjs/builders";
 import { social } from "../assets/const/import";
-import { timeStringToMS } from "../assets/util/time-manipulation";
 
 // heavy db utilization
 export default class Social extends YorSlashCommand {
@@ -61,15 +60,15 @@ export default class Social extends YorSlashCommand {
         // check if user opened a bank account
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // check if it's not time yet
-        if (Date.now() - settings.lastClaimTime < timeStringToMS("1d")) return await ctx.editReply({ content: `Baka, too early. You'll need to wait 24 hours after each daily claim.` });
+        if (Date.now() - settings.lastClaimTime < util.timeStringToMS("1d")) return await ctx.editReply({ content: `Baka, too early. You'll need to wait 24 hours after each daily claim.` });
         // check if user has had a history of excessive stealing for the week
         // if it has been over a week, wipe their steal history
-        if (Date.now() - settings.firstFailedStealTime >= timeStringToMS("7d")) await ctx.user.update({ failedSteal: 0, firstFailedStealTime: "0" });
+        if (Date.now() - settings.firstFailedStealTime >= util.timeStringToMS("7d")) await ctx.user.update({ failedSteal: 0, firstFailedStealTime: "0" });
         const newSettings = ctx.user.settings;
         // if they still have a severe history during the week
         // stop them from earning from daily money
         // severe means 10-15 -- I prefer 10 times
-        if (newSettings.failedSteal >= 10) return await ctx.editReply({ content: `Woah, stop right there. You tried to steal people but got caught for **${newSettings.failedSteal}** times this week, and that history is too severe for me to grant you any allowance!\n\nCome back again on <t:${settings.firstFailedStealTime + timeStringToMS("7d")}:F>!` });
+        if (newSettings.failedSteal >= 10) return await ctx.editReply({ content: `Woah, stop right there. You tried to steal people but got caught for **${newSettings.failedSteal}** times this week, and that history is too severe for me to grant you any allowance!\n\nCome back again on <t:${settings.firstFailedStealTime + util.timeStringToMS("7d")}:F>!` });
         // check if user pocket is exceeding 10k yen
         // a user will always get at least 50 yen on each claim
         // so 9950 is a gatekeep number
@@ -78,15 +77,15 @@ export default class Social extends YorSlashCommand {
         // base claim daily is 50
         let bonus = 50, streak = settings.dailyStreak;
         // check if user voted today
-        if (settings.haveVoted && Date.now() - settings.lastVoteTime > timeStringToMS("1d")) bonus += 10;
+        if (settings.haveVoted && Date.now() - settings.lastVoteTime > util.timeStringToMS("1d")) bonus += 10;
         // scale by time
         // if they claim late, scale the bonus down
         // if they claim early, scale the bonus up
-        if (Date.now() - settings.lastClaimTime < timeStringToMS("1d 6h")) bonus += 10;
-        else if (Date.now() - settings.lastClaimTime < timeStringToMS("1d 8h")) bonus += 5;
-        else if (Date.now() - settings.lastClaimTime < timeStringToMS("1d 12h")) bonus += 1;
+        if (Date.now() - settings.lastClaimTime < util.timeStringToMS("1d 6h")) bonus += 10;
+        else if (Date.now() - settings.lastClaimTime < util.timeStringToMS("1d 8h")) bonus += 5;
+        else if (Date.now() - settings.lastClaimTime < util.timeStringToMS("1d 12h")) bonus += 1;
         // if it is a returning user, give some bonus
-        if (Date.now() - settings.lastClaimTime >= timeStringToMS("3d")) bonus += 10;
+        if (Date.now() - settings.lastClaimTime >= util.timeStringToMS("3d")) bonus += 10;
         // if their streak is more than a week, give some bonus
         if (streak > 7) bonus += 10;
         // random a bonus from 0-5
@@ -94,7 +93,7 @@ export default class Social extends YorSlashCommand {
         // max bonus would be 35
         // which is fair
         // check if they keep their streak
-        if (Date.now() - settings.lastClaimTime > timeStringToMS("24h")) streak = 0; else streak += 1;
+        if (Date.now() - settings.lastClaimTime > util.timeStringToMS("24h")) streak = 0; else streak += 1;
         // if they'll have their balance overflowed
         // stop that from happening
         if (settings.pocketBalance + bonus > 10_000) return await ctx.editReply({ content: "Hey, hey, you baka, you ain't holding **¥10,000** like that, deposit some to your bank. Lucky I stopped this from happening." });
@@ -152,7 +151,7 @@ export default class Social extends YorSlashCommand {
         // check if they opened a bank
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // if their cooldown has not passed
-        if (Date.now() - settings.lastWorkTime < timeStringToMS("30s")) return await ctx.editReply({ content: `Baka, slow down. You can work again in **${30 - Math.floor((Date.now() - settings.lastWorkTime) / 1000)}** seconds.` });
+        if (Date.now() - settings.lastWorkTime < util.timeStringToMS("30s")) return await ctx.editReply({ content: `Baka, slow down. You can work again in **${30 - Math.floor((Date.now() - settings.lastWorkTime) / 1000)}** seconds.` });
         // roll custom responses
         const workMessages = await util.getStatic("work");
         const work = workMessages[Math.floor(Math.random() * workMessages.length)];
@@ -173,7 +172,7 @@ export default class Social extends YorSlashCommand {
         // we do not have to make a timer and track every user
         // we will check when they demand money only
         // if so, wipe their record
-        if (firstFailedStealTime >= timeStringToMS("7d")) await ctx.user.update({ failedSteal: 0, firstFailedStealTime: "0" });
+        if (firstFailedStealTime >= util.timeStringToMS("7d")) await ctx.user.update({ failedSteal: 0, firstFailedStealTime: "0" });
         // tell them
         const newSettings = ctx.user.settings; let extra;
         // deduct the money they earned if the steal is still there
@@ -202,13 +201,13 @@ export default class Social extends YorSlashCommand {
         if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
         // check steal duration
         const lastStealLevel = settings.lastStealLevel;
-        if (lastStealLevel == "failed" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("10m")) 
+        if (lastStealLevel == "failed" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("10m")) 
           return await ctx.editReply({ content: `Baka, you cannot steal yet. You last failed and therefore you have to wait **10 minutes** before trying again.` });
-        if (lastStealLevel == "ez" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("6h")) 
+        if (lastStealLevel == "ez" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("6h")) 
           return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Snitch\` and therefore you have to wait **6 hours** before trying again.` });
-        else if (lastStealLevel == "normal" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("4h")) 
+        else if (lastStealLevel == "normal" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("4h")) 
           return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Commit\` and therefore you have to wait **4 hours** before trying again.` });
-        else if (lastStealLevel == "hard" && Date.now() - Number(settings.lastStealTime) < timeStringToMS("2h")) 
+        else if (lastStealLevel == "hard" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("2h")) 
           return await ctx.editReply({ content: `Baka, you cannot steal yet. You last picked \`Insane\` and therefore you have to wait **2 hours** before trying again.` }); 
         // if victim has no pocket money, or too little, reject
         // we put it here because the 10 minutes can override any long duration, just execute on a bot
@@ -418,14 +417,14 @@ export default class Social extends YorSlashCommand {
         // reply
         // check if their paycheck is coming
         let paycheck = "";
-        if (Date.now() - settings.lastPaycheck > timeStringToMS("30d")) paycheck = "\n\nAlso, you have a paycheck on hold. Do `/social piggy paycheck` to perform it.";
+        if (Date.now() - settings.lastPaycheck > util.timeStringToMS("30d")) paycheck = "\n\nAlso, you have a paycheck on hold. Do `/social piggy paycheck` to perform it.";
         await ctx.editReply({ content: `Received your ticket. Your piggy bank is now holding **¥${piggy}**, and your bank is holding **¥${bank}**.${paycheck}` });
       } else if (sub == "paycheck") {
         // check if piggy exists
         if (!settings || !settings.piggyBalance) return await ctx.editReply({ content: `You baka, you haven't opened a piggy bank yet. Do \`/social piggy open\` to open one.` });
         // check if it's time
-        let paycheckDate = new Date(settings.lastPaycheck + timeStringToMS("30d")).toLocaleDateString("en");
-        if (!(Date.now() - settings.lastPaycheck > timeStringToMS("30d"))) return await ctx.editReply({ content: `Baka, it's not time for a paycheck yet. It's on **${paycheckDate}**.` });
+        let paycheckDate = new Date(settings.lastPaycheck + util.timeStringToMS("30d")).toLocaleDateString("en");
+        if (!(Date.now() - settings.lastPaycheck > util.timeStringToMS("30d"))) return await ctx.editReply({ content: `Baka, it's not time for a paycheck yet. It's on **${paycheckDate}**.` });
         // apply earning rate
         let piggy = settings.piggyBalance, earnRate = 3/100;
         piggy += Math.floor(piggy * earnRate);

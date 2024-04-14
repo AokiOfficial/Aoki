@@ -1,4 +1,4 @@
-// Fully taken from @mathias/he
+// Taken from @mathias/he, adapted to use with esm
 // Avoid using a lot of packages
 //---------------------------------------------------------------------------
 /*! https://mths.be/he v1.2.0 by @mathias | MIT license */

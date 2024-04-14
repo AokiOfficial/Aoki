@@ -3,8 +3,7 @@
 // there's a test file using a lot of methods located in assets - have a check there
 import { YorSlashCommand } from "yor.ts";
 import { EmbedBuilder } from "@discordjs/builders";
-import { fun } from "../assets/const/import"
-import { timeStringToMS } from "../assets/util/time-manipulation";
+import { fun } from "../assets/const/import";
 
 // unlike server neko where we construct data options
 // now we have to explicitly specify the builder and the execute context
@@ -173,7 +172,7 @@ export default class Fun extends YorSlashCommand {
       const level = ctx.getString("level") || "ez";
       // add cooldown right away
       // 6 seconds here includes also the 3 seconds of the response
-      if (Date.now() - ctx.user.settings.lastSlotMachine < timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
       // save cooldown
       await ctx.user.update({ lastSlotMachine: Date.now() });
       // check if smaller than 20
@@ -224,7 +223,7 @@ export default class Fun extends YorSlashCommand {
       if (amount > ctx.user.settings.pocketBalance) return await ctx.editReply({ content: "Baka, you don't have that much money. Work some more, or withdraw from your bank." });
       // add cooldown right away
       // 6 seconds here includes also the 3 seconds of the response
-      if (Date.now() - ctx.user.settings.lastSlotMachine < timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
       // save cooldown
       await ctx.user.update({ lastSlotMachine: Date.now() });
       // if amount is too small

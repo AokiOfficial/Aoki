@@ -339,7 +339,7 @@ export default class Utility extends YorSlashCommand {
         let data, profile;
         // only fetch plays if they have set their osu info
         if (user.settings.inGameName) {
-          profile = await fetch(`https://osu.ppy.sh/api/get_user?k=${ctx.client.env["OSU_KEY"]}&u=${user.settings.inGameName}&m=${util.requestModeFormat(mode)}`).then(async res => await res.json());
+          profile = await fetch(`https://osu.ppy.sh/api/get_user?k=${ctx.client.env["OSU_KEY"]}&u=${user.settings.inGameName}&m=${util.osuNumberModeFormat(mode)}`).then(async res => await res.json());
           profile = profile[0];
           // if still no data
           if (!profile.username) return await ctx.editReply({ content: "Baka, that user doesn't exist." });
@@ -358,7 +358,7 @@ export default class Utility extends YorSlashCommand {
             },
           }).then(async res => await res.json());
           // use that token to get user best
-          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${util.osuModeFormat(mode)}&limit=51`, {
+          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${util.osuStringModeFormat(mode)}&limit=51`, {
             headers: {  
               "Authorization": `Bearer ${loginCredentials.access_token}` 
             }
@@ -375,7 +375,7 @@ export default class Utility extends YorSlashCommand {
             osu: {
               name: profile.username,
               best: best,
-              mode: util.requestModeFormat(mode)
+              mode: util.osuNumberModeFormat(mode)
             },
             color: user.settings.profileColor || "rgb(105, 105, 105)",
             background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",

@@ -1,3 +1,6 @@
+// graphql queries
+// these are currently compatible with anilist graphql API
+// this file will rarely need updates
 const AirDateNoQuery = `{
   Page {
     media(type: ANIME, status: RELEASING, sort: POPULARITY_DESC) {

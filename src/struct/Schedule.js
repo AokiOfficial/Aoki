@@ -10,7 +10,6 @@
 // for issue 3... first, optimizations; second, ask cf for limit increase; and third, lock this to premium until then
 import { Channel } from "yor.ts";
 import { Schedule } from "../assets/const/graphql";
-import { formatDuration } from "date-fns";
 import { EmbedBuilder } from "@discordjs/builders";
 
 export default class AniSchedule {
@@ -31,17 +30,7 @@ export default class AniSchedule {
    * @returns `Object` Request result
    */
   async fetch(query, variables) {
-    return await fetch('https://graphql.anilist.co', {
-      method: "POST",
-      body: JSON.stringify({
-        query: query,
-        variables: variables
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      }
-    }).then(async res => await res.json());
+    return await client.util.anilist(query, variables);
   };
   /**
    * Initialize the scheduler
