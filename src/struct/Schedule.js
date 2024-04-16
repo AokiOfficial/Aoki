@@ -30,7 +30,7 @@ export default class AniSchedule {
    * @returns `Object` Request result
    */
   async fetch(query, variables) {
-    return await client.util.anilist(query, variables);
+    return await this.client.util.anilist(query, variables);
   };
   /**
    * Initialize the scheduler
