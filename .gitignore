@@ -6,3 +6,4 @@ dist
 src/util
 wrangler.toml
 src/struct/Client.js
+.env

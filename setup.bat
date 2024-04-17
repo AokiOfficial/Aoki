@@ -22,9 +22,6 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-REM Build project
-call node src/build.js
-
 REM Open new terminal and run ngrok
 start cmd /k ngrok http 8787
 

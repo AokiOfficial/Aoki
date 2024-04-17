@@ -21,9 +21,6 @@ if ! command -v ngrok &> /dev/null; then
   exit 1
 fi
 
-# Build project
-node src/build.js
-
 # Open new terminal and run ngrok
 # Edit this line if your terminal is not GNOME-based
 gnome-terminal -- ngrok http 8787
