@@ -368,6 +368,6 @@ export default class Utilities {
       throw new Error(JSON.stringify(data));
     }
     // return original response
-    if (options.method == "DELETE") return true; else return await res.json();
+    if (options.method == "DELETE" || options.method == "POST") return true; else return await res.json();
   }
 }

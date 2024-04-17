@@ -1,178 +1,116 @@
-// yor.ts just kinda handled 90% of this file
-// I just want to work the way I did with djs
-import { Member } from "yor.ts";
-
+// resembles djs a little bit
 export default {
+  // replace ctx.creator by ctx.client for familiarity
+  client() { return this.creator },
+  async guild() {
+    const guildId = this.guildID;
+    // scope bind
+    const c = this;
+    // fetch the guild
+    let guild = await this.creator.util.call({
+      method: "guild",
+      param: [guildId]
+    });
+    // super dodgy code piece
+    guild = {
+      get settings() {
+        return c.creator.settings.guilds.get(guildId);
+      },
+      wipe() {
+        return c.creator.settings.guilds.delete(guildId);
+      },
+      get schedules() {
+        return (async () => {
+          const query = await c.creator.db.prepare("SELECT * FROM guilds WHERE id = ?1;").bind(guildId).all();
+          return query.results;
+        })();
+      },
+      update(obj) {
+        return c.creator.settings.guilds.update(guildId, obj);
+      }
+    };
+    return guild;
+  },
   /**
-   * Gets a subcommand from API raw data
+   * Gets a subcommand
    * @returns `string` Subcommand name
    */
   getSubcommand() {
-    if (this.subcommandGroup) {
-      return this.subcommandGroup?.options[0].name;
-    } else if (this.subcommand) {
-      return this.subcommand?.name;
-    }
-    return this.raw?.data?.options?.name || undefined;
+    // get the raw subcommand array
+    const subcommandRawArr = this.subcommands;
+    // check if its size is 2+
+    if (subcommandRawArr.length >= 2) {
+      // if it is, return the last entry
+      return subcommandRawArr[subcommandRawArr.length - 1];
+    } else {
+      // else return the first entry
+      return subcommandRawArr[0];
+    };
   },
   /**
-   * Gets a subcommand group from API raw data
+   * Gets a subcommand group
    * @returns `string` Subcommand group name
    */
   getSubcommandGroup() {
-    return this.subcommandGroup?.name;
+    // get the raw subcommand array
+    const subcommandRawArr = this.subcommands;
+    // if there is no group return null
+    // no group means that command is a subcommand
+    if (subcommandRawArr.length == 1) return null;
+    // else return first entry
+    return subcommandRawArr[0];
   },
   /**
-   * Finds a string option from API raw data
-   * @param { String } string The string option's name
-   * @returns `String | undefined`
+   * Finds a generic option
+   * @param { String } string The option's name
    */
-  getString(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getStringOption(string);
-    } else if (this.subcommand) {
-      option = this.getStringOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getStringOption(string, 2);
-    }
-    return option || undefined;
+  getOption(name) {
+    if (this.getSubcommandGroup()) return this.options[this.getSubcommandGroup()][this.getSubcommand()][name];
+    return this.options[this.getSubcommand()][name] || null;
   },
   /**
-   * Finds a number option from API raw data
-   * @param { String } string The number option's name
-   * @returns `Number | undefined`
-   */
-  getNumber(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getNumberOption(string);
-    } else if (this.subcommand) {
-      option = this.getNumberOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getNumberOption(string, 2);
-    }
-    return option;
-  },
-  /**
-   * Finds an integer option from API raw data
-   * @param { String } string The integer option's name
-   * @returns `Number | undefined`
-   */
-  getInteger(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getIntegerOption(string);
-    } else if (this.subcommand) {
-      option = this.getIntegerOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getIntegerOption(string, 2);
-    }
-    return option;
-  },
-  /**
-   * Finds a boolean option from API raw data
-   * @param { String } string The boolean option's name
-   * @returns `Boolean | undefined`
-   */
-  getBoolean(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getBooleanOption(string);
-    } else if (this.subcommand) {
-      option = this.getBooleanOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getBooleanOption(string, 2);
-    }
-    return option || undefined;
-  },
-  /**
-   * Finds a user option from API raw data
+   * Finds a user option
    * @param { String } string The user option's name
    * @returns `User | undefined`
    */
   getUser(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getUserOption(string);
-    } else if (this.subcommand) {
-      option = this.getUserOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getUserOption(string, 2);
-    }
-    return option || undefined;
+    const query = this.getOption(string);
+    return this.users.get(query);
   },
   /**
-   * Finds a role option from API raw data
+   * Finds a member option
+   * @param { String } string The user option's name
+   * @returns `User | undefined`
+   */
+  getMember(string) {
+    const query = this.getOption(string);
+    return this.members.get(query);
+  },
+  /**
+   * Finds a role option
    * @param { String } string The role option's name
    * @returns `Role | undefined`
    */
   getRole(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getRoleOption(string);
-    } else if (this.subcommand) {
-      option = this.getRoleOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getRoleOption(string, 2);
-    }
-    return option || undefined;
+    const query = this.getOption(string);
+    return this.roles.get(query);
   },
   /**
-   * Finds a channel option from API raw data
+   * Finds a channel option
    * @param { String } string The channel option's name
    * @returns `Channel | undefined`
    */
   getChannel(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getChannelOption(string);
-    } else if (this.subcommand) {
-      option = this.getChannelOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getChannelOption(string, 2);
-    }
-    return option || undefined;
+    const query = this.getOption(string);
+    return this.channels.get(query);
   },
   /**
-   * Finds a member option from API raw data
-   * @param { String } string The member option's name
-   * @returns `Member | undefined`
-   */
-  async getMember(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getUserOption(string);
-    } else if (this.subcommand) {
-      option = this.getUserOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getUserOption(string, 2);
-    }
-    // the internal getMemberOption is broken
-    // because it does not return user object
-    // therefore we do not know what's the member id
-    // learnt this the hard way
-    let member = await this.client.util.call({
-      method: "guildMember",
-      param: [this.member.raw.guildID, option.raw.id]
-    });
-    member = new Member(this.client, this.member.raw.guildID, member)
-    return member || undefined;
-  },
-  /**
-   * Finds an attachment option from API raw data
+   * Finds an attachment option
    * @param { String } string The attachment option's name
    * @returns `Attachment | undefined`
    */
   getAttachment(string) {
-    let option;
-    if (!this.subcommand && !this.subcommandGroup) {
-      option = this.getAttachmentOption(string);
-    } else if (this.subcommand) {
-      option = this.getAttachmentOption(string, 1);
-    } else if (this.subcommandGroup) {
-      option = this.getAttachmentOption(string, 2);
-    }
-    return option || undefined;
+    const query = this.getOption(string);
+    return this.attachments.get(query);
   }
 }
