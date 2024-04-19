@@ -1,25 +1,20 @@
 // file with super simple commands (first 200 lines)
 // great as a starting point for both native fetch and simple defer-reply structure used across all commands
 // there's a test file using a lot of methods located in assets - have a check there
-import { YorSlashCommand } from "yor.ts";
+import { SlashCommand } from "slash-create/web";
 import { EmbedBuilder } from "@discordjs/builders";
 import { fun } from "../assets/const/import";
 
-// unlike server neko where we construct data options
-// now we have to explicitly specify the builder and the execute context
-// which is kinda new because I don't like doing
-// execute = async ctx => {}
-// I'd prefer doing
-// async execute(ctx) {}
-export default class Fun extends YorSlashCommand {
-  builder = fun
-  execute = async ctx => {
+export default class Fun extends SlashCommand {
+  constructor(creator) { super(creator, fun) };
+  async run(ctx) {
     const util = ctx.client.util;
     const sub = ctx.getSubcommand();
     await ctx.defer();
+    // get generic query param
+    const query = ctx.getOption("query");
     // handle commands
     if (sub == "8ball") {
-      const query = ctx.getString("query");
       const eightball = [
         "It is certain.", "It is decidedly so.", "Without a doubt.", "Yes, definitely.",
         "Rely on it.", "As I see it, yes.", "Most likely.", "Outlook good.", "Yes.",
@@ -34,11 +29,11 @@ export default class Fun extends YorSlashCommand {
         "Go wake up that hellhound over there. If you live, it's a yes, if you die, it's a no."
       ];
       if (util.isProfane(query)) {
-        return await ctx.editReply({ content: "Baka, I won't answer that one. Fix your wordings." });
+        return await ctx.send({ content: "Baka, I won't answer that one. Fix your wordings." });
       }
-      await ctx.editReply({ content: eightball[Math.floor(Math.random() * eightball.length)] });
+      return await ctx.send({ content: eightball[Math.floor(Math.random() * eightball.length)] });
     } else if (sub == "fact") {
-      const about = ctx.getString("about");
+      const about = ctx.getOption("about");
       let url, type;
       if (about == "cat") {
         url = "https://catfact.ninja/fact";
@@ -54,7 +49,7 @@ export default class Fun extends YorSlashCommand {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
         }
       }).then(res => res.json());
-      await ctx.editReply({ content: `${about == "dog" ? res.facts[0] : res[type]}` });
+      return await ctx.send({ content: `${about == "dog" ? res.facts[0] : res[type]}` });
     } else if (sub == "today") {
       const baseDate = new Date;
       const date = baseDate.toLocaleDateString();
@@ -67,7 +62,7 @@ export default class Fun extends YorSlashCommand {
       const ranInt = Math.floor(Math.random() * todayJs.data.Events.length);
       const { text, year } = todayJs.data.Events[ranInt];
 
-      await ctx.editReply({ content: `On **${todayJs.date}, ${year}**: ${text}` });
+      return await ctx.send({ content: `On **${todayJs.date}, ${year}**: ${text}` });
     } else if (sub == "meme") {
       const cancelRate = util.probability(10);
       const cancelResponse = [
@@ -76,14 +71,14 @@ export default class Fun extends YorSlashCommand {
       ]
       const cancelled = cancelResponse[Math.floor(Math.random() * cancelResponse.length)]
       if (cancelRate) {
-        return await ctx.editReply({ content: cancelled + "\n\n||Execute the command again.||" })
+        return await ctx.send({ content: cancelled + "\n\n||Execute the command again.||" })
       }
       const response = await util.reddit(query ? query : "random");
       if (response.err) {
-        return await ctx.editReply({ content: "U-Uh, just coming here to say that this subreddit has no posts or doesn't exist." });
+        return await ctx.send({ content: "U-Uh, just coming here to say that this subreddit has no posts or doesn't exist." });
       }
       if (response.nsfw && !ctx.channel.nsfw) {
-        return await ctx.editReply({ content: cancelled + "\n\n||This meme is NSFW.||" });
+        return await ctx.send({ content: cancelled + "\n\n||This meme is NSFW.||" });
       }
       const meme = new EmbedBuilder()
         .setColor(util.color)
@@ -91,17 +86,17 @@ export default class Fun extends YorSlashCommand {
         .setURL(response.url)
         .setDescription(`*Posted in **r/${query ? query : response.randomKey}** by **${response.author}***`)
         .setImage(response.image)
-        .setFooter({ text: `${response.upVotes} likes`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+        .setFooter({ text: `${response.upVotes} likes`, iconURL: util.getUserAvatar(ctx.user) })
         .setTimestamp();
-      await ctx.editReply({ embeds: [meme] });
+      return await ctx.send({ embeds: [meme] });
     } else if (sub == "ship") {
       const first = ctx.getUser("first");
       const second = ctx.getUser("second");
-      if (first.raw.id == util.id || second.raw.id == util.id) {
-        return await ctx.editReply({ content: "Ew, I'm not a fan of shipping. Choose someone else!" })
+      if (first.id == util.id || second.id == util.id) {
+        return await ctx.send({ content: "Ew, I'm not a fan of shipping. Choose someone else!" })
       }
-      if (first.raw.id == second.raw.id) {
-        return await ctx.editReply({ content: "Pfft. No one does that, baka." })
+      if (first.id == second.id) {
+        return await ctx.send({ content: "Pfft. No one does that, baka." })
       }
       const luckyWheelRate = util.probability(5);
       const rollProbability = util.probability(40)
@@ -116,22 +111,22 @@ export default class Fun extends YorSlashCommand {
       else if (normalRate <= 90) finalShipResponse = `Hey! That's pretty good, I rarely see a couple scoring this nicely. A whopping **${normalRate}%**!`;
       else if (normalRate == 100) finalShipResponse = "Holy cow. Perfect couple right here duh? **100%** ship rate!";
       if (luckyWheelRate) {
-        await ctx.editReply({ content: "Lucky wheel time! Let's see if you two are lucky!" });
+        await ctx.send({ content: "Lucky wheel time! Let's see if you two are lucky!" });
         await new Promise(resolve => setTimeout(resolve, 3000));
-        await ctx.followUp({ content: `${result == 100 ? "Hey, good couple! You rolled **100%**!" : "Baka, you two lost. **0%** rate."}` })
-      } else await ctx.editReply({ content: finalShipResponse });
+        return await ctx.send({ content: `${result == 100 ? "Hey, good couple! You rolled **100%**!" : "Baka, you two lost. **0%** rate."}` })
+      } else return await ctx.send({ content: finalShipResponse });
     } else if (sub == "fortune") {
       const cookies = await util.getStatic("fortune");
       const fortune = cookies[Math.floor(Math.random() * cookies.length)]
-      await ctx.editReply({ content: fortune })
+      return await ctx.send({ content: fortune })
     } else if (sub == "truth") {
       const question = await util.getStatic("truth");
       const truth = question[Math.floor(Math.random() * question.length)]
-      await ctx.editReply({ content: truth })
+      return await ctx.send({ content: truth })
     } else if (sub == "generator") {
-      const template_picked = ctx.getString("template");
-      const text1 = ctx.getString("top");
-      const text2 = ctx.getString("bottom");
+      const template_picked = ctx.getOption("template");
+      const text1 = ctx.getOption("top");
+      const text2 = ctx.getOption("bottom");
 
       let finalMemeRes = await fetch("https://api.imgflip.com/caption_image", {
         body: new URLSearchParams({
@@ -151,34 +146,34 @@ export default class Fun extends YorSlashCommand {
         .setColor(util.color)
         .setDescription(`Here you go. Not like I wanted to waste my time.`)
         .setImage(finalMemeRes.url).setTimestamp()
-        .setFooter({ text: "Powered by Imgflip", iconURL: util.getUserAvatar(ctx.member.raw.user) });
-      await ctx.editReply({ embeds: [finalMemeEmbed] });
+        .setFooter({ text: "Powered by Imgflip", iconURL: util.getUserAvatar(ctx.user) });
+      return await ctx.send({ embeds: [finalMemeEmbed] });
     } else if (sub == "owo") {
-      const q = ctx.getString("query");
+      const q = ctx.getOption("query");
       if (q.length > 200) {
-        return await ctx.editReply({ content: "Less than 200 characters please, baka." });
+        return await ctx.send({ content: "Less than 200 characters please, baka." });
       }
       const owoRes = await fetch(`https://nekos.life/api/v2/owoify?text=${encodeURIComponent(q)}`).then(res => res.json());
-      await ctx.editReply({ content: owoRes.owo });
+      return await ctx.send({ content: owoRes.owo });
     };
     // starting from here
     // commands integrating database usage will be used
     // check if user has a bank
     const settings = ctx.user.settings;
-    if (!settings || !settings.bankOpened) return await ctx.editReply({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
+    if (!settings || !settings.bankOpened) return await ctx.send({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
     if (sub == "toss") {
       // typeguard 0
-      const amount = ctx.getInteger("amount") || 0;
-      const level = ctx.getString("level") || "ez";
+      const amount = ctx.getOption("amount") || 0;
+      const level = ctx.getOption("level") || "ez";
       // add cooldown right away
       // 6 seconds here includes also the 3 seconds of the response
-      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.send({ content: `Baka, slow down, I'm not a spamming machine.` });
       // save cooldown
       await ctx.user.update({ lastSlotMachine: Date.now() });
       // check if smaller than 20
-      if (amount < 50) return await ctx.editReply({ content: "So weak, so weak... Higher than **¥50**, please." });
+      if (amount < 50) return await ctx.send({ content: "So weak, so weak... Higher than **¥50**, please." });
       // check if amount exceed pocket limit
-      if (amount > settings.pocketBalance) return await ctx.editReply({ content: `Baka, you don't have that much money in your pocket. You're holding **¥${settings.pocketBalance}** only.`});
+      if (amount > settings.pocketBalance) return await ctx.send({ content: `Baka, you don't have that much money in your pocket. You're holding **¥${settings.pocketBalance}** only.`});
       // level scaling
       let losing, earn;
       if (level == "ez") {
@@ -198,7 +193,7 @@ export default class Fun extends YorSlashCommand {
       // initial response
       // we must move the response delay further down as data is not being saved right away
       // making this command broken when executed along with other commands affecting on money
-      await ctx.editReply({ content: `Your **¥${amount}** is on hold... let's see what do you get from this.` });
+      await ctx.send({ content: `Your **¥${amount}** is on hold... let's see what do you get from this.` });
       // if they lost
       if (lost) {
         // deduct money according to scaling
@@ -207,27 +202,27 @@ export default class Fun extends YorSlashCommand {
         await ctx.user.update({ pocketBalance: pocket });
         // notify
         await new Promise(resolve => setTimeout(resolve, 3000));
-        await ctx.editReply({ content: `Baka, you lost the game. You're losing **¥${change}** from your pocket.` });
+        await ctx.editOriginal({ content: `Baka, you lost the game. You're losing **¥${change}** from your pocket.` });
       } else {
         pocket += change;
         // save
         await ctx.user.update({ pocketBalance: pocket });
         // notify
         await new Promise(resolve => setTimeout(resolve, 3000));
-        await ctx.editReply({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
+        await ctx.editOriginal({ content: `You're just lucky. You won **¥${change}** to your pocket.` });
       };
     } else if (sub == "slot") {
       // typeguard 0
-      const amount = ctx.getInteger("amount") || 0;
+      const amount = ctx.getOption("amount") || 0;
       // if amount exceeds their bank
-      if (amount > ctx.user.settings.pocketBalance) return await ctx.editReply({ content: "Baka, you don't have that much money. Work some more, or withdraw from your bank." });
+      if (amount > ctx.user.settings.pocketBalance) return await ctx.send({ content: "Baka, you don't have that much money. Work some more, or withdraw from your bank." });
       // add cooldown right away
       // 6 seconds here includes also the 3 seconds of the response
-      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.editReply({ content: `Baka, slow down, I'm not a spamming machine.` });
+      if (Date.now() - ctx.user.settings.lastSlotMachine < util.timeStringToMS("6s")) return await ctx.send({ content: `Baka, slow down, I'm not a spamming machine.` });
       // save cooldown
       await ctx.user.update({ lastSlotMachine: Date.now() });
       // if amount is too small
-      if (amount < 50) return await ctx.editReply({ content: "Too little. At least **¥50**, please." });
+      if (amount < 50) return await ctx.send({ content: "Too little. At least **¥50**, please." });
       // define rolls
       // 4 fruits pose a very great threat of toss being completely irrelevant
       const fruits = ["🍑", "🥝", "🍉", "🥥", "🍎"];
@@ -257,9 +252,9 @@ export default class Fun extends YorSlashCommand {
       // map the result
       result = `${matches == 0 ? "Baka, you" : "Nice, you"} got **${matches}** same fruits.\n\`\`\`fix\n${result.join(" | ")}\n\`\`\`\nAnd you ${matches == 0 ? "lost" : "won"} **¥${Math.abs(ctx.user.settings.pocketBalance - settings.pocketBalance)}**.`;
       // reply
-      await ctx.editReply({ content: `Your **¥${amount}** have been placed in the slot machine... let's see what you'll get.` });
+      await ctx.send({ content: `Your **¥${amount}** have been placed in the slot machine... let's see what you'll get.` });
       await new Promise(resolve => setTimeout(resolve, 3000));
-      await ctx.editReply({ content: result });
+      await ctx.editOriginal({ content: result });
     }
   }
 }

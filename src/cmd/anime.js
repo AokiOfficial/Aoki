@@ -1,19 +1,18 @@
 // this one's gonna be stressful as heck
 // be careful trying to implement complex things
 import { EmbedBuilder } from "@discordjs/builders";
-// yes, it has become so bad we have to call structures to initialize
-import { YorSlashCommand, Guild, Channel } from "yor.ts";
-import he from "../assets/util/he";
+import { SlashCommand } from "slash-create/web";
 import { format, parseISO } from "date-fns";
 import { convert as toMarkdown } from "../assets/util/html-to-markdown";
 import { Watching, User, Seiyuu, Character } from "../assets/const/graphql";
-import AniSchedule from "../struct/Schedule";
 import { anime } from "../assets/const/import";
-import PermissionsBitField from "../struct/discord/PermissionsBitField";
+import { PermissionFlagsBits } from 'discord-api-types/v10';
+import AniSchedule from "../struct/Schedule";
+import he from "../assets/util/he";
 
-export default class Anime extends YorSlashCommand {
-  builder = anime
-  execute = async ctx => {
+export default class Anime extends SlashCommand {
+  constructor(creator) { super(creator, anime) };
+  async run(ctx) {
     // define util
     const util = ctx.client.util;
     // defer reply
@@ -21,17 +20,18 @@ export default class Anime extends YorSlashCommand {
     // get sub
     const sub = ctx.getSubcommand();
     const subgroup = ctx.getSubcommandGroup();
+    // return actual subcommand
     // default query param
-    const query = ctx.getString("query");
+    const query = ctx.getOption("query");
     // commands
     // breathe in before reading
     if (!subgroup) {
       if (sub == "profile") {
         // we're globalizing this command
         // instead of splitting it into myanimelist and anilist
-        const platform = ctx.getString("platform");
+        const platform = ctx.getOption("platform");
         // check query
-        if (util.isProfane(query)) return await ctx.editReply({ content: "Stop sneaking in bad content please, you baka." });
+        if (util.isProfane(query)) return await ctx.send({ content: "Stop sneaking in bad content please, you baka." });
         // fetch user query according to their platform choice
         if (platform == "al") {
           let res = await util.anilist(User, { search: query });
@@ -42,7 +42,7 @@ export default class Anime extends YorSlashCommand {
             else if (res.errors.some(a => a.status >= 500)) err = "The AniList data holder is probably on a vacation. Wait for a little bit before trying again.";
             else if (res.errors.some(a => a.status >= 400)) err = "Sensei messed up, something's wrong with the paper sent to AniList's data holder. Try reporting this with `/my fault`||, although it's not my fault, sigh||.";
             else err = "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing happens after that, report it with `/my fault`.";
-            return await ctx.editReply({ content: err });
+            return await ctx.send({ content: err });
           };
           // make embed fields
           const topFields = Object.entries(res.data.User.favourites).map(([query, target]) => {
@@ -61,9 +61,9 @@ export default class Anime extends YorSlashCommand {
             .setTitle(res.data.User.name)
             .setURL(res.data.User.siteUrl)
             .setDescription(`***About the user:** ${res.data.User.about ? util.textTruncate(he.decode(res.data.User.about.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided"}*` + `\n${topFields}`)
-            .setFooter({ text: "Data sent from AniList", iconURL: util.getUserAvatar(ctx.member.raw.user) })
+            .setFooter({ text: "Data sent from AniList", iconURL: util.getUserAvatar(ctx.user) })
             .setTimestamp();
-          await ctx.editReply({ embeds: [alprofile] });
+          await ctx.send({ embeds: [alprofile] });
         } else if (platform == "mal") {
           // fetch user query
           const res = (await fetch(`https://api.jikan.moe/v4/users/${encodeURIComponent(query)}/full`).then(res => res.json())).data;
@@ -73,7 +73,7 @@ export default class Anime extends YorSlashCommand {
             if (res.errors.some(a => a.status >= 500)) err = "MyAnimeList receptionist is probably on a vacation. Wait a little bit, then try again.";
             else if (res.errors.some(a => a.status >= 400)) err = "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||.";
             else err = "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing happens after that, report it with `/my fault`.";
-            return await ctx.editReply({ content: err });
+            return await ctx.send({ content: err });
           };
           // shortcuts
           const fav_anime = util.joinArrayAndLimit(res.favorites.anime.map((entry) => {
@@ -92,7 +92,7 @@ export default class Anime extends YorSlashCommand {
           // braindead code incoming
           const malProfileEmbed = new EmbedBuilder()
             .setColor(util.color)
-            .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+            .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.user) })
             .setAuthor({ name: `${res.username}'s Profile`, iconURL: res.images.jpg.image_url })
             .setTimestamp()
             .setDescription([
@@ -107,20 +107,20 @@ export default class Anime extends YorSlashCommand {
               {
                 name: 'Anime Statics', inline: true,
                 value: '```fix\n' + Object.entries(res.statistics.anime).map(([key, value]) => {
-                  const cwidth = 28;
+                  const cwidth = 24;
                   const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
                   const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
 
-                  return ' • ' + name + ':' + spacing + value;
+                  return '• ' + name + ':' + spacing + value;
                 }).join('\n') + '```'
               }, {
                 name: 'Manga Statics', inline: true,
                 value: '```fix\n' + Object.entries(res.statistics.manga).splice(0, 10).map(([key, value]) => {
-                  const cwidth = 28;
+                  const cwidth = 24;
                   const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
                   const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
 
-                  return ' • ' + name + ':' + spacing + value;
+                  return '• ' + name + ':' + spacing + value;
                 }).join('\n') + '```'
               }, {
                 name: 'Favorite Anime',
@@ -136,12 +136,12 @@ export default class Anime extends YorSlashCommand {
                 value: fav_people.text + (!!fav_people.excess ? ` and ${fav_people.excess} more!` : '') || 'None Listed.'
               }
             ]);
-          await ctx.editReply({ embeds: [malProfileEmbed] });
+          await ctx.send({ embeds: [malProfileEmbed] });
         }
       } else if (sub == "action") {
         // a more friendly command
         const actionPic = await fetch(`https://api.waifu.pics/sfw/${query}`).then(res => res.json());
-        await ctx.editReply({
+        await ctx.send({
           embeds: [
             new EmbedBuilder()
               .setColor(util.color)
@@ -151,23 +151,23 @@ export default class Anime extends YorSlashCommand {
       } else if (sub == "search") {
         // we're also globalizing this command
         // no more /anime search, /anime manga, /anime seiyuu and /anime character
-        const type = ctx.getString("type");
+        const type = ctx.getOption("type");
         // searching on kitsu.io
         // check query
-        if (util.isProfane(query)) return await ctx.editReply({ content: "Stop sneaking in bad content please, you baka." });
+        if (util.isProfane(query)) return await ctx.send({ content: "Stop sneaking in bad content please, you baka." });
         // anime
         if (type == "anime") {
           const res = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${query}&page%5Boffset%5D=0&page%5Blimit%5D=1`).then(res => res.json());
           // if no data
-          if (!res.data.length || !res) return await ctx.editReply({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
+          if (!res.data.length || !res) return await ctx.send({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
           // shortcut
           const data = res.data[0].attributes;
           // check again if no attribute is found
-          if (!data) return await ctx.editReply({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
+          if (!data) return await ctx.send({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
           // check if channel is nsfw
-          if (data.nsfw && !ctx.channel.nsfw) return await ctx.editReply({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
+          if (data.nsfw && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
           // check if content rating is nsfw
-          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.editReply({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
+          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
           // make our embed
           const animeEmbed = new EmbedBuilder()
             .setTitle(`${data.titles.en_jp}`)
@@ -189,22 +189,22 @@ export default class Anime extends YorSlashCommand {
               { name: "Popularity", value: `#${data.popularityRank.toLocaleString()}`, inline: true },
               { name: "NSFW?", value: util.toProperCase(`${data.nsfw}`), inline: true }
             ])
-            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.member.raw.user) })
+            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.user) })
             .setTimestamp();
           // send it
-          await ctx.editReply({ embeds: [animeEmbed] });
+          await ctx.send({ embeds: [animeEmbed] });
         } else if (type == "manga") {
           const res = await fetch(`https://kitsu.io/api/edge/manga?filter[text]=${query}&page%5Boffset%5D=0&page%5Blimit%5D=1`).then(res => res.json());
           // if no data
-          if (!res.data.length || !res) return await ctx.editReply({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
+          if (!res.data.length || !res) return await ctx.send({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
           // shortcut
           const data = res.data[0].attributes;
           // check again if no attribute is found
-          if (!data) return await ctx.editReply({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
+          if (!data) return await ctx.send({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
           // check if channel is nsfw
-          if (data.nsfw && !ctx.channel.nsfw) return await ctx.editReply({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
+          if (data.nsfw && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
           // check if content rating is nsfw
-          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.editReply({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
+          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
           const mangaEmbed = new EmbedBuilder()
             .setTitle(`${data.titles.en_jp}`)
             .setURL(`https://kitsu.io/${res.data[0].id}`)
@@ -225,14 +225,14 @@ export default class Anime extends YorSlashCommand {
               { name: "Rating Rank", value: `#${data.ratingRank.toLocaleString()}`, inline: true },
               { name: "Popularity", value: `#${data.popularityRank.toLocaleString()}`, inline: true }
             ])
-            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.member.raw.user) })
+            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.user) })
             .setTimestamp();
           // send
-          await ctx.editReply({ embeds: [mangaEmbed] });
+          await ctx.send({ embeds: [mangaEmbed] });
         } else if (type == "character") {
           const res = (await util.anilist(Character, { search: query })).data.Character;
           // if error occurs
-          if (!res) return await ctx.editReply({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
+          if (!res) return await ctx.send({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
           // shortcuts
           const desc = res.description.replace(/~!|!~/g, "||") || 'No description.';
           const dupeRemove = [...new Set(res.media.nodes.map(node => node.title.romaji))]
@@ -254,12 +254,12 @@ export default class Anime extends YorSlashCommand {
             .setImage(res.image.large)
             .setColor(util.color)
             .setTimestamp()
-            .setFooter({ text: `Data sent from AniList • ${res.favourites} people love ${res.name.full}`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
-          await ctx.editReply({ embeds: [embed] });
+            .setFooter({ text: `Data sent from AniList • ${res.favourites} people love ${res.name.full}`, iconURL: util.getUserAvatar(ctx.user) });
+          await ctx.send({ embeds: [embed] });
         } else if (type == "seiyuu") {
           const res = (await util.anilist(Seiyuu, { search: query })).data;
           // if error occurs
-          if (!res) return await ctx.editReply({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
+          if (!res) return await ctx.send({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
           // make embed
           const seiyuuEmbed = new EmbedBuilder()
             .setColor(util.color)
@@ -288,8 +288,8 @@ export default class Anime extends YorSlashCommand {
               }
             ])
             .setTimestamp()
-            .setFooter({ text: `Data sent from AniList`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
-          await ctx.editReply({ embeds: [seiyuuEmbed] });
+            .setFooter({ text: `Data sent from AniList`, iconURL: util.getUserAvatar(ctx.user) });
+          await ctx.send({ embeds: [seiyuuEmbed] });
         }
       } else if (sub == "meme") {
         // just simple
@@ -301,34 +301,34 @@ export default class Anime extends YorSlashCommand {
           .setImage(res.image)
           .setColor(util.color)
           .setTimestamp()
-          .setFooter({ text: `${res.upVotes} likes`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
-        await ctx.editReply({ embeds: [meme] });
+          .setFooter({ text: `${res.upVotes} likes`, iconURL: util.getUserAvatar(ctx.user) });
+        await ctx.send({ embeds: [meme] });
       } else if (sub == "quote") {
         // simple
         const res = await fetch('https://animechan.xyz/api/random').then(res => res.json());
-        await ctx.editReply({ content: `**${res.character}** from **${res.anime}**:\n\n*${res.quote}*` });
+        await ctx.send({ content: `**${res.character}** from **${res.anime}**:\n\n*${res.quote}*` });
       } else if (sub == "random") {
         // fetch user query
-        const type = ctx.getString("type");
+        const type = ctx.getOption("type");
         const res = (await fetch(`https://api.jikan.moe/v4/random/${encodeURIComponent(type)}`).then(res => res.json())).data;
         // if request error
-        if (!res) return await ctx.editReply({ content: "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||." });
+        if (!res) return await ctx.send({ content: "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||." });
         // shortcuts
         const anime_stats = {
           "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
           "Source": res.source || "No data",
           "Episodes": res.episodes || "No data",
           "Status": res.status || "No data",
-          "Schedule": res.broadcast ? "Every " + res.broadcast.day : "No data",
+          "Schedule": res.broadcast?.day ? "Every " + res.broadcast.day : "No data",
           "Duration": res.duration ? res.duration.replace(/ per /g, "/") : "No data"
         };
         const anime_scores = {
           "Average Score": res.score || "No data",
-          "Scored By": res.scored_by ? res.scored_by + " people" : "No data",
+          "Scored By": res.scored_by || "No data",
           "Mean Rank": res.rank || "No data",
           "Popularity Rank": res.popularity || "No data",
           "Favorites": res.favorites || "No data",
-          "Subscribed": res.members + " people" || "No data"
+          "Subscribed": res.members || "No data"
         }
         const manga_stats = {
           "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
@@ -341,13 +341,13 @@ export default class Anime extends YorSlashCommand {
           "Mean Rank": res.rank || "No data",
           "Popularity Rank": res.popularity || "No data",
           "Favorites": res.favorites || "No data",
-          "Subscribed": res.members + " people" || "No data"
+          "Subscribed": res.members || "No data"
         };
         // make the embed
         // braindead code incoming
         const malRandomEmbed = new EmbedBuilder()
           .setColor(util.color)
-          .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.user) })
           .setAuthor({ name: `${res.title}`, iconURL: res.images.jpg.image_url })
           .setTimestamp()
           .setDescription([
@@ -361,35 +361,34 @@ export default class Anime extends YorSlashCommand {
             {
               name: `${util.toProperCase(type)} Info`, inline: true,
               value: '```fix\n' + Object.entries(type == "anime" ? anime_stats : manga_stats).map(([key, value]) => {
-                const cwidth = 28;
+                const cwidth = 25;
                 const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
                 const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
 
-                return ' • ' + name + ':' + spacing + value;
+                return '• ' + name + ':' + spacing + value;
               }).join('\n') + '```'
             }, {
               name: `${util.toProperCase(type)} Scorings`, inline: true,
               value: '```fix\n' + Object.entries(type == "anime" ? anime_scores : manga_scores).splice(0, 10).map(([key, value]) => {
-                const cwidth = 28;
+                const cwidth = 25;
                 const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
                 const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
 
-                return ' • ' + name + ':' + spacing + value;
+                return '• ' + name + ':' + spacing + value;
               }).join('\n') + '```'
             }
           ]);
-        await ctx.editReply({ embeds: [malRandomEmbed] });
+        await ctx.send({ embeds: [malRandomEmbed] });
       }
     } else if (subgroup == "schedule") {
       if (sub == "list") {
         // stable release
         // will still push to beta if needed
-        let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
-        guild = new Guild(ctx.client, guild);
-        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        const guild = await ctx.guild;
+        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
         const list = await guild.schedules;
-        if (!list.length || list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subsciptions." });
+        if (!list.length || list[0].anilistId == 0) return await ctx.send({ content: "Baka, this server has no anime subsciptions." });
         // do a full search
         // compile all ids into an array
         let watched = [];
@@ -403,10 +402,10 @@ export default class Anime extends YorSlashCommand {
           const res = await aniFetch.fetch(Watching, { watched, page });
           // if there's some errors from anilist
           if (!res) {
-            return await ctx.editReply({ content: "O-Oh, AniList returned an error. Maybe try again later?\n\n||Issue didn't resolve for more than an hour? Use `/bot feedback` to notice my sensei!||" });
+            return await ctx.send({ content: "O-Oh, AniList returned an error. Maybe try again later?\n\n||Issue didn't resolve for more than an hour? Use `/bot feedback` to notice my sensei!||" });
             // else if there's actually nothing
           } else if (!entries.length && !res.data.Page.media.length) {
-            return await ctx.editReply({ content: "Baka, this server has no anime subscriptions." });
+            return await ctx.send({ content: "Baka, this server has no anime subscriptions." });
             // else it means everything went okay
             // we store data
           } else {
@@ -427,7 +426,7 @@ export default class Anime extends YorSlashCommand {
           .setThumbnail("https://i.imgur.com/wJqBxdk.png")
           .setAuthor({ name: `Current AniSchedule subscription list` })
           .setFooter({
-            text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user)
+            text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user)
           }).setTimestamp()
           .addFields({
             name: 'Tips', value: `${[
@@ -436,50 +435,47 @@ export default class Anime extends YorSlashCommand {
             ].join('\n')}`
           });
         // send the embed
-        await ctx.editReply({ embeds: [embed] });
+        await ctx.send({ embeds: [embed] });
       } else if (sub == "add") {
-        const query = ctx.getString("query");
-        let channel = await util.call({ method: "channel", param: [ctx.subcommandGroup.options[0].options.find(o => o.name == "channel").value] });
-        channel = new Channel(ctx.client, channel);
+        const query = ctx.getOption("query");
+        const channel = ctx.getChannel("channel");
         // check perms
-        if (!(await ctx.member.permissions).has(PermissionsBitField.Flags.ManageGuild)) return await ctx.editReply({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
+        if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return await ctx.send({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
         // define some utils
         const ani = new AniSchedule(ctx.client);
         // get guild settings
-        let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
-        guild = new Guild(ctx.client, guild);
-        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        const guild = await ctx.guild;
+        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
-        let list = await guild.schedules;
+        const list = await guild.schedules;
         // if there's already one let them know
-        if (list.length && list[0].anilistId != 0) return await ctx.editReply({ content: "For now, each server can only have **one schedule** running at a time for technical reasons.\n\nSorry for the inconvenience." });
+        if (list.length && list[0].anilistId != 0) return await ctx.send({ content: "For now, each server can only have **one schedule** running at a time for technical reasons.\n\nSorry for the inconvenience." });
         else {
           // check if query is a valid MAL or AniList url or id
           const anilistId = await util.getMediaId(query);
           // if it's not valid
-          if (!anilistId) return await ctx.editReply({ content: "Have you made a typo or something? That one doesn't exist, baka." });
+          if (!anilistId) return await ctx.send({ content: "Have you made a typo or something? That one doesn't exist, baka." });
           // fetch channel
           // if channel type is voice, throw exception
-          if (channel.type != 0) return await ctx.editReply({ content: "No, I can't speak in there for you, baka." });
+          if (channel.type != 0) return await ctx.send({ content: "No, I can't speak in there for you, baka." });
           // fetch the media to check if it's actually airing
           const media = (await ani.fetch("query($id: Int!) { Media(id: $id) { id status nextAiringEpisode { timeUntilAiring episode } title { native romaji english } } }", { id: anilistId })).data.Media;
-          if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return await ctx.editReply({ content: "Baka, that's not airing. It's not an upcoming one, too. Maybe even finished." });
+          if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return await ctx.send({ content: "Baka, that's not airing. It's not an upcoming one, too. Maybe even finished." });
           // update the entry
           await guild.update({ channelId: ctx.channel.id, anilistId: media.id, nextEp: media.nextAiringEpisode.episode });
           // let them know
-          return await ctx.editReply({ content: `Tracking airing episodes for **${media.title.romaji}** in ${channel ? "<#" + channel.id + ">" : "this channel"}.\n\nNext episode is airing in roughly **${Math.floor((media.nextAiringEpisode.timeUntilAiring / 60) / 60)}** hours.` });
+          return await ctx.send({ content: `Tracking airing episodes for **${media.title.romaji}** in ${channel ? "<#" + channel.id + ">" : "this channel"}.\n\nNext episode is airing in roughly **${Math.floor((media.nextAiringEpisode.timeUntilAiring / 60) / 60)}** hours.` });
         };
       } else if (sub == "remove") {
         // check perms
-        if (!(await ctx.member.permissions).has(PermissionsBitField.Flags.ManageGuild)) return await ctx.editReply({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
+        if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return await ctx.send({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
         // get guild settings
-        let guild = await util.call({ method: "guild", param: [ctx.member.raw.guildID] });
-        guild = new Guild(ctx.client, guild);
-        // if (!guild.settings || !guild.settings.beta) return await ctx.editReply({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
+        const guild = await ctx.guild;
+        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
         // get schedules of this guild
-        let list = await guild.schedules;
+        const list = await guild.schedules;
         // if there's nothing
-        if (!list || list[0].anilistId == 0) return await ctx.editReply({ content: "Baka, this server has no anime subscription." });
+        if (!list || list[0].anilistId == 0) return await ctx.send({ content: "Baka, this server has no anime subscription." });
         // define some utils
         const ani = new AniSchedule(ctx.client);
         // fetch media title
@@ -487,7 +483,7 @@ export default class Anime extends YorSlashCommand {
         // remove the entry
         await guild.update({ channelId: '0', anilistId: 0, nextEp: 0 });
         // let them know
-        return await ctx.editReply({ content: `Stopped tracking airing episodes for **${media.title.romaji}**.` });
+        return await ctx.send({ content: `Stopped tracking airing episodes for **${media.title.romaji}**.` });
       }
     }
   }

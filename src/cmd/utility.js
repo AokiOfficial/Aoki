@@ -1,11 +1,11 @@
-import { YorSlashCommand, User } from "yor.ts";
+import { SlashCommand } from "slash-create/web";
 import { EmbedBuilder } from "@discordjs/builders";
 import { format, formatDistance, parseISO } from "date-fns";
 import { util } from "../assets/const/import";
 
-export default class Utility extends YorSlashCommand {
-  builder = util
-  execute = async ctx => {
+export default class Utility extends SlashCommand {
+  constructor(creator) { super(creator, util) };
+  async run(ctx) {
     // defer reply
     await ctx.defer();
     // define util
@@ -21,32 +21,32 @@ export default class Utility extends YorSlashCommand {
         const user = ctx.getUser("member");
         // check user
         // in edge cases, user might leave right at the time of execution
-        if (!user) return ctx.editReply({ content: "You baka, that's not a valid user." });
+        if (!user) return ctx.send({ content: "You baka, that's not a valid user." });
         // get avatar
         // use variable size so user has many options to pick from
-        const img = (s) => util.getUserAvatar(user.raw, s);
+        const img = (s) => util.getUserAvatar(user, s);
         // reply
         const avatarEmbed = new EmbedBuilder()
           .setColor(util.color)
-          .setAuthor({ name: `${user.raw.username}'s Avatar` })
+          .setAuthor({ name: `${user.username}'s Avatar` })
           .setImage(img(2048)).setTimestamp()
           .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
-        await ctx.editReply({ embeds: [avatarEmbed] });
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) });
+        await ctx.send({ embeds: [avatarEmbed] });
       } else if (sub == "banner") {
         let user = ctx.getUser("member");
         // check user
-        if (!user) return ctx.editReply({ content: "You baka, that's not a valid user." });
+        if (!user) return ctx.send({ content: "You baka, that's not a valid user." });
         // force fetch the user
         // the banner property is only accessible by force fetching
         // as documented in the d.js repo
         const fetchedUser = await util.call({
           method: "user",
-          param: [user.raw.id]
+          param: [user.id]
         });
         user = fetchedUser;
         // check if user has banner
-        if (!user.banner) return ctx.editReply({ content: "Baka, this user has no banner." });
+        if (!user.banner) return ctx.send({ content: "Baka, this user has no banner." });
         // get banner
         const img = (s) => util.getUserBanner(user, s);
         // reply
@@ -55,17 +55,16 @@ export default class Utility extends YorSlashCommand {
           .setAuthor({ name: `${user.username}'s Avatar` })
           .setImage(img(2048)).setTimestamp()
           .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) });
-        await ctx.editReply({ embeds: [bannerEmbed] });
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) });
+        await ctx.send({ embeds: [bannerEmbed] });
       } else if (sub == "channel") {
         const channel = ctx.getChannel("channel");
         // check channel
         // edge case handling again
-        if (!channel) return await ctx.editReply({ content: "Baka, that channel does not exist." });
+        if (!channel) return await ctx.send({ content: "Baka, that channel does not exist." });
         // date shortcut
         const createdAt = new Date(util.getCreatedAt(channel.id));
         const time = formatDistance(createdAt, new Date(), { addSuffix: true });
-        const discordDate = "<t:" + Math.round(util.getCreatedTimestamp(channel.id) / 1000) + ":D>";
         // channel type
         let icon, type;
         switch (channel.type) {
@@ -89,22 +88,33 @@ export default class Utility extends YorSlashCommand {
           .setAuthor({ name: `${channel.name}${channel.name.endsWith("s") ? "'" : "'s"} Information` })
           .setThumbnail(icon)
           .setColor(util.color)
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
           .setTimestamp()
           .addFields([
-            { name: '• Position', value: `${channel.position + 1 == "NaN" ? channel.position + 1 : "Unknown"}` },
-            { name: `• Type`, value: `${type}` },
-            { name: `• Created At`, value: `${discordDate} [\`${time}\`]` },
-            { name: `• NSFW`, value: `${channel.nsfw ? "Yes" : "No"}` },
-            { name: `• Slowmode`, value: `${channel.slowmode || "No Slowmode"}` },
-            { name: '• Channel ID', value: `${channel.id}` },
-            { name: "• Channel Topic", value: `${channel.topic || "No Topic"}` }
+            {
+              name: "\u2000",
+              value: '```fix\n' + Object.entries({
+                "Position": channel.position || "Unknown",
+                "Type": type,
+                "Created": time,
+                "NSFW?": channel.nsfw ? "Yes" : "No",
+                "Slowmode": channel.slowmode || "None",
+                "ID": channel.id,
+                "Topic": channel.topic
+              }).map(([key, value]) => {
+                const cwidth = 30;
+                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
+              }).join('\n') + '```'
+            }
           ]);
         // finally send the embed
-        await ctx.editReply({ embeds: [channelEmbed] });
+        await ctx.send({ embeds: [channelEmbed] });
       } else if (sub == "server") {
         // get the server id
-        const guildID = ctx.member.raw.guildID;
+        const guildID = ctx.member.guildID;
         // make an api call to fetch the server info
         // does not include channels
         // therefore we have to make another one
@@ -126,7 +136,7 @@ export default class Utility extends YorSlashCommand {
         // get icon
         const icon = util.getGuildIcon(guildInfo);
         // created date
-        const since = format(new Date(util.getCreatedAt(guildInfo.id)), 'EEEE, do MMMM yyyy');
+        const since = format(new Date(util.getCreatedAt(guildInfo.id)), 'MMMM yyyy');
         // filter channel based on channel type
         const text = guildInfo.channels.filter(channel => channel.type == 0).length;
         const voice = guildInfo.channels.filter(channel => channel.type == 2).length;
@@ -136,28 +146,55 @@ export default class Utility extends YorSlashCommand {
         const guildEmbed = new EmbedBuilder()
           .setColor(util.color)
           .setAuthor({ name: `${guildInfo.name}`, iconURL: icon })
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
           .setTimestamp()
-          .setDescription(
-            `*${guildInfo.description == null ? "Server has no description." : guildInfo.description}*\n\n` +
-            `**• Owner:** [${owner.username}](https://discord.com/users/${owner.id})\n` +
-            `**• Channels:** ${text} text \| ${voice} voice \| ${category} ${category > 1 ? "categories" : "category"} \| ${news} news\n` +
-            `**• Role Count:** ${guildInfo.roles.length}\n` +
-            `**• Emoji Count:** ${guildInfo.emojis.length}\n` +
-            `**• Created:** ${since}\n` +
-            `**• Preferred Locale:** ${guildInfo.preferred_locale}\n` +
-            `**• Boosting:** Level ${guildInfo.premium_tier}, ${guildInfo.premium_subscription_count} boost${guildInfo.premium_subscription_count > 1 ? "s" : ""}\n` +
-            `**• Verification Level:** ${guildInfo.verification_level}\n` +
-            `**• Content Filter:** ${guildInfo.explicit_content_filter}\n` +
-            `**• AFK Channel ID:** ${guildInfo.afk_channel ? guildInfo.afk_channel.id : "None"}`
-          )
+          .setDescription(`*${guildInfo.description == null ? "Server has no description." : guildInfo.description}*\n\n`)
+          .addFields([
+            {
+              name: "General Info",
+              value: '```fix\n' + Object.entries({
+                "Owner": util.textTruncate(owner.username, 11),
+                "Role Count": guildInfo.roles.length,
+                "Emoji Count": guildInfo.emojis.length,
+                "Created": since,
+                "Boosts": guildInfo.premium_subscription_count,
+                "Main Locale": guildInfo.preferred_locale,
+                "Verification": guildInfo.verification_level,
+                "Filter": guildInfo.explicit_content_filter
+              }).map(([key, value]) => {
+                const cwidth = 24;
+                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
+              }).join('\n') + '```',
+              inline: true
+            },
+            {
+              name: "Channels Info",
+              value: '```fix\n' + Object.entries({
+                "Text Channels": text,
+                "Voice Channels": voice,
+                "Categories": category,
+                "News Channels": news,
+                "AFK Channel": guildInfo.afk_channel ? guildInfo.afk_channel.name : "None"
+              }).map(([key, value]) => {
+                const cwidth = 24;
+                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
+              }).join('\n') + '```',
+              inline: true
+            }
+          ])
         // now send the embed
-        await ctx.editReply({ embeds: [guildEmbed] })
+        await ctx.send({ embeds: [guildEmbed] })
       } else if (sub == "github") {
         // get user and repo from input
-        const [u, r] = (ctx.getString("name")).trim().split("/");
+        const [u, r] = (ctx.getOption("name")).trim().split("/");
         // check if them both are present
-        if (!u || !r) return await ctx.editReply({ content: "Baka, follow this format: `[repo owner]/[repo name]`." });
+        if (!u || !r) return await ctx.send({ content: "Baka, follow this format: `[repo owner]/[repo name]`." });
         // call the api
         // have to specify the user agent here
         const repoData = await fetch(`https://api.github.com/repos/${u}/${r}`, {
@@ -166,7 +203,7 @@ export default class Utility extends YorSlashCommand {
           }
         }).then(res => res.json());
         // check if repo exists
-        if (!repoData.id) return await ctx.editReply({ content: "Baka, that repository doesn't exist." });
+        if (!repoData.id) return await ctx.send({ content: "Baka, that repository doesn't exist." });
         // small methods
         // format bype to human readable size
         const formatBytes = (bytes) => {
@@ -176,7 +213,7 @@ export default class Utility extends YorSlashCommand {
           return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
         };
         const size = formatBytes(repoData.size);
-        const license = repoData.license && repoData.license.name && repoData.license.url ? `[${repoData.license.name}](${repoData.license.url})` : repoData.license && repoData.license.name || "None";
+        const license = repoData.license.name;
         // make embed
         const embed = new EmbedBuilder()
           .setColor(util.color)
@@ -184,24 +221,36 @@ export default class Utility extends YorSlashCommand {
           .setTitle(`${repoData.full_name}`)
           .setURL(repoData.html_url)
           .setThumbnail(repoData.owner.avatar_url)
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
           .setTimestamp()
-          .setDescription(
-            `${repoData.fork ? `***Forked** from **[${repoData.parent.full_name}](${repoData.parent.html_url})**.*` : "*Parent repository.*"}\n\n` +
-            `**• Language:** ${repoData.language || "Unknown"}\n` +
-            `**• Forks:** ${repoData.forks_count.toLocaleString()}\n` +
-            `**• License:** ${license}\n` +
-            `**• Open Issues:** ${repoData.open_issues.toLocaleString()}\n` +
-            `**• Watchers:** ${repoData.subscribers_count.toLocaleString()}\n` +
-            `**• Stars:** ${repoData.stargazers_count.toLocaleString()}\n` +
-            `**• Size:** ${size}\n` +
-            `**• Archive Status:** ${repoData.archived ? "Yes" : "No"}\n` +
-            `**• Disabled?** ${repoData.disabled ? "Yes" : "No"}\u200b`
-          )
+          .setDescription(`${repoData.description}\n\n`)
+          .addFields([
+            {
+              name: "\u2000",
+              value: '```fix\n' + Object.entries({
+                "Language": repoData.language || "Unknown",
+                "Forks": repoData.forks_count.toLocaleString(),
+                "License": license,
+                "Open Issues": repoData.open_issues.toLocaleString(),
+                "Watchers": repoData.subscribers_count.toLocaleString(),
+                "Stars": repoData.stargazers_count.toLocaleString(),
+                "Size": size,
+                "Archived?": repoData.archived ? "Yes" : "No",
+                "Disabled?": repoData.disabled ? "Yes" : "No",
+                "Forked?": repoData.fork ? "Yes" : "No"
+              }).map(([key, value]) => {
+                const cwidth = 30;
+                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
+              }).join('\n') + '```'
+            }
+          ])
         // send it
-        await ctx.editReply({ embeds: [embed] })
+        await ctx.send({ embeds: [embed] })
       } else if (sub == "npm") {
-        const name = ctx.getString("name");
+        const name = ctx.getOption("name");
         // call api
         const rawData = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(name)}&size=1`, {
           headers: {
@@ -213,7 +262,7 @@ export default class Utility extends YorSlashCommand {
         const score = rawData.objects[0].score;
         let maintainers = [];
         // check repo
-        if (!npmData || npmData.length < 1) return await ctx.editReply({ content: "Baka, that's an invalid repository. Or did you make a typo?" });
+        if (!npmData || npmData.length < 1) return await ctx.send({ content: "Baka, that's an invalid repository. Or did you make a typo?" });
         // push maintainers
         for (let n = 0; n < npmData.maintainers.length; n++) {
           maintainers.push("`" + npmData.maintainers[n].username + "`")
@@ -226,25 +275,38 @@ export default class Utility extends YorSlashCommand {
           .setAuthor({ name: "npm Registry", iconURL: 'https://i.imgur.com/24yrZxG.png' })
           .setTitle(`${npmData.name}`)
           .setURL(`https://www.npmjs.com/package/${npmData.name}`)
-          .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
           .setTimestamp()
           .setDescription(
             `${util.textTruncate(npmData.description, 75)}\n\n` +
-            `**• Version:** ${npmData.version || "Unknown"}\n` +
-            `**• Author:** ${npmData.publisher.username}\n` +
-            `**• Modified:** ${format(parseISO(npmData.date), 'EEEE, do MMMM yyyy')}\n` +
-            `**• Score:** ${(score.final * 100).toFixed(1)}%\n` +
-            `**• Maintainers:** ${maintainers.join(', ')}\n` +
-            `**• Keywords:** ${npmData.keywords && npmData.keywords.length > 0 ? `${keywords}` : "None"}`
+            `**Keywords:** ${npmData.keywords && npmData.keywords.length > 0 ? `${keywords}` : "None"}\n` +
+            `**Maintainers:** ${maintainers.join(", ")}`
           )
+          .addFields([
+            {
+              name: "\u2000",
+              value: '```fix\n' + Object.entries({
+                "Version": npmData.version || "Unknown",
+                "Author": npmData.publisher.username,
+                "Modified": format(parseISO(npmData.date), 'EEEE, do MMMM yyyy'),
+                "Score": (score.final * 100).toFixed(1)
+              }).map(([key, value]) => {
+                const cwidth = 40;
+                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
+
+                return '• ' + name + ':' + spacing + value;
+              }).join('\n') + '```'
+            }
+          ])
         // send embed
-        await ctx.editReply({ embeds: [npmEmbed] });
+        await ctx.send({ embeds: [npmEmbed] });
       } else if (sub == "urban") {
-        const query = ctx.getString("word");
+        const query = ctx.getOption("word");
         // base api url
         const apiUrl = `https://api.urbandictionary.com/v0/define?term=${query}`;
         // check for nsfw
-        if (util.isProfane(query) && !ctx.channel.nsfw) return await ctx.editReply({ content: "Hey, I won't search for that! Don't tell me to search for bad words in here!" });
+        if (util.isProfane(query) && !ctx.channel.nsfw) return await ctx.send({ content: "Hey, I won't search for that! Don't tell me to search for bad words in here!" });
         // else just continue
         // fetch the urban definition
         const data = await fetch(apiUrl, {
@@ -260,41 +322,41 @@ export default class Utility extends YorSlashCommand {
             .setTitle(`Definition of ${definition.word}`)
             .setURL(definition.urbanURL)
             .setThumbnail("https://static.wikia.nocookie.net/logopedia/images/a/a7/UDAppIcon.jpg")
-            .setFooter({ text: `Requested by ${ctx.member.raw.user.username}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+            .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
             .addFields([
               {
                 name: 'Definition',
-                value: ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
+                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
                   ? util.textTruncate(definition.definition)
-                  : util.textTruncate(util.clean(definition.definition), 1000),
+                  : util.textTruncate(util.cleanProfane(definition.definition), 1000)}` + '\n```',
               },
               {
                 name: 'Examples',
-                value: ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
+                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
                   ? util.textTruncate(definition.example || 'N/A')
-                  : util.textTruncate(util.clean(definition.example || 'N/A'), 1000),
+                  : util.textTruncate(util.cleanProfane(definition.example || 'N/A'), 1000)}` + '\n```',
               },
               {
                 name: 'Submitted by',
-                value: ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
+                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
                   ? util.textTruncate(definition.author || 'N/A', 250)
-                  : util.textTruncate(util.clean(definition.author || 'N/A'), 250),
+                  : util.textTruncate(util.cleanProfane(definition.author || 'N/A'), 250)}` + '\n```',
               },
               {
                 name: 'Profane Word?',
                 value: 'Yell at my sensei through `/my fault`, the patch should be added in a few working days.',
               },
             ]);
-          return await ctx.editReply({ embeds: [embed] });
+          return await ctx.send({ embeds: [embed] });
         } else {
-          return await ctx.editReply({ content: "Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means." });
+          return await ctx.send({ content: "Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means." });
         }
       } else if (sub == "ask") {
-        const question = ctx.getString("question");
+        const question = ctx.getOption("question");
         // restrict length
-        if (question.length > 180) return await ctx.editReply({ content: "Write a shorter question. I'm not that bothered to work with only you, I got works to do." })
+        if (question.length > 180) return await ctx.send({ content: "Write a shorter question. I'm not that bothered to work with only you, I got works to do." })
         // check for nsfw
-        if (util.isProfane(question) && !ctx.channel.nsfw) return await ctx.editReply({ content: "Hey, I can't help you with that! Don't tell me to deal with bad words in here!" });
+        if (util.isProfane(question) && !ctx.channel.nsfw) return await ctx.send({ content: "Hey, I can't help you with that! Don't tell me to deal with bad words in here!" });
         // ask gemini things
         const data = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${ctx.client.env["GEMINI_KEY"]}`, {
           method: 'POST',
@@ -318,31 +380,49 @@ export default class Utility extends YorSlashCommand {
             }
           })
         }).then(res => res.json());
-        await ctx.editReply({ content: data.candidates[0].content.parts[0].text }).catch(async err => {
+        await ctx.send({ content: data.candidates[0].content.parts[0].text }).catch(async err => {
           console.log(err);
-          await ctx.editReply({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/my fault`." });
+          await ctx.send({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/my fault`." });
         });
       } else if (sub == "profile") {
         // all of these information are not required
         const user = ctx.getUser("user") || ctx.user;
         // 1. use specified mode OR 2. use user mode OR 3. use default mode "taiko"
         // not supporting std yet
-        const mode = ctx.getString("mode") || ctx.user.settings.defaultMode || "taiko";
+        const mode = ctx.getOption("mode") || ctx.user.settings ? ctx.user.settings.defaultMode : "taiko";
         // check wallet
         // make user entry if something happens
         // create an initial settings variable to use along with reply
         const initialSettings = user.settings;
-        if (!initialSettings || !initialSettings.bankOpened) user.update({ bankOpened: 1, bankBalance: 100 });
+        if (!initialSettings || !initialSettings.bankOpened) await user.update({ bankOpened: 1, bankBalance: 100 });
         // check if user has osu profile
         // if not we mock data to all 0
         // we're gonna fetch a lot of things
-        let data, profile;
+        let profile;
+        // define the presets
+        // define data to send to renderer
+        // as cfworkers cannot render images with canvas
+        // we're using this instead
+        let data = {
+          avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")) : ctx.user),
+          name: user != ctx.user ? (ctx.getUser("user")).username : ctx.user.username,
+          color: user.settings?.profileColor || "rgb(105, 105, 105)",
+          background: user.settings?.background || "https://i.imgur.com/WCgt3Ql.jpeg",
+          pattern: user.settings?.pattern || "https://i.imgur.com/nx5qJUb.png",
+          emblem: user.settings?.emblem || undefined,
+          owns: user.settings?.owns ? user.settings.owns.toString().split(",").length : "0",
+          bank: {
+            wallet: user.settings?.pocketBalance || "0",
+            bank: user.settings?.bankBalance || "100"
+          },
+          key: ctx.client.env["RENDER_KEY"]
+        };
         // only fetch plays if they have set their osu info
-        if (user.settings.inGameName) {
+        if (user.settings && user.settings.inGameName) {
           profile = await fetch(`https://osu.ppy.sh/api/get_user?k=${ctx.client.env["OSU_KEY"]}&u=${user.settings.inGameName}&m=${util.osuNumberModeFormat(mode)}`).then(async res => await res.json());
           profile = profile[0];
           // if still no data
-          if (!profile.username) return await ctx.editReply({ content: "Baka, that user doesn't exist." });
+          if (!profile.username) return await ctx.send({ content: "Baka, that user doesn't exist." });
           // login with oapiv2
           // to get top plays to push into
           let loginCredentials = await fetch("https://osu.ppy.sh/oauth/token", {
@@ -364,78 +444,34 @@ export default class Utility extends YorSlashCommand {
             }
           }).then(async res => await res.json());
           // check if best is less than 50
-          if (best.length < 50) return await ctx.editReply({ content: `Baka, you only have **${best.length}**/50 plays (your username is set to **${profile.username}**). You can't render a card for **${mode}** yet.` });
+          if (best.length < 50) return await ctx.send({ content: `Baka, you only have **${best.length}**/50 plays (your username is set to **${profile.username}**). You can't render a card for **${mode}** yet.` });
           // set to data
-          // define data to send to renderer
-          // as cfworkers cannot render images with canvas
-          // we're using this instead
-          data = {
-            avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")).raw : ctx.member.raw.user),
-            name: user != ctx.user ? (ctx.getUser("user")).raw.username : ctx.member.raw.user.username,
-            osu: {
-              name: profile.username,
-              best: best,
-              mode: util.osuNumberModeFormat(mode)
-            },
-            color: user.settings.profileColor || "rgb(105, 105, 105)",
-            background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
-            pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
-            emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns ? user.settings.owns.toString().split(",").length : "0",
-            bank: {
-              wallet: user.settings.pocketBalance || "0",
-              bank: user.settings.bankBalance || "0"
-            },
-            key: ctx.client.env["IMG_KEY"]
-          };
+          data = { ...data, osu: { name: profile.username, best: best, mode: util.osuNumberModeFormat(mode) } };
         }
         // if user has no osu profile
         // mock it
         else {
-          data = {
-            avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")).raw : ctx.member.raw.user),
-            name: user != ctx.user ? (ctx.getUser("user")).raw.username : ctx.member.raw.user.username,
-            osu: {
-              name: undefined,
-              best: undefined,
-              mode: undefined
-            },
-            color: user.settings.profileColor || "rgb(105, 105, 105)",
-            background: user.settings.background || "https://i.imgur.com/WCgt3Ql.jpeg",
-            pattern: user.settings.pattern || "https://i.imgur.com/nx5qJUb.png",
-            emblem: user.settings.emblem || undefined,
-            owns: user.settings.owns ? user.settings.owns.toString().split(",").length : "0",
-            bank: {
-              wallet: user.settings.pocketBalance || "0",
-              bank: user.settings.bankBalance || "0"
-            },
-            key: ctx.client.env["IMG_KEY"]
-          };
+          data = { ...data, osu: { name: undefined, best: undefined, mode: undefined } };
         };
         // ask renderer to process our data
         // cfworkers does not count fetch() processes to cpu time
         // (source: https://stackoverflow.com/questions/68720436/what-is-cpu-time-and-wall-time-in-the-context-of-cloudflare-worker-request)
         // so we are good
-        const image = await fetch("https://unusual-tan-threads.cyclic.app/render", {
+        const rawImage = await fetch("https://unusual-tan-threads.cyclic.app/render", {
           method: "POST",
-          body: JSON.stringify({
-            data: data
-          }), 
-          headers: {
-            'Content-Type': 'application/json',
-          },
+          body: JSON.stringify({ data: data }), 
+          headers: { 'Content-Type': 'application/json' },
         }).then(async res => await res.arrayBuffer());
-        // load image data
-        const attachment = {
-          contentType: "Buffer",
-          data: image,
-          name: "profile.png"
-        };
-        // send
+        // get reply context to provide info
         let replyContext;
         if (!initialSettings) replyContext = "**Tip:** A bank has already been opened for you upon this execution! You now have **¥100** in your bank.";
         else replyContext = "**Tip:** Background looks wrong? Try resizing it. The area's resolution is **475x250**."
-        await ctx.editReply({ content: `${replyContext}`, files: [attachment] });
+        // upload image to imgbb
+        const image = await util.upload(Buffer.from(rawImage).toString('base64'));
+        // make new embed
+        const embed = new EmbedBuilder().setImage(image).setColor(util.color);
+        // send it
+        return ctx.send({ content: `${replyContext}`, embeds: [embed] });
       }
     }
   }
