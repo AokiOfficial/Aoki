@@ -402,7 +402,7 @@ export default class Anime extends SlashCommand {
           const res = await aniFetch.fetch(Watching, { watched, page });
           // if there's some errors from anilist
           if (!res) {
-            return await ctx.send({ content: "O-Oh, AniList returned an error. Maybe try again later?\n\n||Issue didn't resolve for more than an hour? Use `/bot feedback` to notice my sensei!||" });
+            return await ctx.send({ content: "O-Oh, AniList returned an error. Maybe try again later?\n\n||Issue didn't resolve for more than an hour? Use `/my fault` to notice my sensei!||" });
             // else if there's actually nothing
           } else if (!entries.length && !res.data.Page.media.length) {
             return await ctx.send({ content: "Baka, this server has no anime subscriptions." });

@@ -1,5 +1,5 @@
 <h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Neko</br></h1>
-<p align="center">A multi-purpose bot to spice up your Discord experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
+<p align="center">A multi-purpose Discord application to spice up your experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
   <a href="https://forthebadge.com/">
     <img src="https://i.imgur.com/JJkdjKu.png" height="36"/>
@@ -16,20 +16,17 @@ Serious, I'm writing Neko to be compatible with Cloudflare Workers.
 
 I initially wrote this in CommonJS, but many and many and many problems arised about incompatibility, most of them came from Workers. Therefore I changed to ESModule.
 
-It took me about a week just to understand the logic in writing Workers-compatible Discord bot, and without the beauty core of [slash-create](https://github.com/Snazzah/slash-create) and Discord official documentation on [receiving and responding to interactions](https://discord.com/developers/docs/interactions/receiving-and-responding), this wouldn't even be possible.
+It took me about a week just to understand the logic in writing Workers-compatible Discord app, and without the beauty core of [slash-create](https://github.com/Snazzah/slash-create) and Discord official documentation on [receiving and responding to interactions](https://discord.com/developers/docs/interactions/receiving-and-responding), this wouldn't even be possible.
+
+Setup procedures and extra information are in the [wiki page](https://github.com/NekoOfficial/Neko.cf/wiki), take a look there.
 
 ---
 
 ## About the code & license
 
-I don't expect the code to be readable or clean, a lot of logic stays behind an util function in one single settings file. To ease out the process of maintaining and reading, I put comments on every functions in there.
+I don't expect the code to be readable or clean, a lot of logic stays behind an util function in [Utilities.js](/src/struct/Utilities.js). To ease out the process of maintaining and reading, I put comments on every functions in there.
 
 License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other requirements, this is a learning project pushed to production. A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
-
----
-
-## Setup
-Take a look at the [wiki page](https://github.com/NekoOfficial/Neko.cf/wiki). It has been moved there.
 
 ---
 ## Database
@@ -43,7 +40,6 @@ It's built-in, so there's no need to install anything. Check it out by doing:
 wrangler d1
 ```
 
-
 About where all the JSONs are, they are stored online as the ever-expanding need of custom responses. `n:point` serves as a very good and simple JSON bin - and you can directly access anything with only the ID that you can predefine. One thing to note though, you **must lock any JSON made there**.
 
 The function to access all of them are defined as `Util#getStatic()`.
@@ -53,7 +49,7 @@ The function to access all of them are defined as `Util#getStatic()`.
 
 **Q:** Why not any other serverless platforms, like Vercel or AWS Lambda?
 
-- You must have heard of **"cold starts"**. Serverless functions from there take time to turn their service up, *only then* it runs your code. That is not good for a Dicord bot where it requires you to initially respond to an interaction within 3 seconds.
+- You must have heard of **"cold starts"**. Serverless functions from there take time to turn their service up, *only then* it runs your code. That is not good for a Dicord app where it requires you to initially respond to an interaction within 3 seconds.
 - Cloudflare instead uses **V8 Isolates**, developed by Google. This is a game changer as we say goodbye to cold starts. Code runs within *miliseconds*.
 - There is a very big downside though, you are very limited in dependencies. Your package has something to do with polyfill? Too bad. Get that package out or it won't compile.
 

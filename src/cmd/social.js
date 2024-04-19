@@ -210,7 +210,7 @@ export default class Social extends SlashCommand {
         else if (lastStealLevel == "hard" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("2h")) 
           return await ctx.send({ content: `Baka, you cannot steal yet. You last picked \`Insane\` and therefore you have to wait **2 hours** before trying again.` }); 
         // if victim has no pocket money, or too little, reject
-        // we put it here because the 10 minutes can override any long duration, just execute on a bot
+        // we put it here because the 10 minutes can override any long duration
         if (!stealee.settings) {
           return await ctx.send({ content: "They don't even have a wallet, good for them. And you, you just failed, but you can't know that, so keep going if you wish." });
         } else if (stealee.settings.pocketBalance < 50 || stealee.settings.pocketBalance == 0) {

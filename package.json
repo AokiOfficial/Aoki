@@ -15,6 +15,7 @@
   "keywords": [
     "discord",
     "discord-bot",
+    "discord-app",
     "serverless",
     "cloudflare-workers"
   ],
