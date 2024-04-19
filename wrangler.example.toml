@@ -1,6 +1,6 @@
 name = "[the name of your Cloudflare Worker]"
 # don't touch anything here!
-main = "./dist/main.js"
+main = "./src/main.js"
 compatibility_date = "2023-10-22"
 node_compat = true
 

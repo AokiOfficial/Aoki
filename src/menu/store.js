@@ -1,4 +1,3 @@
-import { YorInteractionComponent } from "yor.ts";
 import {
   EmbedBuilder,
   StringSelectMenuBuilder as MenuBuilder,
@@ -7,33 +6,18 @@ import {
 } from "@discordjs/builders";
 import { MessageFlags } from "discord-api-types/v10";
 
-// we have to put components inside yet another folder
-// then import it for use in our Client.js
-// there's no such thing as "events" here like d.js
-// firstly, we define the id of the component
-// then if we ever have to duplicate an entry, we check if it's coming from the specific type
-// yor.ts supports both button and select menu
-export default class Custom extends YorInteractionComponent {
-  id = "store"
-  execute = async ctx => {
+export default {
+  execute: async (ctx) => {
     // define util
-    const util = ctx.client.util;
-    // defer reply
-    await ctx.defer();
+    const util = ctx.creator.util;
     // define what option is selected
     // as this command has only one selection at a time, this is usable
-    const option = ctx.raw.data.values[0];
+    const option = ctx.values[0];
     // find the option from the store json
     // one liner issue
     const storeEntry = ((await util.getStatic("store")).filter(obj => { return obj.name.toLowerCase() == option }))[0];
     // make preset embed
     const preset = async function ({ item, description, image }) {
-      const img = await fetch(image).then(async res => await res.arrayBuffer());
-      const attachment = {
-        contentType: "Buffer",
-        data: img,
-        name: "preview.png"
-      };
       // make select menu
       // if we make buttons users can misclick at it without confirm
       // so we make a select menu instead to "pseudo-confirm" - users click twice to buy
@@ -52,15 +36,14 @@ export default class Custom extends YorInteractionComponent {
         ]);
       const action = new ActionRowBuilder().addComponents(selectBuy);
       const embed = new EmbedBuilder()
-        .setAuthor({ name: `Nya Store | ${item}`, iconURL: util.getUserAvatar(ctx.member.raw.user) })
+        .setAuthor({ name: `Nya Store | ${item}`, iconURL: util.getUserAvatar(ctx.user) })
         .setTimestamp().setColor(util.color)
-        .setFooter({ text: `Requested by ${ctx.member.raw.user.username}` })
+        .setFooter({ text: `Requested by ${ctx.user.username}` })
         .setDescription(description)
-        .setImage("attachment://preview.png");
-      return await ctx.followUp({
+        .setImage(image);
+      return await ctx.send({
         embeds: [embed],
         components: [action],
-        files: [attachment],
         flags: MessageFlags.Ephemeral
       });
     };
