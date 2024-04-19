@@ -4,32 +4,27 @@ export default {
   client() { return this.creator },
   async guild() {
     const guildId = this.guildID;
-    // scope bind
-    const c = this;
-    // fetch the guild
-    let guild = await this.creator.util.call({
-      method: "guild",
-      param: [guildId]
-    });
+    // scope binding
+    const scopedThis = this;
     // super dodgy code piece
-    guild = {
-      get settings() {
-        return c.creator.settings.guilds.get(guildId);
-      },
-      wipe() {
-        return c.creator.settings.guilds.delete(guildId);
-      },
+    return {
+      // spread all fetched guild properties
+      ...await this.creator.util.call({ method: "guild", param: [guildId] }),
+      // extensions to use
+      // get guild settings
+      get settings() { return scopedThis.creator.settings.guilds.get(guildId) },
+      // wipe guild settings
+      wipe() { return scopedThis.creator.settings.guilds.delete(guildId) },
+      // update guild settings
+      update(obj) { return scopedThis.creator.settings.guilds.update(guildId, obj) },
+      // get guild anischedules
       get schedules() {
         return (async () => {
-          const query = await c.creator.db.prepare("SELECT * FROM guilds WHERE id = ?1;").bind(guildId).all();
+          const query = await scopedThis.creator.db.prepare("SELECT * FROM guilds WHERE id = ?1;").bind(guildId).all();
           return query.results;
         })();
-      },
-      update(obj) {
-        return c.creator.settings.guilds.update(guildId, obj);
       }
     };
-    return guild;
   },
   /**
    * Gets a subcommand

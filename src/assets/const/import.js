@@ -106,6 +106,7 @@ const fun = new SlashCommandBuilder()
       .setRequired(true)  
     )  
   )
+  .toJSON()
 
 const util = new SlashCommandBuilder()
   .setName("utility")
@@ -167,6 +168,7 @@ const util = new SlashCommandBuilder()
       ])  
     )
   )
+  .toJSON()
 
 const my = new SlashCommandBuilder()
   .setName("my")
@@ -203,6 +205,7 @@ const my = new SlashCommandBuilder()
     .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
     .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
   )
+  .toJSON()
 
 const anime = new SlashCommandBuilder()
   .setName("anime")
@@ -316,73 +319,7 @@ const anime = new SlashCommandBuilder()
       .setDescription("remove the server's watchlist.")  
     )
   )
-
-const moderate = new SlashCommandBuilder()
-  .setName("moderate")
-  .setDescription("moderation tools.")
-  .addSubcommand(cmd => cmd
-    .setName("warn")
-    .setDescription("warn a user, and log their infraction.")
-    .addUserOption(option => option
-      .setName("member")
-      .setDescription("...just the server member to warn.")
-      .setRequired(true)
-    )
-    .addStringOption(option => option
-      .setName("reason")
-      .setDescription("...well, this is recommended to put in.")
-    )
-    .addBooleanOption(option => option
-      .setName("notify")
-      .setDescription("should I notify the user? Defaults to no.")
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("ban")
-    .setDescription("ban a user, and log it to their infraction data.")
-    .addUserOption(option => option
-      .setName("member")
-      .setDescription("...just the server member to ban.")
-      .setRequired(true)
-    )
-    .addStringOption(option => option
-      .setName("reason")
-      .setDescription("...well, this is now enforced.")
-      .setRequired(true)
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("clear")
-    .setDescription("clear messages in this channel.")
-    .addIntegerOption(option => option
-      .setName("number")
-      .setDescription("...just the number of messages to delete. Max 99, least 1.")
-      .setRequired(true)
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("wipe")
-    .setDescription("deletes a channel, then clone that channel with NO CONTENT in it.")
-    .addChannelOption(option => option
-      .setName("channel")
-      .setDescription("...literally the channel to wipe.")
-      .setRequired(true)
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("kick")
-    .setDescription("kick a user, and log it to their infraction data.")
-    .addUserOption(option => option
-      .setName("member")
-      .setDescription("...just the server member to kick.")
-      .setRequired(true)
-    )
-    .addStringOption(option => option
-      .setName("reason")
-      .setDescription("...well, this is now enforced.")
-      .setRequired(true)
-    )
-  )
+  .toJSON()
 
 const osugame = new SlashCommandBuilder()
   .setName("osu")
@@ -422,6 +359,98 @@ const osugame = new SlashCommandBuilder()
       ])
     )
   )
+  // future plan
+  // .addSubcommand(cmd => cmd
+  //   .setName("beatmap")
+  //   .setDescription("search for a beatmap.")
+  //   .addStringOption(option => option
+  //     .setName("query")
+  //     .setDescription("search query.")
+  //     .setRequired(true)
+  //   )
+  //   .addStringOption(option => option
+  //     .setName("mode")
+  //     .setDescription("gamemode to seach for.")  
+  //     .addChoices(...[
+  //       { name: "standard", value: "0" },
+  //       { name: "taiko", value: "1" },
+  //       { name: "catch", value: "2" },
+  //       { name: "mania", value: "3" }
+  //     ])
+  //   )
+  //   .addStringOption(option => option
+  //     .setName("status")
+  //     .setDescription("rank status") 
+  //     .addChoices(...[
+  //       { name: "any", value: "any" },
+  //       { name: "ranked", value: "ranked" },
+  //       { name: "loved", value: "loved" },
+  //       { name: "qualified", value: "qualified" },
+  //       { name: "pending", value: "pending" },
+  //       { name: "graveyard", value: "graveyard" }
+  //     ])
+  //   )
+  //   .addStringOption(option => option
+  //     .setName("sort")
+  //     .setDescription("sorting mode")  
+  //     .addChoices(...[
+  //       { name: "artist", value: "artist" },
+  //       { name: "favorites", value: "favorites" },
+  //       { name: "playcount", value: "playcount" },
+  //       { name: "ranked date", value: "ranked_date" },
+  //       { name: "rating", value: "rating" },
+  //       { name: "relevance", value: "relevance" },
+  //       { name: "stars", value: "stars" },
+  //       { name: "title", value: "title" }
+  //     ])
+  //   )
+  //   .addStringOption(option => option
+  //     .setName("genre")
+  //     .setDescription("genre of the map")  
+  //     .addChoices(...[
+  //       { name: "any", value: "artist" },
+  //       { name: "anime", value: "anime" },
+  //       { name: "classical", value: "classical" },
+  //       { name: "electronic", value: "stars" },
+  //       { name: "folk", value: "folk" },
+  //       { name: "hiphop", value: "hiphop" },
+  //       { name: "jazz", value: "jazz" },
+  //       { name: "metal", value: "metal" },
+  //       { name: "novelty", value: "novelty" },
+  //       { name: "pop", value: "pop" },
+  //       { name: "rock", value: "rock" },
+  //       { name: "video game", value: "video_game" },
+  //       { name: "other", value: "other" },
+  //       { name: "unspecified", value: "unspecified" }
+  //     ])
+  //   )
+  //   .addStringOption(option => option
+  //     .setName("language")
+  //     .setDescription("language of the song")  
+  //     .addChoices(...[
+  //       { name: "any", value: "artist" },
+  //       { name: "chinese", value: "chinese" },
+  //       { name: "english", value: "english" },
+  //       { name: "french", value: "french" },
+  //       { name: "german", value: "german" },
+  //       { name: "italian", value: "italian" },
+  //       { name: "japanese", value: "japanese" },
+  //       { name: "korean", value: "korean" },
+  //       { name: "polish", value: "polish" },
+  //       { name: "russian", value: "russian" },
+  //       { name: "spanish", value: "spanish" },
+  //       { name: "swedish", value: "swedish" },
+  //       { name: "instrumental", value: "instrumental" },
+  //       { name: "other", value: "other" },
+  //       { name: "unspecified", value: "unspecified" }
+  //     ])
+  //   )
+  //   .addBooleanOption(option => option
+  //     .setName("storyboard")
+  //     .setDescription("whether the map should have a storyboard")
+  //   )
+  // )
+  .toJSON()
 
 const social = new SlashCommandBuilder()
   .setName("social")
@@ -546,5 +575,6 @@ const social = new SlashCommandBuilder()
       .setDescription("perform a monthly paycheck.")  
     )
   )
+  .toJSON()
 
-export { fun, util, my, anime, moderate, osugame, social };
+export { fun, util, my, anime, osugame, social };

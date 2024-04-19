@@ -1,6 +1,7 @@
 // we work with esmodule now
-// commonjs is not recommended for serverless
-// and we move from commonjs up anyway
+// slash-create/web is a web interface for discord apps
+// so things like cfworkers or vercel serverless can work
+// build issues will raise if you use the normal standard lib
 import { SlashCreator, CloudflareWorkerServer } from "slash-create/web";
 import Utility from "./Utilities";
 import Database from "./Database";
@@ -11,13 +12,12 @@ import Fun from "../cmd/fun";
 import Util from "../cmd/utility";
 import My from "../cmd/my";
 import Anime from "../cmd/anime";
-// import Moderate from "../cmd/moderate";
 import OsuGame from "../cmd/osugame";
-// import Social from "../cmd/social";
-// import select menus
-// import Custom from "../menu/store";
-// import Buy from "../menu/buy";
-// import Acknowledged from "../menu/acknowledged";
+import Social from "../cmd/social";
+// import components
+import store from "../menu/store";
+import buy from "../menu/buy";
+import acknowledged from "../menu/acknowledged";
 
 export default class NekoClient extends SlashCreator {
   // we walk exactly like how we written server neko
@@ -48,18 +48,20 @@ export default class NekoClient extends SlashCreator {
   async start() {
     // because using fs is against cfworkers' global async i/o rule
     // we have to call every single command in here
-    this.withServer(this.workers).registerCommands([ Anime, Fun, My, Util, OsuGame
-      // new Moderate(),
-      // new Social()
-    ]);
-    // register components
-    // this.registerGlobalComponent([
-    //   new Custom(),
-    //   new Buy(),
-    //   new Acknowledged
-    // ]);
-    // handle events
-    this.on('warn', (message) => console.warn(message));
+    // that probably yell'd "make more subcommands" strong enough
+    this.withServer(this.workers).registerCommands([ Anime, Fun, My, Util, OsuGame, Social ]);
+    // handle component interactions
+    this.on('componentInteraction', async ctx => {
+      // make a function map
+      // later on we'll only have to import and add entries
+      const functions = { "store": store, "buy": buy, "acknowledged": acknowledged };
+      // select the according function
+      const interaction = functions[ctx.customID];
+      // execute the function
+      return interaction.execute(ctx);
+    });
+    // handle other events
+    // we'll only handle errors in prod
     this.on('error', (error) => console.error(error.stack || error.toString()));
     this.on('commandError', (command, error) =>
       console.error(`${command.commandName}:`, error.stack || error.toString())
@@ -67,7 +69,10 @@ export default class NekoClient extends SlashCreator {
   };
   async cron(event, env, ctx) {
     if (event.cron == "0 */6 * * *") {
-      let { approximate_guild_count } = await this.util.call({ method: "currentApplication" });
+      // if there's no dbl token just skip it
+      if (!env.DBL_TOKEN) return new Response("No DBL token present.");
+      // else do the posting like normal
+      const { approximate_guild_count } = await this.util.call({ method: "currentApplication" });
       const res = await fetch("https://top.gg/api/bots/stats", {
         method: "POST",
         headers: {
