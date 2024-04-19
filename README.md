@@ -12,11 +12,11 @@
 ---
 ## About this project
 
-Serious, I'm writing Neko to be compatible with Cloudflare Workers. I use a library, of course, [yor.ts](https://github.com/OreOreki/yor.ts). The package itself is not perfect *just yet* for me, so I still use the old-school extend methods. You can find the extensions I frequently use in my code in [src/struct/extends](/src/struct/extends/).
+Serious, I'm writing Neko to be compatible with Cloudflare Workers.
 
 I initially wrote this in CommonJS, but many and many and many problems arised about incompatibility, most of them came from Workers. Therefore I changed to ESModule.
 
-It took me about a week just to understand the logic in writing Workers-compatible Discord bot, and without the beauty core of [yor.ts](https://github.com/OreOreki/yor.ts) and Discord official documentation on [receiving and responding to interactions](https://discord.com/developers/docs/interactions/receiving-and-responding), this wouldn't even be possible.
+It took me about a week just to understand the logic in writing Workers-compatible Discord bot, and without the beauty core of [slash-create](https://github.com/Snazzah/slash-create) and Discord official documentation on [receiving and responding to interactions](https://discord.com/developers/docs/interactions/receiving-and-responding), this wouldn't even be possible.
 
 ---
 
@@ -29,52 +29,7 @@ License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other req
 ---
 
 ## Setup
-
-### Automated way
-
-> [!IMPORTANT]
-> Before continuing, make sure you have all example files edited and with the word `example` removed from the file name.
-
-The local setup process is automated in setup files provided in the root of this repository. Run the file appropriately depending on your system, e.g. Windows users should run `setup.bat`, and Linux users should run `setup`.
-
-> [!CAUTION]
-> Linux users should modify the `setup` bash file to use the correct terminal command if you're not using the GNOME user interface, and grant the file execution permission.
-
-For production deployment, I *don't recommend* you to use this in production; but this option is available. Simply run:
-
-```bash
-npm run deploy
-```
-
-### What's next? I see a new terminal opening!
-
-<img src=https://i.imgur.com/a0MaNWA.png>
-
-It should look like this inside while developing locally. The URL in the `Forwarding` field, ending with `.ngrok-free.app`, is your local URL exposed to the Internet. You will use that URL to put inside the `Application Command URL` field, on your Discord Application page.
-
-**Why can't you use `localhost:8787`?** It's not exposed to Discord. Simply put, it can't see your local address.
-
-### So... what do I do with production?
-
-> [!WARNING]
-> Make sure to fill `wrangler.example.toml` completely, remove the `example` from the name and double-check to make sure the information are correct!
-
-Upon running `npm run deploy`, it will end with this line:
-
-```bash
-Current deploy URL: https://something.fancy.workers.dev/
-```
-
-That's the URL you'll be using to put inside the `Application Command URL` field, on your Discord Application page.
-
-### What's the `build.js` file in the `src` folder?
-
-Cloudflare Workers requires your entire script to be compiled into one single `.js` file. That `build` file serves that exact purpose.
-
-It will be compiled (and made compact) to a new folder named `dist`. Shorthand for `distribution`, by the way.
-
-> [!CAUTION]
-> DO NOT edit `/dist/main.js` and/or `/dist/main.js.map` directly! To make changes, edit the source code, and rebuild the project.
+Take a look at the [wiki page](https://github.com/NekoOfficial/Neko.cf/wiki). It has been moved there.
 
 ---
 ## Database
@@ -96,16 +51,11 @@ The function to access all of them are defined as `Util#getStatic()`.
 ---
 ## Common questions
 
-**Q:** Why not `slash-create`?
-
-- It is very troublesome figuring out how to write a Workers-compatible bot with that library. I continuously receive errors about Workers complaining nothing is polyfilled, when there's not a single polyfill for it!
-- That issue persists *within* the library itself no matter if you choose to write with **CommonJS or ESModule**! Only when you write your code in TypeScript and include defining files, it will work. I personally don't like TypeScript as I never had time to properly type all types.
-
 **Q:** Why not any other serverless platforms, like Vercel or AWS Lambda?
 
 - You must have heard of **"cold starts"**. Serverless functions from there take time to turn their service up, *only then* it runs your code. That is not good for a Dicord bot where it requires you to initially respond to an interaction within 3 seconds.
 - Cloudflare instead uses **V8 Isolates**, developed by Google. This is a game changer as we say goodbye to cold starts. Code runs within *miliseconds*.
-- There is a very big downside though, you are very limited in dependencies. This project uses very raw files like the entire `jimp` library in one file. That's a hassle to commit, so you can just install `jimp` instead.
+- There is a very big downside though, you are very limited in dependencies. Your package has something to do with polyfill? Too bad. Get that package out or it won't compile.
 
 **Q:** Why so terrible code writing?
 
@@ -119,5 +69,5 @@ The function to access all of them are defined as `Util#getStatic()`.
 
 **Q:** I wanna contribute! How to do that?
 
-- That's great! There's a template ready for you to write a proper PR when you get on the tab, so there should be no major issues!
+- That's great, there's a template ready for you to write a proper PR when you get on the tab, so there should be no major issues.
 - I appreciate even tiny fixes about basically anything, so get going and jump right on it!
