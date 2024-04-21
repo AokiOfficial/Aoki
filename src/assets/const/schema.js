@@ -9,7 +9,7 @@
  * 4: future issues will arise as we come closer to r/w limit
  */ 
 // these tables will still have breaking changes
-const schema = async (pool) => {
+const initSchema = async (pool) => {
   const users = pool.prepare(`
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY NOT NULL UNIQUE,
@@ -58,4 +58,4 @@ const schema = async (pool) => {
   await pool.batch([guilds, users, members]); 
 }
 
-export default schema;
+export default initSchema;

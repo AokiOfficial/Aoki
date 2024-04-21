@@ -1,12 +1,12 @@
 {
   "name": "neko-cf",
-  "version": "1.1.0",
+  "version": "2.0.0",
   "description": "neko, but written to work in workers",
   "main": "src/main",
   "type": "module",
   "scripts": {
-    "dev": "node src/build & wrangler dev --test-scheduled",
-    "deploy": "node src/build & wrangler deploy"
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
   },
   "repository": {
     "type": "git",
@@ -15,6 +15,7 @@
   "keywords": [
     "discord",
     "discord-bot",
+    "discord-app",
     "serverless",
     "cloudflare-workers"
   ],
@@ -24,12 +25,10 @@
     "url": "https://github.com/NekoOfficial/Neko.cf/issues"
   },
   "homepage": "https://github.com/NekoOfficial/Neko.cf#readme",
-  "dependencies": {
-    "date-fns": "^3.3.1",
-    "yor.ts": "^0.0.8"
-  },
   "devDependencies": {
-    "esbuild": "^0.19.12",
-    "esbuild-plugin-polyfill-node": "^0.3.0"
+    "@discordjs/builders": "^1.7.0",
+    "@sapphire/snowflake": "^3.5.3",
+    "date-fns": "^3.3.1",
+    "slash-create": "^6.1.2"
   }
 }

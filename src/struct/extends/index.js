@@ -1,6 +1,10 @@
 // extending stuff
 // shortcut just to make my life easier
-import { CommandContext, User, Member, Guild } from "yor.ts";
+import { CommandContext, User, Member } from "slash-create/web";
+// this interface is not exported by the package
+// we have to extend it so the getMember() method can access
+// member's resolved settings
+import { ResolvedMember } from "../../../node_modules/slash-create/lib/structures/resolvedMember";
 const _defProp = Object.defineProperties;
 
 // instead of having to do ctx.get{type}Option(name, index, required?)
@@ -9,12 +13,11 @@ const _defProp = Object.defineProperties;
 // only have to be careful about commands in subcommand group colliding with subcommands
 import NekoCommandContext from "./CommandContext";
 _defProp(CommandContext.prototype, {
+  client: { get: NekoCommandContext.client },
+  guild: { get: NekoCommandContext.guild },
   getSubcommand: { value: NekoCommandContext.getSubcommand },
   getSubcommandGroup: { value: NekoCommandContext.getSubcommandGroup },
-  getString: { value: NekoCommandContext.getString },
-  getNumber: { value: NekoCommandContext.getNumber },
-  getInteger: { value: NekoCommandContext.getInteger },
-  getBoolean: { value: NekoCommandContext.getBoolean },
+  getOption: { value: NekoCommandContext.getOption },
   getUser: { value: NekoCommandContext.getUser },
   getMember: { value: NekoCommandContext.getMember },
   getChannel: { value: NekoCommandContext.getChannel },
@@ -26,25 +29,16 @@ _defProp(CommandContext.prototype, {
 import NekoUser from "./User";
 _defProp(User.prototype, {
   settings: { get: NekoUser.settings },
-  update: { value: NekoUser.update },
-  syncSettings: { value: NekoUser.syncSettings },
-  syncSettingsCache: { value: NekoUser.syncSettingsCache }
+  update: { value: NekoUser.update }
 });
 
 import NekoMember from "./Member";
 _defProp(Member.prototype, {
   settings: { get: NekoMember.settings },
-  update: { value: NekoMember.update },
-  syncSettings: { value: NekoMember.syncSettings },
-  syncSettingsCache: { value: NekoMember.syncSettingsCache },
-  permissions: { get: NekoMember.permissions }
+  update: { value: NekoMember.update }
 });
 
-import NekoGuild from "./Guild";
-_defProp(Guild.prototype, {
-  settings: { get: NekoGuild.settings },
-  update: { value: NekoGuild.update },
-  syncSettings: { value: NekoGuild.syncSettings },
-  schedules: { get: NekoGuild.schedules },
-  wipe: { value: NekoGuild.wipe }
+_defProp(ResolvedMember.prototype, {
+  settings: { get: NekoMember.settings },
+  update: { value: NekoMember.update }
 });

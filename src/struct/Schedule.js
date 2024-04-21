@@ -8,7 +8,6 @@
 // for issue 1, we can use cron jobs each 30 minutes
 // for issue 2, we use the most simple methods to ensure accuracy
 // for issue 3... first, optimizations; second, ask cf for limit increase; and third, lock this to premium until then
-import { Channel } from "yor.ts";
 import { Schedule } from "../assets/const/graphql";
 import { EmbedBuilder } from "@discordjs/builders";
 
@@ -84,12 +83,14 @@ export default class AniSchedule {
         const date = new Date(filtered[0].airingAt * 1000);
         // make an embed
         const embed = this._makeAnnouncementEmbed(filtered[0], date);
-        // initialize a new channel
-        // fetch the channel first then init a class to send messages
-        let channel = await this.client.util.call({ method: "channel", param: [schedule.channelID] });
-        channel = new Channel(this.client, channel);
         // send the embed in that channel
-        await channel.send({ embeds: [embed] });
+        await this.client.util.call({
+          method: "channelMessages",
+          param: [schedule.channelID]
+        }, {
+          method: "POST",
+          body: { embeds: [embed.toJSON()] }
+        });
         // increment episode up
         await this.client.db.prepare("UPDATE guilds SET nextEp = ?1 WHERE id = ?2;").bind(schedule.nextEp + 1, schedule.id).all();
       };
