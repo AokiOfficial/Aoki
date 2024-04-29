@@ -1,6 +1,6 @@
 {
   "name": "neko-cf",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "neko, but written to work in workers",
   "main": "src/main",
   "type": "module",
