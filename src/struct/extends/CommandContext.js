@@ -12,17 +12,15 @@ export default {
       ...await this.creator.util.call({ method: "guild", param: [guildId] }),
       // extensions to use
       // get guild settings
-      get settings() { return scopedThis.creator.settings.guilds.get(guildId) },
+      getSettings() { return scopedThis.creator.settings.guilds.get(guildId) },
       // wipe guild settings
       wipe() { return scopedThis.creator.settings.guilds.delete(guildId) },
       // update guild settings
       update(obj) { return scopedThis.creator.settings.guilds.update(guildId, obj) },
       // get guild anischedules
-      get schedules() {
-        return (async () => {
-          const query = await scopedThis.creator.db.prepare("SELECT * FROM guilds WHERE id = ?1;").bind(guildId).all();
-          return query.results;
-        })();
+      async getSchedules() {
+        const query = await scopedThis.creator.db.prepare("SELECT * FROM guilds WHERE id = ?1;").bind(guildId).all();
+        return query.results;
       }
     };
   },

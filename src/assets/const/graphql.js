@@ -80,6 +80,7 @@ const Character = `query ($search: String) {
         title {
           romaji
         }
+        siteUrl
       }
     }
   }
@@ -239,6 +240,10 @@ const Watching = `query($watched: [Int!] = [0], $page: Int!) {
       id
       title {
         romaji
+      }
+      nextAiringEpisode {
+        episode
+        timeUntilAiring
       }
     }
   }

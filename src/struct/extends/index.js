@@ -7,10 +7,7 @@ import { CommandContext, User, Member } from "slash-create/web";
 import { ResolvedMember } from "../../../node_modules/slash-create/lib/structures/resolvedMember";
 const _defProp = Object.defineProperties;
 
-// instead of having to do ctx.get{type}Option(name, index, required?)
-// now we only have to specify name
-// ctx.get{type}(name)
-// only have to be careful about commands in subcommand group colliding with subcommands
+// easing out typings
 import NekoCommandContext from "./CommandContext";
 _defProp(CommandContext.prototype, {
   client: { get: NekoCommandContext.client },
