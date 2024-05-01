@@ -5,7 +5,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
-  .setDescription("Long list of subcommands for... fun.")
+  .setDescription("long list of subcommands for... fun.")
   .addSubcommand(cmd => cmd
     .setName("8ball")
     .setDescription("ask me anything.")
@@ -110,7 +110,7 @@ const fun = new SlashCommandBuilder()
 
 const util = new SlashCommandBuilder()
   .setName("utility")
-  .setDescription("The name says it all.")
+  .setDescription("the name says it all.")
   .addSubcommand(cmd => cmd
     .setName("avatar")
     .setDescription("display one's avatar.")
@@ -172,36 +172,22 @@ const util = new SlashCommandBuilder()
 
 const my = new SlashCommandBuilder()
   .setName("my")
-  .setDescription("Commands directly related to me or my development.")
+  .setDescription("commands directly related to me or my development.")
   .addSubcommand(cmd => cmd
     .setName("ping")
     .setDescription("check latency... or it's you wanting to be insulted.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("terms")
-    .setDescription("read my neat version of Terms of Service.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName("beta")
-    .setDescription("enroll in the Neko Beta Program.")  
   )
   .addSubcommand(cmd => cmd
     .setName("vote")
     .setDescription("vote for me on top.gg to show some support!")
   )
   .addSubcommand(cmd => cmd
+    .setName("info")
+    .setDescription("essentially a \"help\" command.")  
+  )
+  .addSubcommand(cmd => cmd
     .setName("fault")
-    .setDescription("is anything wrong? Having good ideas? Share it!")
-    .addStringOption(option => option
-      .setName("type")
-      .setDescription("the type of this feedback")
-      .setRequired(true)
-      .addChoices(...[
-        { name: "issue", value: "Issue" },
-        { name: "suggestion", value: "Suggestion" }
-      ])
-      .setRequired(true)
-    )
+    .setDescription("is anything wrong? having good ideas? share it!")
     .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
     .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
   )
