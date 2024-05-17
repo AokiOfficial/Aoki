@@ -36,7 +36,7 @@ export default {
         ]);
       const action = new ActionRowBuilder().addComponents(selectBuy);
       const embed = new EmbedBuilder()
-        .setAuthor({ name: `Nya Store | ${item}`, iconURL: util.getUserAvatar(ctx.user) })
+        .setAuthor({ name: `Nya Store | ${item}`, iconURL: ctx.user.dynamicAvatarURL("png") })
         .setTimestamp().setColor(util.color)
         .setFooter({ text: `Requested by ${ctx.user.username}` })
         .setDescription(description)

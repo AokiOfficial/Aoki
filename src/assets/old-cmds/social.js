@@ -52,7 +52,7 @@ export default class Social extends SlashCommand {
             "**That's it!**\n" +
             "Start doing fun activites now and have fun earning!"
           )
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
+          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: ctx.user.dynamicAvatarURL("png") })
           .setTimestamp()
           .setColor(util.color)
         await ctx.send({ embeds: [introEmbed] });
@@ -76,8 +76,6 @@ export default class Social extends SlashCommand {
         // check if user get bonus
         // base claim daily is 50
         let bonus = 50, streak = settings.dailyStreak;
-        // check if user voted today
-        if (settings.haveVoted && Date.now() - settings.lastVoteTime > util.timeStringToMS("1d")) bonus += 10;
         // scale by time
         // if they claim late, scale the bonus down
         // if they claim early, scale the bonus up
@@ -93,7 +91,7 @@ export default class Social extends SlashCommand {
         // max bonus would be 35
         // which is fair
         // check if they keep their streak
-        if (Date.now() - settings.lastClaimTime > util.timeStringToMS("24h")) streak = 0; else streak += 1;
+        if (Date.now() - settings.lastClaimTime > util.timeStringToMS("1d")) streak = 0; else streak += 1;
         // if they'll have their balance overflowed
         // stop that from happening
         if (settings.pocketBalance + bonus > 10_000) return await ctx.send({ content: "Hey, hey, you baka, you ain't holding **¥10,000** like that, deposit some to your bank. Lucky I stopped this from happening." });
@@ -195,10 +193,10 @@ export default class Social extends SlashCommand {
         const level = ctx.getOption("level") || "normal";
         // get recipent
         const stealee = await ctx.getUser("user");
-        // if user is themselves
-        if (ctx.user.id == stealee.id) return await ctx.send({ content: "Baka, you're doing something very useless. Wake up." });
         // check wallet
         if (!settings || !settings.bankOpened) return await ctx.send({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
+        // if user is themselves
+        if (ctx.user.id == stealee.id) return await ctx.send({ content: "Baka, you're doing something very useless. Wake up." });
         // check steal duration
         const lastStealLevel = settings.lastStealLevel;
         if (lastStealLevel == "failed" && Date.now() - Number(settings.lastStealTime) < util.timeStringToMS("10m")) 
@@ -236,7 +234,7 @@ export default class Social extends SlashCommand {
           pocket -= Math.floor(stealee.settings.pocketBalance * scalePercentage);
           // save the result
           const hasFailedBefore = settings.firstFailedStealTime;
-          if (hasFailedBefore) await ctx.user.update({ pocketBalance: pocket, failedSteal: settings.failedSteal++, lastStealTime: Date.now(), lastStealLevel: level });
+          if (hasFailedBefore) await ctx.user.update({ pocketBalance: pocket, failedSteal: ++settings.failedSteal, lastStealTime: Date.now(), lastStealLevel: level });
           else await ctx.user.update({ pocketBalance: pocket, firstFailedStealTime: Date.now(), lastStealTime: Date.now(), lastStealLevel: level, failedSteal: 1 });
           // reply
           const stealFailMessages = await util.getStatic("caught");
@@ -255,10 +253,10 @@ export default class Social extends SlashCommand {
         const amount = ctx.getOption("amount") || 0;
         // if amount is negative or 0
         if (amount < 1) return await ctx.send({ content: "Baka, you must be joking. You can't sneak that past me!" });
-        // if user is themselves
-        if (ctx.user.id == user.id) return await ctx.send({ content: "Baka, you're doing something very useless. Wake up." });
         // check wallet
         if (!settings || !settings.bankOpened) return await ctx.send({ content: `You baka, you haven't opened a bank account yet. Do \`/social register\` to open one.` });
+        // if user is themselves
+        if (ctx.user.id == user.id) return await ctx.send({ content: "Baka, you're doing something very useless. Wake up." });
         // check amount
         if (amount > 5_000) return await ctx.send({ content: "Baka, you can only transfer at most **¥5,000** at once." });
         // check balance 
@@ -275,23 +273,27 @@ export default class Social extends SlashCommand {
         await ctx.user.update({ pocketBalance: pocket });
         await user.update({ pocketBalance: receiver });
         // reply
-        await ctx.send({ content: `Received your ticket. **¥${amount}** has been transferred to the recipent, and the transfer fee is **1%** of your pocket after transfer, which is **¥${transferFee}**.` });
+        await ctx.send({ content: `Received your ticket. **¥${amount}** has been transferred to the recipent${transferFee == 0 ? "" : `, and the transfer fee is **1%** of your pocket after transfer, which is **¥${transferFee}**`}.` });
       } else if (sub == "customize") {
         const background = ctx.getOption("background");
         const color = ctx.getOption("color");
         // check both
         if (!background && !color) return await ctx.send({ content: "Baka, what am I supposed to change then?" });
         // regex to test
-        const bgRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png)/g;
+        const bgRegex = /(http(s?):)([/|.|\w|\s|-])*\.(?:jpg|png|jpeg)/g;
         const colorRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g;
         // check if valid
-        if (background && !bgRegex.test(background)) return await ctx.send({ content: "Baka, the background URL is invalid. It must end with either `JPG` or `PNG`, and must not contain any **\"%\"** sign." });
+        if (background && !bgRegex.test(background)) return await ctx.send({ content: "Baka, the background URL is invalid. It must end with either `JPG (JPEG)` or `PNG`, and must not contain any **\"%\"** sign." });
         // remove all spaces from color string
         if (color && !colorRegex.test(color.replace(/ /g, ""))) return await ctx.send({ content: "Baka, the color is invalid. It must be in `rgb` form, for instance, `rgb(101,231,133)`."});
         // check if bg is available and is too big
         if (background) {
-          const bg = await fetch(background).then(async res => await res.arrayBuffer());
-          if (Buffer.byteLength(bg) > 5_242_880 /* 5MB */) return await ctx.send({ content: "Baka, that image is too big. Its size must be less than **5MB**, or less than **2400x3000** in resolution." });
+          try {
+            const bg = await fetch(background).then(async res => await res.arrayBuffer());
+            if (Buffer.byteLength(bg) > 5_242_880 /* 5MB */) return await ctx.send({ content: "Baka, that image is too big. Its size must be less than **5MB**, or less than **2400x3000** in resolution." });
+          } catch {
+            return await ctx.send({ content: "I can't fetch your background, therefore I can't save it. Try another image.\n\n||**Tip:** If this issue persists for an hour, please give my sensei a yell! Do `/my fault` to report this!||"});
+          };
         };
         // save each if it is available
         if (background) await ctx.user.update({ background: background });
@@ -299,8 +301,6 @@ export default class Social extends SlashCommand {
         // reply
         await ctx.send({ content: "Received your ticket. Your entry is updated, check your profile using `/utility profile`." });
       }
-      // THIS COMMAND IS IN TESTING PHASE
-      // -------------------------------------------------------------------------------------
       else if (sub == "store") {
         // working with select menu
         // they have to be put in a different folder to handle seperately
@@ -336,7 +336,7 @@ export default class Social extends SlashCommand {
         const action = new ActionRowBuilder().addComponents(select).toJSON();
         // make an embed to display information
         const embed = new EmbedBuilder()
-          .setAuthor({ name: "Welcome to the Nya Store!", iconURL: util.getUserAvatar(ctx.user) })
+          .setAuthor({ name: "Welcome to the Nya Store!", iconURL: ctx.user.dynamicAvatarURL("png") })
           .setTimestamp().setColor(util.color)
           .setFooter({ text: `Requested by ${ctx.user.username} `})
           .setThumbnail("https://static-00.iconduck.com/assets.00/shopping-trolley-emoji-2048x2048-hl18pstw.png")
@@ -350,8 +350,7 @@ export default class Social extends SlashCommand {
           embeds: [embed],
           components: [action]
         });
-      }
-    // ---------------------------------------------------------------------------------------
+      };
     } else if (subGroup == "piggy") {
       if (sub == "info") {
         await ctx.send({ content: 

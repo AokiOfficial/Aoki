@@ -114,27 +114,28 @@ const util = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName("avatar")
     .setDescription("display one's avatar.")
-    .addUserOption(option => option.setName("member").setDescription("...just the server member.").setRequired(true))
+    .addUserOption(option => option.setName("user").setDescription("user to check their avatar."))
   )
   .addSubcommand(cmd => cmd
     .setName("banner")
     .setDescription("display one's banner.")
-    .addUserOption(option => option.setName("member").setDescription("...just the server member.").setRequired(true))
+    .addUserOption(option => option.setName("user").setDescription("user to check their banner."))
   )
   .addSubcommand(cmd => cmd
     .setName("channel")
     .setDescription("display a channel's information.")
-    .addChannelOption(option => option.setName("channel").setDescription("...just the channel.").setRequired(true))
+    .addChannelOption(option => option.setName("channel").setDescription("...just the server channel."))
   )
   .addSubcommand(cmd => cmd
     .setName("github")
     .setDescription("display a (public) GitHub repo's information.")
-    .addStringOption(option => option.setName("name").setDescription("Format: [repo owner]/[repo name].").setRequired(true))
+    .addStringOption(option => option.setName("user").setDescription("the owner of the repository.").setRequired(true))
+    .addStringOption(option => option.setName("repo").setDescription("the name of the repository.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
     .setName("npm")
     .setDescription("display an npm package's information.")
-    .addStringOption(option => option.setName("name").setDescription("...just the package's name.").setRequired(true))
+    .addStringOption(option => option.setName("query").setDescription("...just the package's name.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
     .setName("server")
@@ -143,30 +144,17 @@ const util = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName("urban")
     .setDescription("the one dictionary you love.")
-    .addStringOption(option => option.setName("word").setDescription("...just the word you want to define.").setRequired(true))
+    .addStringOption(option => option.setName("query").setDescription("...just the word you want to define.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
-    .setName("ask")
-    .setDescription("you're just lazy, aren't you. Please only ask short questions, I will only read only 140 characters.")
-    .addStringOption(option => option.setName("question").setDescription("thing you wanna ask").setRequired(true))
+    .setName("screenshot")
+    .setDescription("screenshot a webpage.")
+    .addStringOption(option => option.setName("query").setDescription("the URL of the webpage").setRequired(true))
   )
   .addSubcommand(cmd => cmd
-    .setName("profile")
-    .setDescription("check out both your balance and osu! skills in one image.")
-    .addUserOption(option => option
-      .setName("user")
-      .setDescription("the user you wanna check out. Default you.")  
-    )  
-    .addStringOption(option => option
-      .setName("mode")
-      .setDescription("if you wanna check out another mode. Default yours.")
-      .addChoices(...[
-        { name: "standard", value: "osu" },
-        { name: "taiko", value: "taiko" },
-        { name: "catch", value: "fruits" },
-        { name: "mania", value: "mania" }
-      ])  
-    )
+    .setName("wiki")
+    .setDescription("the one encyclopedia you love.")
+    .addStringOption(option => option.setName("query").setDescription("...just the definition you want to search for.").setRequired(true))
   )
   .toJSON()
 
@@ -323,10 +311,10 @@ const osugame = new SlashCommandBuilder()
       .setDescription("your main gamemode")
       .setRequired(true)  
       .addChoices(...[
-        { name: "standard", value: "0" },
-        { name: "taiko", value: "1" },
-        { name: "catch", value: "2" },
-        { name: "mania", value: "3" }
+        { name: "standard", value: "osu" },
+        { name: "taiko", value: "taiko" },
+        { name: "catch", value: "fruits" },
+        { name: "mania", value: "mania" }
       ])
     )
   )
@@ -338,11 +326,35 @@ const osugame = new SlashCommandBuilder()
       .setName("mode")
       .setDescription("the mode you wish to check out. Not required if you have one saved")
       .addChoices(...[
-        { name: "standard", value: "0" },
-        { name: "taiko", value: "1" },
-        { name: "catch", value: "2" },
-        { name: "mania", value: "3" }
+        { name: "standard", value: "osu" },
+        { name: "taiko", value: "taiko" },
+        { name: "catch", value: "fruits" },
+        { name: "mania", value: "mania" }
       ])
+    )
+    .addStringOption(option => option
+      .setName("type")
+      .setDescription("the output type. Defaults to info")
+      .addChoices(...[
+        { name: "info", value: "info" },
+        { name: "card", value: "card" }
+      ])  
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("customize")
+    .setDescription("customize your osu! card")
+    .addStringOption(option => option
+      .setName("color")
+      .setDescription("the color of the info field. Can be in hex or rgb")
+    )
+    .addStringOption(option => option
+      .setName("background")
+      .setDescription("the color of the background field. Can be in hex or rgb")
+    )
+    .addStringOption(option => option
+      .setName("description")
+      .setDescription("the field below your username. Limits to 75 characters")
     )
   )
   // future plan
@@ -509,18 +521,6 @@ const social = new SlashCommandBuilder()
         { name: "Commit", value: "normal" },
         { name: "Insane", value: "hard" }
       ])  
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("customize")
-    .setDescription("customize your personal user card.")
-    .addStringOption(option => option
-      .setName("background")
-      .setDescription("set the image on your card. Must end with JPG or PNG.")  
-    )
-    .addStringOption(option => option
-      .setName("color")
-      .setDescription("set the color tint on your profile. Must be in rgb format.")  
     )
   )
   .addSubcommandGroup(group => group
