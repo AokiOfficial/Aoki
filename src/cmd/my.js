@@ -118,7 +118,6 @@ export default class My extends SlashCommand {
       await ctx.send({ content: "I'll like [these](https://i.imgur.com/FRWBFXr.png) better." });
     };
     const isImageAttachment = function(attachment) {
-      console.log(attachment)
       return attachment.content_type.includes("image");
     };
     const sendToLogs = async function(embed) {

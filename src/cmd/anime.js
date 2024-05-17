@@ -67,7 +67,6 @@ export default class Anime extends SlashCommand {
     // <--> processing api response
     const type = ctx.getOption("type");
     const res = (await this.fetch(`${this.jikan_v4}/random/${type}`)).data;
-    console.log(res)
     if (!res) return this.throw(this.ErrorMessages.default);
     const stats = {
       "Main Genre": res.genres?.[0]?.name || "No data",
@@ -298,7 +297,6 @@ export default class Anime extends SlashCommand {
       await ctx.send({ embeds: [embed] });
     } else {
       // <--> processing api response
-      console.log(res.media.nodes[0])
       const description = (res.description?.replace(/~!|!~/g, "||") || 'No description.') + `\n\n*More information can be found [here](${res.siteUrl}).*`;
       const embedField = util.joinArrayAndLimit(res.media.nodes.map((entry) => {
         return `[${entry.title.romaji}](${entry.siteUrl?.split('/').slice(0, 5).join('/') || "https://anilist.co/"})`;

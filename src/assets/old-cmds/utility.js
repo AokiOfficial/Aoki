@@ -397,7 +397,6 @@ export default class Utility extends SlashCommand {
           // make user entry if something happens
           // create an initial settings variable to use along with reply
           const initialSettings = user.settings;
-          console.log(initialSettings)
           if (!initialSettings?.bankOpened) await user.update({ bankOpened: 1, bankBalance: 100 });
           // check if user has osu profile
           // if not we mock data to all 0
