@@ -314,10 +314,10 @@ export default class Anime extends SlashCommand {
       await ctx.send({ embeds: [embed] });
     };
   };
-  // <--> schedule list command
-  async list(ctx) {
+  // <--> schedule current command
+  async current(ctx) {
     // <--> get guild settings
-    const guild = await ctx.guild;
+    const guild = await ctx.getGuild();
     const schedule = await guild.getSchedules();
     // <--> handle exceptions
     if (!schedule?.[0]?.anilistId) return this.throw("Baka, this server has no anime subsciptions.");
@@ -347,7 +347,7 @@ export default class Anime extends SlashCommand {
   // <--> schedule add command
   async add(ctx, query, util) {
     // <--> get guild settings
-    const guild = await ctx.guild;
+    const guild = await ctx.getGuild();
     const schedule = await guild.getSchedules();
     const channel = ctx.getChannel("channel");
     const aniFetch = new AniSchedule(ctx.client);
@@ -384,7 +384,7 @@ export default class Anime extends SlashCommand {
   // <--> schedule remove command
   async remove(ctx) {
     // <--> get guild settings
-    const guild = await ctx.guild;
+    const guild = await ctx.getGuild();
     const schedule = await guild.getSchedules();
     const aniFetch = new AniSchedule(ctx.client);
     // <--> handle exceptions
