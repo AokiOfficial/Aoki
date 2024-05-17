@@ -1,9 +1,10 @@
 .dev.vars
+.env
+.vscode
+.wrangler
 package-lock.json
 node_modules
 dist
-.wrangler
 src/util
 wrangler.toml
 src/struct/Client.js
-.env

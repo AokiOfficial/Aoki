@@ -1,21 +1,19 @@
-// no sql will be used anywhere else
-// ravener wrote this code 4 years ago, I happened to keep it ^-^
-// this is modified a bit to work with d1
-// we're using workers d1, an open beta sql db for cfworkers
-// which.. is sql, yeah
+// Ravener wrote this code 4 years ago, I happened to keep it ^-^
+// you can find him on GitHub @Ravener, or on Discord @_ravener, he makes cool stuff
 export default class Database {
   constructor(client, table) {
     this.client = client;
     this.table = table;
-  }
+  };
 
   /**
-   * Get an entry by ID from cache
-   * @param {String} id - The ID to lookup the cache.
-   * @returns {?Object} The document from the cache if available.
+   * Get an entry by ID
+   * @param {String} id - The ID to lookup
+   * @returns {?Object} The document if available
    */
   async get(id) {
-    return await this.client.db.prepare(`SELECT * FROM ${this.table} WHERE id = ?1;`).bind(id).all();
+    // as there's no caching for a short-lived process, we ignore the cache to keep requests at bay
+    return (await this.client.db.prepare(`SELECT * FROM ${this.table} WHERE id = ?1;`).bind(id).all()).results[0];
   };
 
   /**
@@ -27,10 +25,8 @@ export default class Database {
    * @returns {Object} The updated object from the database
    */
   async update(id, obj) {
-    // get keys and values
     const keys = Object.keys(obj);
     const values = Object.values(obj);
-    // construct the query
     const query = `INSERT INTO "${this.table}" ("id", ${
       keys.map((key) => `"${key}"`).join(", ")}) VALUES (?1, ${
       keys.map((_, i) => `?${i + 2}`).join(", ")}) ON CONFLICT ("id") DO UPDATE SET ${

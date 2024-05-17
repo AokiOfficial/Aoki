@@ -1,5 +1,4 @@
-// settings and utils in one place for ease of access
-// if we need to use the utils just init this class and we're done
+// settings and utils
 import { Routes, RouteBases, CDNRoutes } from "discord-api-types/v10";
 import { DiscordSnowflake } from "@sapphire/snowflake";
 import AniSchedule from "./Schedule";
@@ -171,8 +170,8 @@ export default class Utilities {
     return (int instanceof String) ? int : ["osu", "taiko", "fruits", "mania"][int];
   };
   /**
-   * Takes human time input and outputs time in ms (eg: 5m 30s -> 330000 | 3d 5h 2m -> 277320000)
-   * @param {string} timeStr - Time input (eg: 1m 20s, 1s, 3h 20m)
+   * Takes human-readable time input and outputs time in `ms` (e.g.: `5m 30s` -> `330000` | `3d 5h 2m` -> `277320000`)
+   * @param {string} timeStr - Time input (e.g.: `1m 20s`, `1s`, `3h 20m`)
    */
   timeStringToMS(timeString) {
     return timeString.match(/\d+\s?\w/g).reduce((acc, cur) => {
@@ -191,6 +190,15 @@ export default class Utilities {
     }, 0);
   };
   /**
+   * Pseudo-randomly pick an entry from the given array
+   * @param {Array} arr The array to randomly pick from
+   * @returns `arr[entry]` An item from the array
+   */
+  random(arr) {
+    const pick = Math.floor(Math.random() * arr.length);
+    return arr[pick] || arr[0];
+  };
+  /**
    * Generates a proper embed field value for key-value objects
    * @param {Object} obj The object with key-value pairs
    * @param {Number} cwidth The width between key and value
@@ -204,21 +212,8 @@ export default class Utilities {
     }).join('\n') + '```'
   };
   /**
-   * Gets a user avatar URL
-   * @param { Object } user The user object
-   * @param { Number } size The image size
-   * @returns `String` The image URL
-   */
-  getUserAvatar(user, size = "256") {
-    // handle animated avatars
-    let avatarExtension = "png";
-    if (user.avatar.startsWith("a_")) avatarExtension = "gif";
-    return `${RouteBases.cdn}${CDNRoutes.userAvatar(user.id, user.avatar, avatarExtension)}?size=${size}`;
-  };
-  /**
    * Gets a user banner URL.
-   * Note that it is necessary to force-fetch the user before
-   * using this method
+   * Note that it is necessary to force-fetch the user before using this method
    * @param { Object } user The user object
    * @param { Number } size The image size
    * @returns `String` The image URL
@@ -327,6 +322,8 @@ export default class Utilities {
       case "truth": id = "0cda95c7f398cec569dc"; break
       case "store": id = "7caa1a8787a53b391d22"; break
       case "ping": id = "1a006901b761c2a1538c"; break
+      case "nsfw": id = "cd2d0d098676b641fa49"; break
+      case "8ball": id = "e4756a8bba56a05fa4ca"; break
     };
     // fetch data
     const res = await fetch(`https://api.npoint.io/${id}`).then(async res => await res.json());
@@ -338,21 +335,41 @@ export default class Utilities {
    * @returns `String | undefined` The direct URL to the image
    */
   async upload(base64) {
-    // make formdata
     const form = new FormData();
-    // append the image
     form.append("image", base64);
-    // upload the base64
-    // an image will only stay for 1 minute
-    const res = await fetch(`https://api.imgbb.com/1/upload?expiration=${this.timeStringToMS("1m") / 1000}&key=${this.env.UPLOAD_KEY}`, {
+    const res = await fetch(`https://api.imgbb.com/1/upload?expiration=${this.timeStringToMS("30m") / 1000}&key=${this.env.UPLOAD_KEY}`, {
       method: "POST",
       body: form
     }).then(async res => await res.json());
-    // return direct url of the uploaded image
     return res.data.url || null;
   };
+  /**
+   * Screenshot a website and upload the image to imgbb
+   * @param {String} url The URL of the site to screenshot
+   * @returns `String` The URL of the screenshot'd image
+   */
+  async screenshot(url) {
+    const res = await fetch([
+      `https://api.screenshotone.com/take?`,
+      `access_key=${this.env.SCREENSHOT_KEY}&`,
+      `url=${url}&`,
+      `viewport_width=1920&`,
+      `viewport_height=1080&`,
+      `device_scale_factor=1&`,
+      `image_quality=80&`,
+      `format=jpg&`,
+      `block_ads=true&`,
+      `block_cookie_banners=true&`,
+      `full_page=false&`,
+      `block_trackers=true&`,
+      `block_banners_by_heuristics=false&`,
+      `delay=0&`,
+      `timeout=10`
+    ].join("")).then(async res => await res.arrayBuffer());
+    return await this.upload(Buffer.from(res).toString('base64'));
+  };
   // sometimes we'll have to reach out to raw api calls 
-  // as a fallback solution when yor.ts does not support something
+  // as a fallback solution when slash-create does not support something
   // in that case we'll have to import Routes and RouteBases 
   // from d-api-types
   // and do RouteBases.api + Route...

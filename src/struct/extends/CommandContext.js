@@ -2,7 +2,7 @@
 export default {
   // replace ctx.creator by ctx.client for familiarity
   client() { return this.creator },
-  async guild() {
+  async getGuild() {
     const guildId = this.guildID;
     // scope binding
     const scopedThis = this;
