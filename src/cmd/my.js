@@ -38,11 +38,10 @@ export default class My extends SlashCommand {
     // <--> utilities
     const msg = await ctx.fetch();
     const replies = await util.getStatic("ping");
-    const pick = Math.floor(Math.random() * (replies.length - 1));
     // <--> calculate roundtrip
     const timeTaken = Date.now() - util.getCreatedTimestamp(msg.id);
     // <--> construct reply
-    const reply = replies[pick]
+    const reply = util.random(replies)
       .replace(/{{user}}/g, ctx.user.username)
       .replace(/{{ms}}/g, timeTaken);
     // <--> send ping
@@ -52,9 +51,8 @@ export default class My extends SlashCommand {
   async vote(ctx, _, util) {
     // <--> construct reply
     const votes = ["Vote? Sweet.", "You finally decided to show up?", "Oh, hi. I'm busy, so get it done.", "Not like I'm not busy, but sure."];
-    const pick = Math.floor(Math.random() * (votes.length - 1));
     const voteUrl = `https://top.gg/bot/https://top.gg/bot/${util.id}`;
-    const vote = `${votes[pick]} [Do that here.](<${voteUrl}>)\n\n||If you decided to vote, thank you. You'll get extra perks in the future.||`;
+    const vote = `${util.random(votes)} [Do that here.](<${voteUrl}>)\n\n||If you decided to vote, thank you. You'll get extra perks in the future.||`;
     // <--> send reply
     await ctx.send({ content: vote });
   };
@@ -94,7 +92,7 @@ export default class My extends SlashCommand {
     const preset = this.embed
       .setTitle(`New issue!`)
       .setThumbnail("https://i.imgur.com/1xMJ0Ew.png")
-      .setFooter({ text: "Helpful things for you, sensei!", iconURL: util.getUserAvatar(ctx.user) })
+      .setFooter({ text: "Helpful things for you, sensei!", iconURL: ctx.user.dynamicAvatarURL("png") })
       .setDescription(`*Sent by **${ctx.user.username}***\n\n**Description:** ${query ? query : "None"}\n**Image:** ${attachment ? "" : "None"}`)
     // <--> construct some utility functions
     const delay = async function(ms) { 

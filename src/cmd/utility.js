@@ -1,478 +1,327 @@
+// ref!: error handling
+// <-->: block division
+// /**/: useless? notes
 import { SlashCommand } from "slash-create/web";
 import { EmbedBuilder } from "@discordjs/builders";
 import { format, formatDistance, parseISO } from "date-fns";
 import { util } from "../assets/const/import";
 
 export default class Utility extends SlashCommand {
-  constructor(creator) { super(creator, util) };
+  constructor(creator) {
+    super(creator, util);
+    this.imgur = "https://i.imgur.com/";
+    this.headers = {
+      'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
+    };
+  };
+  // <--> main block
   async run(ctx) {
-    // defer reply
-    await ctx.defer();
-    // define util
-    const util = ctx.client.util;
-    // get subgroup
-    const subGroup = ctx.getSubcommandGroup();
-    // get subcommand
+    this.ctx = ctx;
+    // <--> get command and define utilities
     const sub = ctx.getSubcommand();
-    // check if subgroup
-    if (!subGroup) {
-      // commands
-      if (sub == "avatar") {
-        const user = ctx.getUser("member");
-        // check user
-        // in edge cases, user might leave right at the time of execution
-        if (!user) return ctx.send({ content: "You baka, that's not a valid user." });
-        // get avatar
-        // use variable size so user has many options to pick from
-        const img = (s) => util.getUserAvatar(user, s);
-        // reply
-        const avatarEmbed = new EmbedBuilder()
-          .setColor(util.color)
-          .setAuthor({ name: `${user.username}'s Avatar` })
-          .setImage(img(2048)).setTimestamp()
-          .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) });
-        await ctx.send({ embeds: [avatarEmbed] });
-      } else if (sub == "banner") {
-        let user = ctx.getUser("member");
-        // check user
-        if (!user) return ctx.send({ content: "You baka, that's not a valid user." });
-        // force fetch the user
-        // the banner property is only accessible by force fetching
-        // as documented in the d.js repo
-        const fetchedUser = await util.call({
-          method: "user",
-          param: [user.id]
-        });
-        user = fetchedUser;
-        // check if user has banner
-        if (!user.banner) return ctx.send({ content: "Baka, this user has no banner." });
-        // get banner
-        const img = (s) => util.getUserBanner(user, s);
-        // reply
-        const bannerEmbed = new EmbedBuilder()
-          .setColor(util.color)
-          .setAuthor({ name: `${user.username}'s Avatar` })
-          .setImage(img(2048)).setTimestamp()
-          .setDescription(`Quality: [x128](${img(128)}) | [x256](${img(256)}) | [x512](${img(512)}) | [x1024](${img(1024)}) | [x2048](${img(2048)})`)
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) });
-        await ctx.send({ embeds: [bannerEmbed] });
-      } else if (sub == "channel") {
-        const channel = ctx.getChannel("channel");
-        // check channel
-        // edge case handling again
-        if (!channel) return await ctx.send({ content: "Baka, that channel does not exist." });
-        // date shortcut
-        const createdAt = new Date(util.getCreatedAt(channel.id));
-        const time = formatDistance(createdAt, new Date(), { addSuffix: true });
-        // channel type
-        let icon, type;
-        switch (channel.type) {
-          // Enum value
-          case 0: icon = "https://i.imgur.com/IkQqhRj.png"; type = "Text Channel"; break;
-          case 2: icon = "https://i.imgur.com/VuuMCXq.png"; type = "Voice Channel"; break;
-          case 4: icon = "https://i.imgur.com/Ri5YA3G.png"; type = "Guild Category"; break;
-          case 5: icon = "https://i.imgur.com/4TKO7k6.png"; type = "News Channel"; break;
-          case 10: icon = "https://i.imgur.com/Dfu73ox.png"; type = "Threads Channel"; break;
-          case 11: icon = "https://i.imgur.com/Dfu73ox.png"; type = "Threads Channel"; break;
-          case 12: icon = "https://i.imgur.com/Dfu73ox.png"; type = "Threads Channel"; break;
-          case 13: icon = "https://i.imgur.com/F92hbg9.png"; type = "Stage Channel"; break;
-          case 14: icon = "https://i.imgur.com/Dfu73ox.png"; type = "Guild Directory"; break;
-          case 15: icon = "https://i.imgur.com/q13YoYu.png"; type = "Guild Forum"; break;
-        };
-        // make embed
-        const channelEmbed = new EmbedBuilder()
-          // grammar check
-          // if channel ends with "s" only write a tick
-          // else do like normal
-          .setAuthor({ name: `${channel.name}${channel.name.endsWith("s") ? "'" : "'s"} Information` })
-          .setThumbnail(icon)
-          .setColor(util.color)
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
-          .setTimestamp()
-          .addFields([
-            {
-              name: "\u2000",
-              value: '```fix\n' + Object.entries({
-                "Position": channel.position || "Unknown",
-                "Type": type,
-                "Created": time,
-                "NSFW?": channel.nsfw ? "Yes" : "No",
-                "Slowmode": channel.slowmode || "None",
-                "ID": channel.id,
-                "Topic": channel.topic
-              }).map(([key, value]) => {
-                const cwidth = 30;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
-              }).join('\n') + '```'
-            }
-          ]);
-        // finally send the embed
-        await ctx.send({ embeds: [channelEmbed] });
-      } else if (sub == "server") {
-        // get the server id
-        const guildID = ctx.member.guildID;
-        // make an api call to fetch the server info
-        // does not include channels
-        // therefore we have to make another one
-        let guildInfo = await util.call({
-          method: "guild",
-          param: [guildID]
-        });
-        // get it in the guildinfo object to avoid polluting
-        guildInfo.channels = await util.call({
-          method: "guildChannels",
-          param: [guildID]
-        });
-        // shortcuts
-        // get owner
-        const owner = await util.call({
-          method: "user",
-          param: [guildInfo.owner_id]
-        });
-        // get icon
-        const icon = util.getGuildIcon(guildInfo);
-        // created date
-        const since = format(new Date(util.getCreatedAt(guildInfo.id)), 'MMMM yyyy');
-        // filter channel based on channel type
-        const text = guildInfo.channels.filter(channel => channel.type == 0).length;
-        const voice = guildInfo.channels.filter(channel => channel.type == 2).length;
-        const category = guildInfo.channels.filter(channel => channel.type == 4).length;
-        const news = guildInfo.channels.filter(channel => channel.type == 5).length;
-        // make the embed
-        const guildEmbed = new EmbedBuilder()
-          .setColor(util.color)
-          .setAuthor({ name: `${guildInfo.name}`, iconURL: icon })
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
-          .setTimestamp()
-          .setDescription(`*${guildInfo.description == null ? "Server has no description." : guildInfo.description}*\n\n`)
-          .addFields([
-            {
-              name: "General Info",
-              value: '```fix\n' + Object.entries({
-                "Owner": util.textTruncate(owner.username, 11),
-                "Role Count": guildInfo.roles.length,
-                "Emoji Count": guildInfo.emojis.length,
-                "Created": since,
-                "Boosts": guildInfo.premium_subscription_count,
-                "Main Locale": guildInfo.preferred_locale,
-                "Verification": guildInfo.verification_level,
-                "Filter": guildInfo.explicit_content_filter
-              }).map(([key, value]) => {
-                const cwidth = 24;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
-              }).join('\n') + '```',
-              inline: true
-            },
-            {
-              name: "Channels Info",
-              value: '```fix\n' + Object.entries({
-                "Text Channels": text,
-                "Voice Channels": voice,
-                "Categories": category,
-                "News Channels": news,
-                "AFK Channel": guildInfo.afk_channel ? guildInfo.afk_channel.name : "None"
-              }).map(([key, value]) => {
-                const cwidth = 24;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
-              }).join('\n') + '```',
-              inline: true
-            }
-          ])
-        // now send the embed
-        await ctx.send({ embeds: [guildEmbed] })
-      } else if (sub == "github") {
-        // get user and repo from input
-        const [u, r] = (ctx.getOption("name")).trim().split("/");
-        // check if them both are present
-        if (!u || !r) return await ctx.send({ content: "Baka, follow this format: `[repo owner]/[repo name]`." });
-        // call the api
-        // have to specify the user agent here
-        const repoData = await fetch(`https://api.github.com/repos/${u}/${r}`, {
-          headers: {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
-          }
-        }).then(res => res.json());
-        // check if repo exists
-        if (!repoData.id) return await ctx.send({ content: "Baka, that repository doesn't exist." });
-        // small methods
-        // format bype to human readable size
-        const formatBytes = (bytes) => {
-          if (bytes === 0) return '0 Bytes';
-          const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', "PB", 'EB', 'ZB', 'YB'];
-          const i = Math.floor(Math.log(bytes) / Math.log(1024));
-          return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))} ${sizes[i]}`
-        };
-        const size = formatBytes(repoData.size);
-        const license = repoData.license.name;
-        // make embed
-        const embed = new EmbedBuilder()
-          .setColor(util.color)
-          .setAuthor({ name: "GitHub", iconURL: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png' })
-          .setTitle(`${repoData.full_name}`)
-          .setURL(repoData.html_url)
-          .setThumbnail(repoData.owner.avatar_url)
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
-          .setTimestamp()
-          .setDescription(`${repoData.description}\n\n`)
-          .addFields([
-            {
-              name: "\u2000",
-              value: '```fix\n' + Object.entries({
-                "Language": repoData.language || "Unknown",
-                "Forks": repoData.forks_count.toLocaleString(),
-                "License": license,
-                "Open Issues": repoData.open_issues.toLocaleString(),
-                "Watchers": repoData.subscribers_count.toLocaleString(),
-                "Stars": repoData.stargazers_count.toLocaleString(),
-                "Size": size,
-                "Archived?": repoData.archived ? "Yes" : "No",
-                "Disabled?": repoData.disabled ? "Yes" : "No",
-                "Forked?": repoData.fork ? "Yes" : "No"
-              }).map(([key, value]) => {
-                const cwidth = 30;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + (name.endsWith("?") ? ' ' :':') + spacing + value;
-              }).join('\n') + '```'
-            }
-          ])
-        // send it
-        await ctx.send({ embeds: [embed] })
-      } else if (sub == "npm") {
-        const name = ctx.getOption("name");
-        // call api
-        const rawData = await fetch(`https://registry.npmjs.org/-/v1/search?text=${encodeURIComponent(name)}&size=1`, {
-          headers: {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
-          }
-        }).then(res => res.json());
-        // make the data usable
-        const npmData = rawData.objects[0].package;
-        const score = rawData.objects[0].score;
-        let maintainers = [];
-        // check repo
-        if (!npmData || npmData.length < 1) return await ctx.send({ content: "Baka, that's an invalid repository. Or did you make a typo?" });
-        // push maintainers
-        for (let n = 0; n < npmData.maintainers.length; n++) {
-          maintainers.push("`" + npmData.maintainers[n].username + "`")
-        };
-        // map keywords
-        const keywords = npmData.keywords.map(k => `\`${k}\``).join(', ');
-        // make embed
-        const npmEmbed = new EmbedBuilder()
-          .setColor(util.color)
-          .setAuthor({ name: "npm Registry", iconURL: 'https://i.imgur.com/24yrZxG.png' })
-          .setTitle(`${npmData.name}`)
-          .setURL(`https://www.npmjs.com/package/${npmData.name}`)
-          .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
-          .setTimestamp()
-          .setDescription(
-            `${util.textTruncate(npmData.description, 75)}\n\n` +
-            `**Keywords:** ${npmData.keywords && npmData.keywords.length > 0 ? `${keywords}` : "None"}\n` +
-            `**Maintainers:** ${maintainers.join(", ")}`
-          )
-          .addFields([
-            {
-              name: "\u2000",
-              value: '```fix\n' + Object.entries({
-                "Version": npmData.version || "Unknown",
-                "Author": npmData.publisher.username,
-                "Modified": format(parseISO(npmData.date), 'EEEE, do MMMM yyyy'),
-                "Score": (score.final * 100).toFixed(1)
-              }).map(([key, value]) => {
-                const cwidth = 40;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + ':' + spacing + value;
-              }).join('\n') + '```'
-            }
-          ])
-        // send embed
-        await ctx.send({ embeds: [npmEmbed] });
-      } else if (sub == "urban") {
-        const query = ctx.getOption("word");
-        // base api url
-        const apiUrl = `https://api.urbandictionary.com/v0/define?term=${query}`;
-        // check for nsfw
-        if (util.isProfane(query) && !ctx.channel.nsfw) return await ctx.send({ content: "Hey, I won't search for that! Don't tell me to search for bad words in here!" });
-        // else just continue
-        // fetch the urban definition
-        const data = await fetch(apiUrl, {
-          headers: {
-            'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
-          }
-        }).then(res => res.json());
-        // only if a list exists we proceed
-        if (data.list && data.list.length > 0) {
-          const definition = data.list[0];
-          const embed = new EmbedBuilder()
-            .setColor(util.color)
-            .setTitle(`Definition of ${definition.word}`)
-            .setURL(definition.urbanURL)
-            .setThumbnail("https://static.wikia.nocookie.net/logopedia/images/a/a7/UDAppIcon.jpg")
-            .setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) })
-            .addFields([
-              {
-                name: 'Definition',
-                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
-                  ? util.textTruncate(definition.definition)
-                  : util.textTruncate(util.cleanProfane(definition.definition), 1000)}` + '\n```',
-              },
-              {
-                name: 'Examples',
-                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
-                  ? util.textTruncate(definition.example || 'N/A')
-                  : util.textTruncate(util.cleanProfane(definition.example || 'N/A'), 1000)}` + '\n```',
-              },
-              {
-                name: 'Submitted by',
-                value: '```fix\n' + `${ctx.channel.nsfw === true || ctx.channel.nsfw === undefined
-                  ? util.textTruncate(definition.author || 'N/A', 250)
-                  : util.textTruncate(util.cleanProfane(definition.author || 'N/A'), 250)}` + '\n```',
-              },
-              {
-                name: 'Profane Word?',
-                value: 'Yell at my sensei through `/my fault`, the patch should be added in a few working days.',
-              },
-            ]);
-          return await ctx.send({ embeds: [embed] });
-        } else {
-          return await ctx.send({ content: "Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means." });
+    const util = ctx.client.util;
+    // <--> run command in try...catch
+    try {
+      await ctx.defer();
+      return await this[sub](ctx, util);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.log(err);
+        const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
+        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+      };
+    };
+  };
+  // <--> avatar command
+  async avatar(ctx) {
+    const user = ctx.getUser("user") || ctx.user;
+    // <--> handle different sizes
+    const avatar = (s) => {
+      return user.dynamicAvatarURL("png", s);
+    };
+    const description = [
+      `Quality: `,
+      `[x128](${avatar(128)}) | `,
+      `[x256](${avatar(256)}) | `,
+      `[x512](${avatar(512)}) | `,
+      `[x1024](${avatar(1024)}) | `,
+      `[x2048](${avatar(2048)})`
+    ].join("");
+    const embed = this.embed
+      .setAuthor({ name: `${user.username}'s Avatar` })
+      .setDescription(description)
+      .setImage(avatar(2048));
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> avatar command
+  async banner(ctx, util) {
+    const user = ctx.getUser("user") || ctx.user;
+    // <--> force fetch user
+    const fetchedUser = await util.call({ method: "user", param: [user.id] });
+    if (!fetchedUser.banner) return this.throw("Baka, this user has no banner.");
+    // <--> handle different sizes
+    const banner = (s) => {
+      return util.getUserBanner(fetchedUser, s);
+    };
+    const description = [
+      `Quality: `,
+      `[x128](${banner(128)}) | `,
+      `[x256](${banner(256)}) | `,
+      `[x512](${banner(512)}) | `,
+      `[x1024](${banner(1024)}) | `,
+      `[x2048](${banner(2048)})`
+    ].join("");
+    const embed = this.embed
+      .setAuthor({ name: `${user.username}'s Banner` })
+      .setDescription(description)
+      .setImage(banner(2048));
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> channel command
+  async channel(ctx, util) {
+    const channel = ctx.getChannel("channel") || ctx.channel;
+    // <--> utilities
+    const channelTypes = {
+      0: { icon: `${this.imgur}IkQqhRj.png`, type: "Text Channel" },
+      2: { icon: `${this.imgur}VuuMCXq.png`, type: "Voice Channel" },
+      4: { icon: `${this.imgur}Ri5YA3G.png`, type: "Guild Category" },
+      5: { icon: `${this.imgur}4TKO7k6.png`, type: "News Channel" },
+      10: { icon: `${this.imgur}Dfu73ox.png`, type: "Threads Channel" },
+      11: { icon: `${this.imgur}Dfu73ox.png`, type: "Threads Channel" },
+      12: { icon: `${this.imgur}Dfu73ox.png`, type: "Threads Channel" },
+      13: { icon: `${this.imgur}F92hbg9.png`, type: "Stage Channel" },
+      14: { icon: `${this.imgur}Dfu73ox.png`, type: "Guild Directory" },
+      15: { icon: `${this.imgur}q13YoYu.png`, type: "Guild Forum" },
+    };
+    const { icon, type } = channelTypes[channel.type] || {};
+    const createdAt = new Date(util.getCreatedAt(channel.id));
+    const time = formatDistance(createdAt, new Date(), { addSuffix: true });
+    const authorFieldName = `${channel.name}${channel.name.endsWith("s") ? "'" : "'s"} Information`;
+    const field = util.keyValueField({
+      "Position": channel.position || "Unknown",
+      "Type": type,
+      "Created": time,
+      "NSFW?": channel.nsfw ? "Yes" : "No",
+      "Slowmode": channel.slowmode || "None",
+      "ID": channel.id,
+      "Topic": channel.topic
+    }, 30);
+    // <--> make embed
+    const embed = this.embed
+      .setAuthor({ name: authorFieldName })
+      .setThumbnail(icon)
+      .addFields([{ name: "\u2000", value: field }]);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> server command
+  async server(ctx, util) {
+    const guild = await ctx.getGuild();
+    // <--> handle extra info
+    const [channels, owner] = await Promise.all([
+      await util.call({ method: "guildChannels", param: [guild.id] }),
+      await util.call({ method: "user", param: [guild.owner_id] })
+    ]);
+    guild.channels = channels;
+    guild.owner = owner;
+    guild.icon = util.getGuildIcon(guild);
+    // <--> utilities
+    const since = format(new Date(util.getCreatedAt(guild.id)), 'MMMM yyyy');
+    const channelCounts = guild.channels.reduce((counts, channel) => {
+      counts[channel.type] = (counts[channel.type] || 0) + 1;
+      return counts;
+    }, {});
+    const { 0: text = 0, 2: voice = 0, 4: category = 0, 5: news = 0 } = channelCounts;
+    const description = `*${guild.description == null ? "Server has no description." : guild.description}*\n\n`;
+    const generalInfoField = util.keyValueField({
+      "Owner": util.textTruncate(owner.username, 20),
+      "Role Count": guild.roles.length,
+      "Emoji Count": guild.emojis.length,
+      "Created": since,
+      "Boosts": guild.premium_subscription_count,
+      "Main Locale": guild.preferred_locale,
+      "Verification": guild.verification_level,
+      "Filter": guild.explicit_content_filter
+    }, 30);
+    const channelInfoField = util.keyValueField({
+      "Categories": category,
+      "Text Channels": text,
+      "Voice Channels": voice,
+      "News Channels": news,
+      "AFK Channel": guild.afk_channel?.name || "None"
+    }, 30);
+    // <--> make embed
+    const embed = this.embed
+      .setAuthor({ name: `${guild.name}`, iconURL: guild.icon })
+      .setDescription(description)
+      .addFields([
+        { name: "General Info", value: generalInfoField },
+        { name: "Channels Info", value: channelInfoField }
+      ]);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> github command
+  async github(ctx, util) {
+    const user = ctx.getOption("user");
+    const repo = ctx.getOption("repo");
+    const res = await fetch(`https://api.github.com/repos/${user}/${repo}`, { headers: this.headers }).then(res => res.json());
+    if (!res?.id) return this.throw("Baka, that repo doesn't exist.");
+    // <--> utilities
+    const formatBytes = (bytes) => {
+      if (bytes == 0) return '0B';
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB', "PB", 'EB', 'ZB', 'YB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(1024));
+      return `${parseFloat((bytes / Math.pow(1024, i)).toFixed(2))}${sizes[i]}`
+    };
+    const icon = 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png';
+    const size = formatBytes(res.size);
+    const license = repo.license?.name || "Unknown";
+    const field = util.keyValueField({
+      "Language": res.language || "Unknown",
+      "Forks": res.forks_count.toLocaleString(),
+      "License": license,
+      "Open Issues": res.open_issues.toLocaleString(),
+      "Watchers": res.subscribers_count.toLocaleString(),
+      "Stars": res.stargazers_count.toLocaleString(),
+      "Size": size,
+      "Archived?": res.archived ? "Yes" : "No",
+      "Disabled?": res.disabled ? "Yes" : "No",
+      "Forked?": res.fork ? "Yes" : "No"
+    }, 30);
+    // <--> make embed
+    const embed = this.embed
+      .setAuthor({ name: "GitHub", iconURL: icon })
+      .setTitle(`${user}/${repo}`)
+      .setURL(res.html_url)
+      .setThumbnail(res.owner.avatar_url)
+      .setDescription(`${res.description}\n\n`)
+      .addFields([{ name: "\u2000", value: field }]);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> npm command
+  async npm(ctx, util) {
+    const query = ctx.getOption("query");
+    const raw = await fetch(`https://registry.npmjs.org/-/v1/search?text=${query}&size=1`, { headers: this.headers }).then(res => res.json());
+    const res = raw.objects?.[0]?.package;
+    if (!res) return this.throw("Baka, that's an invalid repository. Or did you make a typo?");
+    // <--> utilities
+    const score = raw.objects[0].score;
+    const maintainers = res.maintainers.map(maintainer => `\`${maintainer.username}\``).join(', ');
+    const keywords = res.keywords?.map(keyword => `\`${keyword}\``).join(', ') || "None";
+    const description = [
+      `${util.textTruncate(res.description, 75)}\n\n`,
+      `**Keywords:** ${keywords}\n`,
+      `**Maintainers:** ${maintainers}`
+    ].join("");
+    const field = util.keyValueField({
+      "Version": res.version || "Unknown",
+      "Author": res.publisher.username,
+      "Modified": format(parseISO(res.date), 'EEEE, do MMMM yyyy'),
+      "Score": (score.final * 100).toFixed(1)
+    }, 40);
+    // <--> make embed
+    const embed = this.embed
+      .setAuthor({ name: "npm Registry", iconURL: 'https://i.imgur.com/24yrZxG.png' })
+      .setTitle(`${res.name}`)
+      .setURL(`https://www.npmjs.com/package/${res.name}`)
+      .setDescription(description)
+      .addFields([{ name: "\u2000", value: field }]);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> urban command
+  async urban(ctx, util) {
+    const query = ctx.getOption("query");
+    // <--> handle user query
+    if (util.isProfane(query) && !ctx.channel.nsfw) return this.throw("Your query has some profanity in there.\n\nEither get into a NSFW channel, or change your query.");
+    const res = await fetch(`https://api.urbandictionary.com/v0/define?term=${query}`, { headers: this.headers }).then(res => res.json());
+    if (!res?.list?.length) return this.throw("Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means.")
+    const definition = res.list[0];
+    // <--> utilities
+    const nsfw = ctx.channel.nsfw;
+    const truncateText = (text, maxLength) => util.textTruncate(nsfw ? text : util.cleanProfane(text), maxLength);
+    const fields = {
+      definition: '```fix\n' + truncateText(definition.definition, 1000) + '\n```',
+      example: '```fix\n' + truncateText(definition.example || 'N/A', 1000) + '\n```',
+      author: '```fix\n' + truncateText(definition.author || 'N/A', 250) + '\n```'
+    };
+    // <--> make embed
+    const embed = this.embed
+      .setTitle(`Definition of ${definition.word}`)
+      .setURL(definition.urbanURL)
+      .addFields([
+        { name: 'Definition', value: fields.definition },
+        { name: 'Examples', value: fields.example },
+        { name: 'Submitted by', value: fields.author },
+        { name: 'Profane Word?', value: 'Yell at my sensei through `/my fault`, the patch should be added in a few working days.' }
+      ]);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> screenshot command
+  async screenshot(ctx, util) {
+    const query = ctx.getOption("query");
+    // <--> handle user query
+    const url = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
+    if (!query.match(url)) return this.throw("Baka, that's not a valid URL.\n\nMake sure it starts with either `https://` or `http://`.");
+    const nsfwPages = await util.getStatic("nsfw");
+    if (nsfwPages.includes(query) && !ctx.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
+    const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${ctx.client.env.URLSAFE_KEY}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        "client": {
+          "clientId":      "neko-discord-bot",
+          "clientVersion": "3.0.0"
+        },
+        "threatInfo": {
+          "threatTypes":      ["MALWARE", "SOCIAL_ENGINEERING"],
+          "platformTypes":    ["ANY_PLATFORM"],
+          "threatEntryTypes": ["URL"],
+          "threatEntries": [
+            { "url": query }
+          ]
         }
-      } else if (sub == "ask") {
-        const question = ctx.getOption("question");
-        // restrict length
-        if (question.length > 180) return await ctx.send({ content: "Write a shorter question. I'm not that bothered to work with only you, I got works to do." })
-        // check for nsfw
-        if (util.isProfane(question) && !ctx.channel.nsfw) return await ctx.send({ content: "Hey, I can't help you with that! Don't tell me to deal with bad words in here!" });
-        // ask gemini things
-        const data = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${ctx.client.env["GEMINI_KEY"]}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                // match personality tho
-                // it's more fun than normal repetitive ai tone
-                // y'know, you'll see things like baka and science in one same reply
-                text: `${question}, reply as a tsundere scientist and make it short`
-              }]
-            }],
-            generationConfig: {
-              temperature: 1.0,
-              maxOutputTokens: 400,
-              topP: 0.8,
-              topK: 10
-            }
-          })
-        }).then(res => res.json());
-        await ctx.send({ content: data.candidates[0].content.parts[0].text }).catch(async err => {
-          console.log(err);
-          await ctx.send({ content: "Hang on there, I'm busy. It should be done in about an hour.\n\nIf nothing changes after that timeframe, probably give my sensei a yell. Do `/my fault`." });
-        });
-      } else if (sub == "profile") {
-        // all of these information are not required
-        const user = ctx.getUser("user") || ctx.user;
-        // 1. use specified mode OR 2. use user mode OR 3. use default mode "taiko"
-        // not supporting std yet
-        const mode = ctx.getOption("mode") || ctx.user.settings ? ctx.user.settings.defaultMode : "taiko";
-        // check wallet
-        // make user entry if something happens
-        // create an initial settings variable to use along with reply
-        const initialSettings = user.settings;
-        if (!initialSettings || !initialSettings.bankOpened) await user.update({ bankOpened: 1, bankBalance: 100 });
-        // check if user has osu profile
-        // if not we mock data to all 0
-        // we're gonna fetch a lot of things
-        let profile;
-        // define the presets
-        // define data to send to renderer
-        // as cfworkers cannot render images with canvas
-        // we're using this instead
-        let data = {
-          avatar: util.getUserAvatar(user != ctx.user ? (ctx.getUser("user")) : ctx.user),
-          name: user != ctx.user ? (ctx.getUser("user")).username : ctx.user.username,
-          color: user.settings?.profileColor || "rgb(105, 105, 105)",
-          background: user.settings?.background || "https://i.imgur.com/WCgt3Ql.jpeg",
-          pattern: user.settings?.pattern || "https://i.imgur.com/nx5qJUb.png",
-          emblem: user.settings?.emblem || undefined,
-          owns: user.settings?.owns ? user.settings.owns.toString().split(",").length : "0",
-          bank: {
-            wallet: user.settings?.pocketBalance || "0",
-            bank: user.settings?.bankBalance || "100"
-          },
-          key: ctx.client.env["RENDER_KEY"]
-        };
-        // only fetch plays if they have set their osu info
-        if (user.settings && user.settings.inGameName) {
-          profile = await fetch(`https://osu.ppy.sh/api/get_user?k=${ctx.client.env["OSU_KEY"]}&u=${user.settings.inGameName}&m=${util.osuNumberModeFormat(mode)}`).then(async res => await res.json());
-          profile = profile[0];
-          // if still no data
-          if (!profile.username) return await ctx.send({ content: "Baka, that user doesn't exist." });
-          // login with oapiv2
-          // to get top plays to push into
-          let loginCredentials = await fetch("https://osu.ppy.sh/oauth/token", {
-            method: "POST",
-            body: JSON.stringify({
-              grant_type: 'client_credentials',
-              client_id: '14095',
-              client_secret: ctx.client.env["OSU_AUTH"],
-              scope: 'public',
-            }), 
-            headers: {
-              'Content-Type': 'application/json',
-            },
-          }).then(async res => await res.json());
-          // use that token to get user best
-          const best = await fetch(`https://osu.ppy.sh/api/v2/users/${profile.user_id}/scores/best?mode=${util.osuStringModeFormat(mode)}&limit=51`, {
-            headers: {  
-              "Authorization": `Bearer ${loginCredentials.access_token}` 
-            }
-          }).then(async res => await res.json());
-          // check if best is less than 50
-          if (best.length < 50) return await ctx.send({ content: `Baka, you only have **${best.length}**/50 plays (your username is set to **${profile.username}**). You can't render a card for **${mode}** yet.` });
-          // set to data
-          data = { ...data, osu: { name: profile.username, best: best, mode: util.osuNumberModeFormat(mode) } };
-        }
-        // if user has no osu profile
-        // mock it
-        else {
-          data = { ...data, osu: { name: undefined, best: undefined, mode: undefined } };
-        };
-        // ask renderer to process our data
-        // cfworkers does not count fetch() processes to cpu time
-        // (source: https://stackoverflow.com/questions/68720436/what-is-cpu-time-and-wall-time-in-the-context-of-cloudflare-worker-request)
-        // so we are good
-        const rawImage = await fetch("https://unusual-tan-threads.cyclic.app/render", {
-          method: "POST",
-          body: JSON.stringify({ data: data }), 
-          headers: { 'Content-Type': 'application/json' },
-        }).then(async res => await res.arrayBuffer());
-        // get reply context to provide info
-        let replyContext;
-        if (!initialSettings) replyContext = "**Tip:** A bank has already been opened for you upon this execution! You now have **¥100** in your bank.";
-        else replyContext = "**Tip:** Background looks wrong? Try resizing it. The area's resolution is **475x250**."
-        // upload image to imgbb
-        const image = await util.upload(Buffer.from(rawImage).toString('base64'));
-        // make new embed
-        const embed = new EmbedBuilder().setImage(image).setColor(util.color);
-        // send it
-        return ctx.send({ content: `${replyContext}`, embeds: [embed] });
-      }
-    }
-  }
+      })
+    }).then(async res => await res.json());
+    if (res.matches) return this.throw("That's a dangerous URL, you moron!");
+    // <--> take screenshot
+    try {
+      const screenshot = await util.screenshot(query);
+      const embed = this.embed.setImage(screenshot);
+      await ctx.send({ embeds: [embed] });
+    } catch {
+      return this.throw("Something's wrong with that URL.\n\nCheck if you made a typo.");
+    };
+  };
+  // <--> wiki command
+  async wiki(ctx, util) {
+    const query = ctx.getOption("query");
+    // <--> handle exceptions
+    if (util.isProfane(query) && !ctx.channel.nsfw) return this.throw("Your query has something to do with profanity, baka.\n\nEither move to a NSFW channel, or change the query.");
+    const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${query}`).then(async res => await res.json());
+    if (!res?.title) return this.throw("Can't find that. Check your query.");
+    // <--> utilities
+    const timestamp = new Date(res.timestamp);
+    const thumbnail = "https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/1122px-Wikipedia-logo-v2.svg.png";
+    const description = [
+        `***Description:** ${res.description || "None"}*\n\n`,
+        `**Extract:** ${util.textTruncate(res.extract, 1000).split(". ").join(".\n- ")}`
+    ].join("");
+    // <--> make embed
+    const embed = this.embed
+      .setTimestamp(timestamp)
+      .setTitle(res.title)
+      .setThumbnail(thumbnail)
+      .setURL(res.content_urls.desktop.page)
+      .setDescription(description);
+    await ctx.send({ embeds: [embed] });
+  };
+  // <--> internal utilities
+  async throw(content) {
+    await this.ctx.send({ content });
+    return Promise.reject();
+  };
+  get embed() {
+    return new EmbedBuilder()
+      .setColor(16777215)
+      .setFooter({ text: `Requested by ${this.ctx.user.username}`, iconURL: this.ctx.user.dynamicAvatarURL("png") })
+      .setTimestamp();
+  };
 }

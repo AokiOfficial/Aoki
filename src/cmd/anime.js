@@ -22,6 +22,7 @@ export default class Anime extends SlashCommand {
       default: "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing changes after that, my sensei probably messed up. Try reporting this with `/my fault`."
     };
   };
+  // <--> main block
   async run(ctx) {
     this.ctx = ctx;
     // <--> get command and define utilities
@@ -58,7 +59,7 @@ export default class Anime extends SlashCommand {
       .setURL(res.url)
       .setDescription(`*Posted by **${res.author}***`)
       .setImage(res.image)
-      .setFooter({ text: `${res.upVotes} likes`, iconURL: util.getUserAvatar(ctx.user) });
+      .setFooter({ text: `${res.upVotes} likes`, iconURL: ctx.user.dynamicAvatarURL("png") });
     return await ctx.send({ embeds: [meme] });
   };
   // <--> random command
@@ -102,7 +103,7 @@ export default class Anime extends SlashCommand {
     ].join('\n');
     // <--> extending preset embed
     const embed = this.embed
-      .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.user) })
+      .setFooter({ text: `Data sent from MyAnimeList`, iconURL: ctx.user.dynamicAvatarURL("png") })
       .setAuthor({ name: `${res.title}`, iconURL: res.images?.jpg.image_url })
       .setDescription(description)
       .addFields([
@@ -132,7 +133,7 @@ export default class Anime extends SlashCommand {
       } else return this.throw(this.ErrorMessages.default);
     };
     // <--> generate a preset embed
-    const presetEmbed = this.embed.setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user) });
+    const presetEmbed = this.embed.setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: ctx.user.dynamicAvatarURL("png") });
     // <--> conditional for each platform
     if (platform == "mal") {
       // <--> processing api response
