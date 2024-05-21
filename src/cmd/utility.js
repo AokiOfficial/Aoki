@@ -262,7 +262,7 @@ export default class Utility extends SlashCommand {
     const url = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
     if (!query.match(url)) return this.throw("Baka, that's not a valid URL.\n\nMake sure it starts with either `https://` or `http://`.");
     const nsfwPages = await util.getStatic("nsfw");
-    if (nsfwPages.includes(query) && !ctx.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
+    if (nsfwPages.domains.includes(query) && !ctx.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
     const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${ctx.client.env.URLSAFE_KEY}`, {
       method: 'POST',
       body: JSON.stringify({

@@ -49,7 +49,7 @@ export default class OsuGame extends SlashCommand {
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
     // <--> utilities
     const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
-    const reply = `${util.random(replies)} Your current username is \`${profile.username}\`, and your current mode is \`${util.osuStringModeFormat(mode)}\`.`;
+    const reply = `${util.random(replies)} Your current username is \`${profile.username}\`, and your current mode is \`${mode}\`.`;
     // <--> database check
     if (
       settings.defaultMode && /* entry exists in db */
@@ -66,8 +66,8 @@ export default class OsuGame extends SlashCommand {
   async profile(ctx, util) {
     const settings = await ctx.user.getSettings();
     const type = ctx.getOption("type") || "info";
-    const user = ctx.getOption("username") || settings.inGameName;
-    const mode = ctx.getOption("mode") || settings.defaultMode;
+    const user = ctx.getOption("username") || settings?.inGameName;
+    const mode = ctx.getOption("mode") || settings?.defaultMode;
     // <--> handle exceptions
     if (!user || !mode) return this.throw("You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
@@ -78,7 +78,7 @@ export default class OsuGame extends SlashCommand {
       userId: profile.user_id,
       username: profile.username,
       mode: mode,
-      properMode: util.osuStringModeFormat(mode) == "osu" ? "" : util.osuStringModeFormat(mode),
+      properMode: mode == "osu" ? "" : mode,
       level: (+Number(profile.level).toFixed(2)).toString().split("."),
       playTime: Math.floor(Number(profile.total_seconds_played) / 3600),
       playCount: Number(profile.playcount).toLocaleString(),
@@ -100,7 +100,7 @@ export default class OsuGame extends SlashCommand {
         `https://lemmmy.pw/osusig/sig.php?`,
         `colour=pink&`,
         `uname=${profile.username}&`,
-        `mode=${mode}&`,
+        `mode=${util.osuNumberModeFormat(mode)}&`,
         `pp=0`
       ].join("")).then(async res => await res.arrayBuffer());
       profile.image = await util.upload(Buffer.from(rawImage).toString('base64'));
@@ -209,7 +209,7 @@ export default class OsuGame extends SlashCommand {
     return Promise.reject();
   };
   async getProfile(username, mode) {
-    return (await fetch(`${this.api_v1}/get_user?k=${this.ctx.client.env["OSU_KEY"]}&u=${username}&m=${mode}`).then(async res => await res.json()))[0];
+    return (await fetch(`${this.api_v1}/get_user?k=${this.ctx.client.env["OSU_KEY"]}&u=${username}&m=${this.ctx.client.util.osuNumberModeFormat(mode)}`).then(async res => await res.json()))[0];
   };
   get embed() {
     return new EmbedBuilder()

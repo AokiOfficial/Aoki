@@ -54,7 +54,7 @@ export default class Fun extends SlashCommand {
       "Get cancelled.", "Baka, bad luck. You got cancelled.",
       "You've been ignored.", "He he he haw.", "Baka, you're unlucky. Get cancelled."
     ]);
-    if (util.probability(10)) return this.throw({ content: `${cancelled}\n\n||Execute the command again.||` });
+    if (util.probability(10)) return this.throw(`${cancelled}\n\n||Execute the command again.||`);
     try {
       const res = await util.reddit(query || "random");
       if (res.nsfw && !ctx.channel.nsfw) throw new Error(`${cancelled}\n\n||This meme is NSFW.||`);
@@ -73,8 +73,8 @@ export default class Fun extends SlashCommand {
     const first = ctx.getUser("first");
     const second = ctx.getUser("second");
     // <--> handle exceptions
-    if (first.id == util.id || second.id == util.id) return this.throw({ content: "Ew, I'm not a fan of shipping. Choose someone else!" });
-    if (first.id == second.id) return this.throw({ content: "Pfft. No one does that, baka." });
+    if (first.id == util.id || second.id == util.id) return this.throw("Ew, I'm not a fan of shipping. Choose someone else!");
+    if (first.id == second.id) return this.throw("Pfft. No one does that, baka.");
     // <--> utilities
     const luckyWheelRate = util.probability(5);
     const rollProbability = util.probability(40);
