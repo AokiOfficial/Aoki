@@ -1,6 +1,7 @@
 // ref!: reformat stuff
 // <-->: block division
 // /**/: useless? notes
+
 // <--> import classes
 import { SlashCreator, CloudflareWorkerServer } from "slash-create/web";
 import Utility from "./Utilities";
@@ -13,10 +14,6 @@ import Util from "../cmd/utility";
 import My from "../cmd/my";
 import Anime from "../cmd/anime";
 import OsuGame from "../cmd/osugame";
-/* social awaiting rework */
-// import Social from "../cmd/social";
-// import store from "../menu/store";
-// import buy from "../menu/buy";
 // <--> import components
 import acknowledged from "../menu/acknowledged";
 
@@ -39,10 +36,10 @@ export default class NekoClient extends SlashCreator {
   };
   // <--> start the app
   async start() {
-    this.withServer(this.workers).registerCommands([ Anime, Fun, My, Util, OsuGame, /* Social */ ]);
+    this.withServer(this.workers).registerCommands([ Anime, Fun, My, Util, OsuGame ]);
     // <--> handle component interactions
     this.on('componentInteraction', async ctx => {
-      const functions = { /* "store": store, "buy": buy, */ "acknowledged": acknowledged };
+      const functions = { "acknowledged": acknowledged };
       const interaction = functions[ctx.customID];
       return interaction.execute(ctx);
     });
