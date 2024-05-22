@@ -3,6 +3,7 @@
 // /**/: useless? notes
 import { my } from "../assets/const/import";
 import { SlashCommand } from "slash-create/web";
+/* unused vars are left for beta command */
 import { PermissionFlagsBits } from 'discord-api-types/v10';
 import {
   EmbedBuilder,

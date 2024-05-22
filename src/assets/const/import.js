@@ -14,16 +14,6 @@ const fun = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName('fact')
     .setDescription("gives you a random fact. Mostly useless though.")
-    .addStringOption(option => option
-      .setName("about")
-      .setDescription("whether to give facts about dogs, cats, or random")
-      .addChoices(...[
-        { name: "cat", value: "cat" },
-        { name: "dog", value: "dog" },
-        { name: "random", value: "random" }
-      ])  
-      .setRequired(true)
-    )
   )
   .addSubcommand(cmd => cmd
     .setName("owo")
