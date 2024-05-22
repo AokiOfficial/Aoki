@@ -27,7 +27,7 @@ export default class Fun extends SlashCommand {
     };
   };
   // <--> 8ball command
-  async "8ball"(ctx, query) {
+  async "8ball"(ctx, query, util) {
     if (util.isProfane(query)) return this.throw("Fix your query, please. At least give me some respect!");
     const eightball = await util.getStatic("8ball");
     return await ctx.send({ content: util.random(eightball) });
