@@ -1,5 +1,6 @@
-// this one's gonna be stressful as heck
-// be careful trying to implement complex things
+// ref!: error handling
+// <-->: block division
+// /**/: useless? notes
 import { EmbedBuilder } from "@discordjs/builders";
 import { SlashCommand } from "slash-create/web";
 import { format, parseISO } from "date-fns";
@@ -11,480 +12,413 @@ import AniSchedule from "../struct/Schedule";
 import he from "../assets/util/he";
 
 export default class Anime extends SlashCommand {
-  constructor(creator) { super(creator, anime) };
+  constructor(creator) {
+    super(creator, anime);
+    // <--> static and reusable variables
+    this.jikan_v4 = "https://api.jikan.moe/v4";
+    this.ErrorMessages = {
+      500: "The service is probably dead. Wait a little bit, then try again.",
+      400: "Looks like I found nothing in the records.\n\nYou believe that should exist? My sensei probably messed up. Try reporting this with `/my fault`.",
+      default: "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing changes after that, my sensei probably messed up. Try reporting this with `/my fault`."
+    };
+  };
+  // <--> main block
   async run(ctx) {
-    // define util
-    const util = ctx.client.util;
-    // defer reply
-    await ctx.defer();
-    // get sub
+    this.ctx = ctx;
+    // <--> get command and define utilities
     const sub = ctx.getSubcommand();
-    const subgroup = ctx.getSubcommandGroup();
-    // return actual subcommand
-    // default query param
+    const util = ctx.client.util;
     const query = ctx.getOption("query");
-    // commands
-    // breathe in before reading
-    if (!subgroup) {
-      if (sub == "profile") {
-        // we're globalizing this command
-        // instead of splitting it into myanimelist and anilist
-        const platform = ctx.getOption("platform");
-        // check query
-        if (util.isProfane(query)) return await ctx.send({ content: "Stop sneaking in bad content please, you baka." });
-        // fetch user query according to their platform choice
-        if (platform == "al") {
-          let res = await util.anilist(User, { search: query });
-          // if no res is available
-          if (res.errors) {
-            let err;
-            if (res.errors[0].status == 404) err = "Check your query. I just checked with the AniList data holder, they said no.";
-            else if (res.errors.some(a => a.status >= 500)) err = "The AniList data holder is probably on a vacation. Wait for a little bit before trying again.";
-            else if (res.errors.some(a => a.status >= 400)) err = "Sensei messed up, something's wrong with the paper sent to AniList's data holder. Try reporting this with `/my fault`||, although it's not my fault, sigh||.";
-            else err = "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing happens after that, report it with `/my fault`.";
-            return await ctx.send({ content: err });
-          };
-          // make embed fields
-          const topFields = Object.entries(res.data.User.favourites).map(([query, target]) => {
-            const firstTarget = target.edges.map(entry => {
-              const identifier = entry.node.title || entry.node.name;
-              const name = typeof identifier === 'object' ? identifier.userPreferred || identifier.full : identifier;
-              return `[**${name}**](${entry.node.siteUrl})`;
-            }).join('|') || 'None Listed';
-            return `\n**Top 1 ${query}:** ` + firstTarget.split("|")[0];
-          });
-          // make embed
-          const alprofile = new EmbedBuilder()
-            .setColor(util.color)
-            .setImage(res.data.User.bannerImage)
-            .setThumbnail(res.data.User.avatar.medium)
-            .setTitle(res.data.User.name)
-            .setURL(res.data.User.siteUrl)
-            .setDescription(`***About the user:** ${res.data.User.about ? util.textTruncate(he.decode(res.data.User.about.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided"}*` + `\n${topFields}`)
-            .setFooter({ text: "Data sent from AniList", iconURL: util.getUserAvatar(ctx.user) })
-            .setTimestamp();
-          await ctx.send({ embeds: [alprofile] });
-        } else if (platform == "mal") {
-          // fetch user query
-          const res = (await fetch(`https://api.jikan.moe/v4/users/${encodeURIComponent(query)}/full`).then(res => res.json())).data;
-          // if request error
-          if (res.errors) {
-            let err;
-            if (res.errors.some(a => a.status >= 500)) err = "MyAnimeList receptionist is probably on a vacation. Wait a little bit, then try again.";
-            else if (res.errors.some(a => a.status >= 400)) err = "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||.";
-            else err = "Wow, this kind of error has never been documented. Wait for about 5-10 minutes, if nothing happens after that, report it with `/my fault`.";
-            return await ctx.send({ content: err });
-          };
-          // shortcuts
-          const fav_anime = util.joinArrayAndLimit(res.favorites.anime.map((entry) => {
-            return `[${entry.title}](${entry.url.split('/').splice(0, 5).join('/')})`;
-          }), 1000, ' • ');
-          const fav_manga = util.joinArrayAndLimit(res.favorites.manga.map((entry) => {
-            return `[${entry.title}](${entry.url.split('/').splice(0, 5).join('/')})`;
-          }), 1000, ' • ');
-          const fav_characters = util.joinArrayAndLimit(res.favorites.characters.map((entry) => {
-            return `[${entry.name}](${entry.url.split('/').splice(0, 5).join('/')})`;
-          }), 1000, ' • ');
-          const fav_people = util.joinArrayAndLimit(res.favorites.people.map((entry) => {
-            return `[${entry.name}](${entry.url.split('/').splice(0, 5).join('/')})`;
-          }), 1000, ' • ');
-          // make the embed
-          // braindead code incoming
-          const malProfileEmbed = new EmbedBuilder()
-            .setColor(util.color)
-            .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.user) })
-            .setAuthor({ name: `${res.username}'s Profile`, iconURL: res.images.jpg.image_url })
-            .setTimestamp()
-            .setDescription([
-              util.textTruncate((res.about || '').replace(/(<([^>]+)>)/ig, ''), 350, `... *[read more here](${res.url})*`),
-              `• **Gender:** ${res.gender || 'Unspecified'}`,
-              `• **From:** ${res.location || 'Unspecified'}`,
-              `• **Joined:** ${format(parseISO(res.joined), 'EEEE, do MMMM yyyy')}`,
-              `• **Last Seen:** ${format(parseISO(res.last_online), 'EEEE, do MMMM yyyy')}`
-            ].join('\n'))
-            .addFields([
-              // thanks mai-bot for this masterpiece of formatting
-              {
-                name: 'Anime Statics', inline: true,
-                value: '```fix\n' + Object.entries(res.statistics.anime).map(([key, value]) => {
-                  const cwidth = 24;
-                  const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                  const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                  return '• ' + name + ':' + spacing + value;
-                }).join('\n') + '```'
-              }, {
-                name: 'Manga Statics', inline: true,
-                value: '```fix\n' + Object.entries(res.statistics.manga).splice(0, 10).map(([key, value]) => {
-                  const cwidth = 24;
-                  const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                  const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                  return '• ' + name + ':' + spacing + value;
-                }).join('\n') + '```'
-              }, {
-                name: 'Favorite Anime',
-                value: fav_anime.text + (!!fav_anime.excess ? ` and ${fav_anime.excess} more!` : '') || 'None Listed.'
-              }, {
-                name: 'Favorite Manga',
-                value: fav_manga.text + (!!fav_manga.excess ? ` and ${fav_manga.excess} more!` : '') || 'None Listed.'
-              }, {
-                name: 'Favorite Characters',
-                value: fav_characters.text + (!!fav_characters.excess ? ` and ${fav_characters.excess} more!` : '') || 'None Listed.'
-              }, {
-                name: 'Favorite Staffs',
-                value: fav_people.text + (!!fav_people.excess ? ` and ${fav_people.excess} more!` : '') || 'None Listed.'
-              }
-            ]);
-          await ctx.send({ embeds: [malProfileEmbed] });
-        }
-      } else if (sub == "action") {
-        // a more friendly command
-        const actionPic = await fetch(`https://api.waifu.pics/sfw/${query}`).then(res => res.json());
-        await ctx.send({
-          embeds: [
-            new EmbedBuilder()
-              .setColor(util.color)
-              .setImage(actionPic.url)
-          ]
+    // <--> run command in try...catch
+    try {
+      await ctx.defer();
+      return await this[sub](ctx, query, util);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.log(err);
+        const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
+        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+      };
+    };
+  };
+  // <--> action command
+  async action(ctx, query) {
+    const { url } = await this.fetch(`https://api.waifu.pics/sfw/${query}`);
+    return await ctx.send({ embeds: [this.embed.setImage(url)] });
+  };
+  // <--> quote command
+  async quote(ctx) {
+    const { anime, character, quote } = await this.fetch(`https://animechan.xyz/api/random`);
+    return await ctx.send({ content: `**${character}** from **${anime}**:\n\n*${quote}*` });
+  };
+  // <--> meme command
+  async meme(ctx, _, util) {
+    const res = await util.reddit("animemes");
+    const meme = this.embed
+      .setTitle(`**${res.title}**`)
+      .setURL(res.url)
+      .setDescription(`*Posted by **${res.author}***`)
+      .setImage(res.image)
+      .setFooter({ text: `${res.upVotes} likes`, iconURL: ctx.user.dynamicAvatarURL("png") });
+    return await ctx.send({ embeds: [meme] });
+  };
+  // <--> random command
+  async random(ctx, _, util) {
+    // <--> processing api response
+    const type = ctx.getOption("type");
+    const res = (await this.fetch(`${this.jikan_v4}/random/${type}`)).data;
+    if (!res) return this.throw(this.ErrorMessages.default);
+    const stats = {
+      "Main Genre": res.genres?.[0]?.name || "No data",
+      ...(type === "anime") ? 
+      {
+        "Source": res.source || "No data",
+        "Episodes": res.episodes || "No data",
+        "Status": res.status || "No data",
+        "Schedule": res.broadcast?.day ? `${res.broadcast.day}s` : "No data",
+        "Duration": res.duration?.replace(/ per /g, "/") || "No data"
+      } : {
+        "Chapters": res.chapters || "No data",
+        "Volumes": res.volumes || "No data"
+      }
+    };
+    const scores = {
+      "Mean Rank": res.rank || "No data",
+      "Popularity": res.popularity || "No data",
+      "Favorites": res.favorites || "No data",
+      "Subscribed": res.members || "No data",
+      ...(type === "anime") ? 
+      {
+        "Average Score": res.score || "No data",
+        "Scored By": res.scored_by || "No data",
+      } : {}
+    };
+    const description = [
+      util.textTruncate((res.synopsis || '').replace(/(<([^>]+)>)/ig, ''), 350, `...`),
+      `\n• **Main Theme:** ${res.themes?.[0]?.name || 'Unspecified'}`,
+      `• **Demographics:** ${res.demographics?.[0]?.name || 'Unspecified'}`,
+      `• **Air Season:** ${res.season ? util.toProperCase(res.season) : "Unknown"}`,
+      `\n*More about the ${type} can be found [here](${res.url}), and the banner can be found [here](${res.images?.jpg.image_url}).*`
+    ].join('\n');
+    // <--> extending preset embed
+    const embed = this.embed
+      .setFooter({ text: `Data sent from MyAnimeList`, iconURL: ctx.user.dynamicAvatarURL("png") })
+      .setAuthor({ name: `${res.title}`, iconURL: res.images?.jpg.image_url })
+      .setDescription(description)
+      .addFields([
+        { name: `${util.toProperCase(type)} Info`, inline: true, value: util.keyValueField(stats, 25) },
+        { name: `${util.toProperCase(type)} Scorings`, inline: true, value: util.keyValueField(scores, 25) }
+      ]);
+    return await ctx.send({ embeds: [embed] });
+  };
+  // <--> profile command
+  async profile(ctx, query, util) {
+    // <--> processing user query
+    const platform = ctx.getOption("platform");
+    if (util.isProfane(query)) this.throw("Stop sneaking in bad content please, you baka.");
+    const fetchData = {
+      al: async () => await util.anilist(User, { search: query }),
+      mal: async () => (await this.fetch(`${this.jikan_v4}/users/${query}/full`)).data
+    };
+    const res = await fetchData[platform]();
+    // <--> handling errors
+    if (!res) return this.throw(this.ErrorMessages[400]);
+    else if (res?.errors) {
+      const errorCodes = res.errors;
+      if (errorCodes.some(code => code.status >= 500)) {
+        return this.throw(this.ErrorMessages[500]);
+      } else if (errorCodes.some(code => code.status >= 400)) {
+        return this.throw(this.ErrorMessages[400]);
+      } else return this.throw(this.ErrorMessages.default);
+    };
+    // <--> generate a preset embed
+    const presetEmbed = this.embed.setFooter({ text: `Requested by ${ctx.user.username}`, iconURL: ctx.user.dynamicAvatarURL("png") });
+    // <--> conditional for each platform
+    if (platform == "mal") {
+      // <--> processing api response
+      /**
+       * Format AniList array information
+       * 
+       * Method scoped in here is exclusive for animes and mangas
+       * @param {Array} arr Array of query info to work with
+       * @returns `String`
+       */
+      const spreadMap = function(arr) {
+        const res = util.joinArrayAndLimit(arr.map((entry) => {
+          return `[${entry[entry.title ? "title" : "name"]}](${entry.url.split('/').splice(0, 5).join('/')})`;
+        }), 1000, ' • ');
+        return res.text + (!!res.excess ? ` and ${res.excess} more!` : '') || 'None Listed.'
+      };
+      const fav = {
+        anime: spreadMap(res.favorites.anime),
+        manga: spreadMap(res.favorites.manga),
+        chars: spreadMap(res.favorites.characters),
+        people: spreadMap(res.favorites.people)
+      };
+      const cleanedAboutField = (res.about || '').replace(/(<([^>]+)>)/ig, '');
+      const description = [
+        util.textTruncate(cleanedAboutField, 350, `... *[read more here](${res.url})*`),
+        `• **Gender:** ${res.gender || 'Unspecified'}`,
+        `• **From:** ${res.location || 'Unspecified'}`,
+        `• **Joined:** ${format(parseISO(res.joined), 'EEEE, do MMMM yyyy')}`,
+        `• **Last Seen:** ${format(parseISO(res.last_online), 'EEEE, do MMMM yyyy')}`
+      ].join('\n');
+      // <--> extending preset embed
+      const embed = presetEmbed
+        .setAuthor({ name: `${res.username}'s Profile`, iconURL: res.images.jpg.image_url })
+        .setDescription(description)
+        .addFields([
+          { name: 'Anime Stats', value: util.keyValueField(res.statistics.anime), inline: true },
+          { name: 'Manga Stats', value: util.keyValueField(res.statistics.manga), inline: true },
+          { name: 'Favourite Anime', value: fav.anime }, 
+          { name: 'Favorite Manga', value: fav.manga }, 
+          { name: 'Favorite Characters', value: fav.chars }, 
+          { name: 'Favorite Staffs', value: fav.people }
+        ]);
+      return await ctx.send({ embeds: [embed] });
+    } else {
+      // <--> processing api response
+      const topFields = Object.entries(res.data.User.favourites).map(([query, target]) => {
+        const firstTarget = target.edges.map(entry => {
+          const identifier = entry.node.title || entry.node.name;
+          const name = typeof identifier === 'object' ? identifier.userPreferred || identifier.full : identifier;
+          return `[**${name}**](${entry.node.siteUrl})`;
+        }).join('|') || 'None Listed';
+        return `\n**Top 1 ${query}:** ` + firstTarget.split("|")[0];
+      });
+      const description = res.data.User.about ? util.textTruncate(he.decode(res.data.User.about?.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided";
+      // <--> extending preset embed
+      const embed = presetEmbed
+        .setImage(res.data.User.bannerImage)
+        .setThumbnail(res.data.User.avatar.medium)
+        .setTitle(res.data.User.name)
+        .setURL(res.data.User.siteUrl)
+        .setDescription(`***About the user:** ${description}*` + `\n${topFields}`);
+      return await ctx.send({ embeds: [embed] });
+    };
+  };
+  // <--> search command
+  async search(ctx, query, util) {
+    // <--> processing user query
+    const type = ctx.getOption("type");
+    if (util.isProfane(query)) return this.throw("Stop sneaking in bad content please, you baka.");
+    const kitsuURL = function(type) {
+      return `https://kitsu.io/api/edge/${type}?filter[text]=${query}&page[offset]=0&page[limit]=1`;
+    };
+    const fetchData = {
+      anime: async () => await this.fetch(kitsuURL("anime")),
+      manga: async () => await this.fetch(kitsuURL("manga")),
+      character: async () => (await util.anilist(Character, { search: query })).data.Character,
+      seiyuu: async () => (await util.anilist(Seiyuu, { search: query })).data
+    };
+    const res = await fetchData[type]();
+    // <--> error handling
+    if (
+      !res || /* universal */
+      ((type == "anime" || type == "manga") && !res.data?.[0]) /* kitsu.io response */
+    ) {
+      return this.throw(this.ErrorMessages[400]);
+    };
+    // <--> processing api response
+    const processData = {
+      anime: res.data?.[0]?.attributes,
+      manga: res.data?.[0]?.attributes,
+      character: res.Character,
+      seiyuu: res
+    };
+    const data = processData[type];
+    if (
+      (type == "anime" || type == "manga") && /* kitsu.io response */
+      data.ageRatingGuide && /* ageRatingGuide exists */
+      (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && /* ageRatingGuide has NSFW */
+      !ctx.channel.nsfw /* channel is not NSFW */
+    ) {
+      return this.throw("The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Get in a NSFW channel, please.");
+    };
+    // <--> handling by type
+    if (type == "anime" || type == "manga") {
+      // <--> processing api response
+      const presetEmbed = this.embed
+        .setTitle(`${data.titles.en_jp}`)
+        .setURL(`https://kitsu.io/${type}/${res.data[0].id}`)
+        .setThumbnail(data.posterImage.original)
+        .setDescription(
+          `*The cover of this ${type} can be found [here](https://media.kitsu.io/${type}/poster_images/${res.data[0].id}/large.jpg)*\n\n` +
+          `**Description:** ${util.textTruncate(`${data.synopsis}`, 250, `... *(read more [here](https://kitsu.io/${type}/${res.data[0].id}))*`)}`
+        )
+      const fields = [
+        { name: "Type", value: `${util.toProperCase(data[type == "anime" ? "showType" : "subtype"])}`, inline: true },
+        { name: "Status", value: util.toProperCase(`${data.status}`), inline: true },
+        { name: "Air Date", value: `${data.startDate}`, inline: true },
+        { name: "Avg. Rating", value: `${data.averageRating?.toLocaleString() || "Unknown"}`, inline: true },
+        { name: "Age Rating", value: `${data.ageRatingGuide?.replace(")", "") || "Unknown"}`, inline: true },
+        { name: "Rating Rank", value: `#${data.ratingRank?.toLocaleString() || "Unknown"}`, inline: true },
+        { name: "Popularity", value: `#${data.popularityRank?.toLocaleString() || "Unknown"}`, inline: true },
+        ...(type == "anime") ?
+        [
+          { name: "NSFW?", value: util.toProperCase(`${data.nsfw}`), inline: true },
+          { name: "Ep. Count", value: `${data.episodeCount}`, inline: true },
+        ] : [
+          { name: "Volume Count", value: `${data.volumeCount || "None recorded"}`, inline: true },
+          { name: "Chapter Count", value: `${data.chapterCount || "None recorded"}`, inline: true },
+        ]
+      ];
+      const embed = presetEmbed.addFields(fields);
+      await ctx.send({ embeds: [embed] });
+    } else if (type == "seiyuu") {
+      // <--> processing api response
+      /**
+       * Format AniList array information
+       * 
+       * Method scoped in here is exclusive for seiyuu
+       * @param {Array} arr Array of query info to work with
+       * @returns `String`
+       */
+      const spreadMap = function(arr) {
+        const res = util.joinArrayAndLimit(arr.map((entry) => {
+          return `[${entry[entry.title ? "title" : "name"][entry.title ? "romaji" : "full"]}](${entry.siteUrl.split('/').slice(0, 5).join('/')})`;
+        }), 350, ' • ');
+        return res.text + (!!res.excess ? ` and ${res.excess} more!` : '') || 'None Listed.'
+      };
+      const staffName = [res.Staff.name.full, res.Staff.name.native].filter(Boolean).join(" | ");
+      const description = [
+        util.langflags.find(f => f.lang.toLowerCase() == res.Staff.language?.toLowerCase())?.flag,
+        util.textTruncate(toMarkdown(he.decode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
+      ].join('\n');
+      // <--> extending preset embed
+      const embed = this.embed
+        .setThumbnail(res.Staff.image.large)
+        .setAuthor({ name: staffName, url: res.Staff.siteUrl })
+        .setDescription(description)
+        .addFields([
+          { name: `${staffName} voiced...`, value: spreadMap(res.Staff.characters.nodes) },
+          { name: `${staffName} is part of...`, value: spreadMap(res.Staff.staffMedia.nodes) }
+        ]);
+      await ctx.send({ embeds: [embed] });
+    } else {
+      // <--> processing api response
+      const description = (res.description?.replace(/~!|!~/g, "||") || 'No description.') + `\n\n*More information can be found [here](${res.siteUrl}).*`;
+      const embedField = util.joinArrayAndLimit(res.media.nodes.map((entry) => {
+        return `[${entry.title.romaji}](${entry.siteUrl?.split('/').slice(0, 5).join('/') || "https://anilist.co/"})`;
+      }), 350, ' • ');
+      // <--> extending preset embed
+      const embed = this.embed
+        .setTitle(`${res.name.full}`)
+        .setURL(res.siteUrl)
+        .setDescription(description)
+        .setThumbnail(res.image.large)
+        .addFields({
+          name: "Appears in...",
+          value: embedField.text + (!!embedField.excess ? ` and ${embedField.excess} more!` : '') || 'None Listed.'
         });
-      } else if (sub == "search") {
-        // we're also globalizing this command
-        // no more /anime search, /anime manga, /anime seiyuu and /anime character
-        const type = ctx.getOption("type");
-        // searching on kitsu.io
-        // check query
-        if (util.isProfane(query)) return await ctx.send({ content: "Stop sneaking in bad content please, you baka." });
-        // anime
-        if (type == "anime") {
-          const res = await fetch(`https://kitsu.io/api/edge/anime?filter[text]=${query}&page%5Boffset%5D=0&page%5Blimit%5D=1`).then(res => res.json());
-          // if no data
-          if (!res.data.length || !res) return await ctx.send({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
-          // shortcut
-          const data = res.data[0].attributes;
-          // check again if no attribute is found
-          if (!data) return await ctx.send({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
-          // check if channel is nsfw
-          if (data.nsfw && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
-          // check if content rating is nsfw
-          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
-          // make our embed
-          const animeEmbed = new EmbedBuilder()
-            .setTitle(`${data.titles.en_jp}`)
-            .setURL(`https://kitsu.io/${res.data[0].id}`)
-            .setThumbnail(data.posterImage.original)
-            .setDescription(
-              `*The cover of this anime can be found [here](https://media.kitsu.io/anime/poster_images/${res.data[0].id}/large.jpg)*\n\n` +
-              `**Description:** ${util.textTruncate(`${data.synopsis}`, 250, `... *(read more [here](https://kitsu.io/anime/${res.data[0].id}))*`)}`
-            ) // mobile users
-            .setColor(util.color)
-            .addFields([
-              { name: "Type", value: `${data.showType}`, inline: true },
-              { name: "Status", value: util.toProperCase(`${data.status}`), inline: true },
-              { name: "Air Date", value: `${data.startDate}`, inline: true },
-              { name: "Ep. Count", value: `${data.episodeCount}`, inline: true },
-              { name: "Avg. Rating", value: `${data.averageRating}`, inline: true },
-              { name: "Age Rating", value: `${data.ageRatingGuide.replace(")", "")}`, inline: true },
-              { name: "Rating Rank", value: `#${data.ratingRank.toLocaleString()}`, inline: true },
-              { name: "Popularity", value: `#${data.popularityRank.toLocaleString()}`, inline: true },
-              { name: "NSFW?", value: util.toProperCase(`${data.nsfw}`), inline: true }
-            ])
-            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.user) })
-            .setTimestamp();
-          // send it
-          await ctx.send({ embeds: [animeEmbed] });
-        } else if (type == "manga") {
-          const res = await fetch(`https://kitsu.io/api/edge/manga?filter[text]=${query}&page%5Boffset%5D=0&page%5Blimit%5D=1`).then(res => res.json());
-          // if no data
-          if (!res.data.length || !res) return await ctx.send({ content: `Baka, check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
-          // shortcut
-          const data = res.data[0].attributes;
-          // check again if no attribute is found
-          if (!data) return await ctx.send({ content: `Check your query. Kitsu.io's staff cannot find **${query}**, well, at least it's not in their records.` });
-          // check if channel is nsfw
-          if (data.nsfw && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io is NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
-          // check if content rating is nsfw
-          if (data.ageRatingGuide && (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && !ctx.channel.nsfw) return await ctx.send({ content: `The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Please get in a NSFW channel, please.` });
-          const mangaEmbed = new EmbedBuilder()
-            .setTitle(`${data.titles.en_jp}`)
-            .setURL(`https://kitsu.io/${res.data[0].id}`)
-            .setThumbnail(data.posterImage.original)
-            .setDescription(
-              `*The cover of this manga can be found [here](https://media.kitsu.io/manga/poster_images/${res.data[0].id}/large.jpg)*\n\n` +
-              `**Description:** ${util.textTruncate(`${data.synopsis}`, 250, `... *(read more [here](https://kitsu.io/manga/${res.data[0].id}))*`)}`
-            ) // mobile users
-            .setColor(util.color)
-            .addFields([
-              { name: "Type", value: util.toProperCase(`${data.subtype}`), inline: true },
-              { name: "Status", value: util.toProperCase(`${data.status}`), inline: true },
-              { name: "Air Date", value: `${data.startDate}`, inline: true },
-              { name: "Volume Count", value: `${data.volumeCount ? data.volumeCount : "None recorded"}`, inline: true },
-              { name: "Chapter Count", value: `${data.chapterCount ? data.chapterCount : "None recorded"}`, inline: true },
-              { name: "Average Rating", value: `${data.averageRating.toLocaleString()}`, inline: true },
-              { name: "Age Rating", value: `${data.ageRatingGuide ? data.ageRatingGuide : "None"}`, inline: true },
-              { name: "Rating Rank", value: `#${data.ratingRank.toLocaleString()}`, inline: true },
-              { name: "Popularity", value: `#${data.popularityRank.toLocaleString()}`, inline: true }
-            ])
-            .setFooter({ text: 'Powered by kitsu.io', iconURL: util.getUserAvatar(ctx.user) })
-            .setTimestamp();
-          // send
-          await ctx.send({ embeds: [mangaEmbed] });
-        } else if (type == "character") {
-          const res = (await util.anilist(Character, { search: query })).data.Character;
-          // if error occurs
-          if (!res) return await ctx.send({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
-          // shortcuts
-          const desc = res.description.replace(/~!|!~/g, "||") || 'No description.';
-          const dupeRemove = [...new Set(res.media.nodes.map(node => node.title.romaji))]
-          // remove duplicate in anime/manga appearance
-          let newDescStr = "";
-          for (let i = 0; i < dupeRemove.length; i++) {
-            newDescStr += `\n- ${dupeRemove[i]}`;
-          };
-          // make embed
-          const embed = new EmbedBuilder()
-            .setTitle(`Character information for ${res.name.full}`)
-            .setThumbnail("https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/AniList_logo.svg/2048px-AniList_logo.svg.png")
-            .setURL(res.siteUrl)
-            .setDescription(desc)
-            .addFields({
-              name: 'Appears in...',
-              value: newDescStr || 'None.'
-            })
-            .setImage(res.image.large)
-            .setColor(util.color)
-            .setTimestamp()
-            .setFooter({ text: `Data sent from AniList • ${res.favourites} people love ${res.name.full}`, iconURL: util.getUserAvatar(ctx.user) });
-          await ctx.send({ embeds: [embed] });
-        } else if (type == "seiyuu") {
-          const res = (await util.anilist(Seiyuu, { search: query })).data;
-          // if error occurs
-          if (!res) return await ctx.send({ content: "Can't find them. Could be server error, though. Try again with another query, or if this doesn't work as intended at all, use `/my fault`." });
-          // make embed
-          const seiyuuEmbed = new EmbedBuilder()
-            .setColor(util.color)
-            .setThumbnail(res.Staff.image.large)
-            .setAuthor({
-              name: `${[
-                res.Staff.name.full,
-                res.Staff.name.native
-              ].filter(Boolean).join(" | ")}`, url: res.Staff.siteUrl
-            })
-            .setDescription(`${[
-              util.langflags.find(f => f.lang.toLowerCase() === res.Staff.language?.toLowerCase())?.flag,
-              util.textTruncate(toMarkdown(he.decode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
-            ].join('\n')}`)
-            .addFields([
-              {
-                name: `${res.Staff.name.full} voiced these characters`,
-                value: `${util.joinArrayAndLimit(res.Staff.characters.nodes.map(x => {
-                  return `[${x.name.full}](${x.siteUrl.split('/').slice(0, 5).join('/')})`;
-                }), 1000, ' • ').text || 'None Found.'}`
-              }, {
-                name: `${res.Staff.name.full} is part of the staff of these anime`,
-                value: `${util.joinArrayAndLimit(res.Staff.staffMedia.nodes.map(s => {
-                  return `[${s.title.romaji}](${s.siteUrl.split('/').slice(0, 5).join('/')})`;
-                }), 1000, ' • ').text || 'None Found.'}`
-              }
-            ])
-            .setTimestamp()
-            .setFooter({ text: `Data sent from AniList`, iconURL: util.getUserAvatar(ctx.user) });
-          await ctx.send({ embeds: [seiyuuEmbed] });
-        }
-      } else if (sub == "meme") {
-        // just simple
-        const res = await util.reddit("animemes");
-        const meme = new EmbedBuilder()
-          .setTitle(`**${res.title}**`)
-          .setURL(res.url)
-          .setDescription(`*Posted by **${res.author}***`)
-          .setImage(res.image)
-          .setColor(util.color)
-          .setTimestamp()
-          .setFooter({ text: `${res.upVotes} likes`, iconURL: util.getUserAvatar(ctx.user) });
-        await ctx.send({ embeds: [meme] });
-      } else if (sub == "quote") {
-        // simple
-        const res = await fetch('https://animechan.xyz/api/random').then(res => res.json());
-        await ctx.send({ content: `**${res.character}** from **${res.anime}**:\n\n*${res.quote}*` });
-      } else if (sub == "random") {
-        // fetch user query
-        const type = ctx.getOption("type");
-        const res = (await fetch(`https://api.jikan.moe/v4/random/${encodeURIComponent(type)}`).then(res => res.json())).data;
-        // if request error
-        if (!res) return await ctx.send({ content: "Sensei messed up, something's wrong with the paper sent to MyAnimeList's receptionist. Try reporting this with `/my fault`||, although it's not my fault, sigh||." });
-        // shortcuts
-        const anime_stats = {
-          "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
-          "Source": res.source || "No data",
-          "Episodes": res.episodes || "No data",
-          "Status": res.status || "No data",
-          "Schedule": res.broadcast?.day ? "Every " + res.broadcast.day : "No data",
-          "Duration": res.duration ? res.duration.replace(/ per /g, "/") : "No data"
-        };
-        const anime_scores = {
-          "Average Score": res.score || "No data",
-          "Scored By": res.scored_by || "No data",
-          "Mean Rank": res.rank || "No data",
-          "Popularity Rank": res.popularity || "No data",
-          "Favorites": res.favorites || "No data",
-          "Subscribed": res.members || "No data"
-        }
-        const manga_stats = {
-          "Main Genre": res.genres.length != 0 ? res.genres[0].name : "No data",
-          "Chapters": res.chapters || "No data",
-          "Volumes": res.volumes || "No data",
-          "Status": res.status || "No data"
-        };
-        const manga_scores = {
-          // manga on mal has no average score
-          "Mean Rank": res.rank || "No data",
-          "Popularity Rank": res.popularity || "No data",
-          "Favorites": res.favorites || "No data",
-          "Subscribed": res.members || "No data"
-        };
-        // make the embed
-        // braindead code incoming
-        const malRandomEmbed = new EmbedBuilder()
-          .setColor(util.color)
-          .setFooter({ text: `Data sent from MyAnimeList`, iconURL: util.getUserAvatar(ctx.user) })
-          .setAuthor({ name: `${res.title}`, iconURL: res.images.jpg.image_url })
-          .setTimestamp()
-          .setDescription([
-            util.textTruncate((res.synopsis || '').replace(/(<([^>]+)>)/ig, ''), 350, `... *[read more here](${res.url})*`),
-            `\n• **Main Theme:** ${res.themes[0]?.name || 'Unspecified'}`,
-            `• **Demographics:** ${res.demographics[0]?.name || 'Unspecified'}`,
-            `• **Air Season:** ${res.season ? util.toProperCase(res.season) : "Unknown"}`,
-            `\n*More about the ${type} can be found [here](${res.url}), and the banner can be found [here](${res.images.jpg.image_url}).*`
-          ].join('\n'))
-          .addFields([
-            {
-              name: `${util.toProperCase(type)} Info`, inline: true,
-              value: '```fix\n' + Object.entries(type == "anime" ? anime_stats : manga_stats).map(([key, value]) => {
-                const cwidth = 25;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + ':' + spacing + value;
-              }).join('\n') + '```'
-            }, {
-              name: `${util.toProperCase(type)} Scorings`, inline: true,
-              value: '```fix\n' + Object.entries(type == "anime" ? anime_scores : manga_scores).splice(0, 10).map(([key, value]) => {
-                const cwidth = 25;
-                const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
-                const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
-
-                return '• ' + name + ':' + spacing + value;
-              }).join('\n') + '```'
-            }
-          ]);
-        await ctx.send({ embeds: [malRandomEmbed] });
-      }
-    } else if (subgroup == "schedule") {
-      if (sub == "list") {
-        // stable release
-        // will still push to beta if needed
-        const guild = await ctx.guild;
-        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
-        // get schedules of this guild
-        const list = await guild.schedules;
-        if (!list.length || list[0].anilistId == 0) return await ctx.send({ content: "Baka, this server has no anime subsciptions." });
-        // do a full search
-        // compile all ids into an array
-        let watched = [];
-        for (let i = 0; i < list.length; i++) {
-          watched.push(list[i].anilistId);
-        };
-        let page = 0, hasNextPage = false, entries = [];
-        const aniFetch = new AniSchedule(ctx.client);
-        // fetch data
-        do {
-          const res = await aniFetch.fetch(Watching, { watched, page });
-          // if there's some errors from anilist
-          if (!res) {
-            return await ctx.send({ content: "O-Oh, AniList returned an error. Maybe try again later?\n\n||Issue didn't resolve for more than an hour? Use `/my fault` to notice my sensei!||" });
-            // else if there's actually nothing
-          } else if (!entries.length && !res.data.Page.media.length) {
-            return await ctx.send({ content: "Baka, this server has no anime subscriptions." });
-            // else it means everything went okay
-            // we store data
-          } else {
-            page = res.data.Page.pageInfo.currentPage + 1;
-            hasNextPage = res.data.Page.pageInfo.hasNextPage;
-            entries.push(...res.data.Page.media.filter(x => x.status === 'RELEASING'));
-          };
-        } while (hasNextPage);
-        // format entries
-        const description = entries.sort((A, B) => A.id - B.id).map(entry => {
-          const id = ' '.repeat(6 - String(entry.id).length) + String(entry.id);
-          const title = util.textTruncate(entry.title.romaji, 42, '...');
-          return `• \`ID: [${id}]\` [**${title}**](${entry.siteUrl})`;
-        }).join("\n");
-        const embed = new EmbedBuilder()
-          .setColor(util.color)
-          .setDescription(`${description}`)
-          .setThumbnail("https://i.imgur.com/wJqBxdk.png")
-          .setAuthor({ name: `Current AniSchedule subscription list` })
-          .setFooter({
-            text: `Requested by ${ctx.user.username}`, iconURL: util.getUserAvatar(ctx.user)
-          }).setTimestamp()
-          .addFields({
-            name: 'Tips', value: `${[
-              `- Use \`/anime schedule add\` to add subscription`,
-              `- Use \`/anime schedule remove\` to remove subscription`
-            ].join('\n')}`
-          });
-        // send the embed
-        await ctx.send({ embeds: [embed] });
-      } else if (sub == "add") {
-        const query = ctx.getOption("query");
-        const channel = ctx.getChannel("channel");
-        // check perms
-        if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return await ctx.send({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
-        // define some utils
-        const ani = new AniSchedule(ctx.client);
-        // get guild settings
-        const guild = await ctx.guild;
-        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
-        // get schedules of this guild
-        const list = await guild.schedules;
-        // if there's already one let them know
-        if (list.length && list[0].anilistId != 0) return await ctx.send({ content: "For now, each server can only have **one schedule** running at a time for technical reasons.\n\nSorry for the inconvenience." });
-        else {
-          // check if query is a valid MAL or AniList url or id
-          const anilistId = await util.getMediaId(query);
-          // if it's not valid
-          if (!anilistId) return await ctx.send({ content: "Have you made a typo or something? That one doesn't exist, baka." });
-          // fetch channel
-          // if channel type is voice, throw exception
-          if (channel.type != 0) return await ctx.send({ content: "No, I can't speak in there for you, baka." });
-          // fetch the media to check if it's actually airing
-          const media = (await ani.fetch("query($id: Int!) { Media(id: $id) { id status nextAiringEpisode { timeUntilAiring episode } title { native romaji english } } }", { id: anilistId })).data.Media;
-          if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return await ctx.send({ content: "Baka, that's not airing. It's not an upcoming one, too. Maybe even finished." });
-          // update the entry
-          await guild.update({ channelId: ctx.channel.id, anilistId: media.id, nextEp: media.nextAiringEpisode.episode });
-          // let them know
-          return await ctx.send({ content: `Tracking airing episodes for **${media.title.romaji}** in ${channel ? "<#" + channel.id + ">" : "this channel"}.\n\nNext episode is airing in roughly **${Math.floor((media.nextAiringEpisode.timeUntilAiring / 60) / 60)}** hours.` });
-        };
-      } else if (sub == "remove") {
-        // check perms
-        if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return await ctx.send({ content: "Baka, you must have the `Manage Guild` permission to execute this command." });
-        // get guild settings
-        const guild = await ctx.guild;
-        // if (!guild.settings || !guild.settings.beta) return await ctx.send({ content: "Your server is not enrolled in the beta program, therefore you cannot use this command." });
-        // get schedules of this guild
-        const list = await guild.schedules;
-        // if there's nothing
-        if (!list || list[0].anilistId == 0) return await ctx.send({ content: "Baka, this server has no anime subscription." });
-        // define some utils
-        const ani = new AniSchedule(ctx.client);
-        // fetch media title
-        const media = (await ani.fetch("query($id: Int!) { Media(id: $id) { id status title { native romaji english } } }", { id: list[0].anilistId })).data.Media;
-        // remove the entry
-        await guild.update({ channelId: '0', anilistId: 0, nextEp: 0 });
-        // let them know
-        return await ctx.send({ content: `Stopped tracking airing episodes for **${media.title.romaji}**.` });
-      }
-    }
-  }
+      await ctx.send({ embeds: [embed] });
+    };
+  };
+  // <--> schedule current command
+  async current(ctx) {
+    // <--> get guild settings
+    const guild = await ctx.getGuild();
+    const schedule = await guild.getSchedules();
+    // <--> handle exceptions
+    if (!schedule?.[0]?.anilistId) return this.throw("Baka, this server has no anime subsciptions.");
+    // <--> get watching data
+    const aniFetch = new AniSchedule(ctx.client);
+    const res = (await aniFetch.fetch(Watching, { 
+      watched: [schedule[0].anilistId], 
+      page: 0 
+    })).data.Page.media[0];
+    // <--> handle errors
+    if (!res) return this.throw(this.ErrorMessages[400]);
+    else if (res?.errors) {
+      const errorCodes = res.errors;
+      if (errorCodes.some(code => code.status >= 500)) {
+        return this.throw(this.ErrorMessages[500]);
+      } else if (errorCodes.some(code => code.status >= 400)) {
+        return this.throw(this.ErrorMessages[400]);
+      } else return this.throw(this.ErrorMessages.default);
+    };
+    // <--> handle api response
+    const title = `[${res.title.romaji}](${res.siteUrl})`;
+    const nextEpisode = res.nextAiringEpisode.episode;
+    const timeUntilAiring = Math.round(res.nextAiringEpisode.timeUntilAiring / 3600, 0);
+    // <--> send response
+    return await ctx.send({ content: `You are currently watching **${title}**. Its next episode is **${nextEpisode}**, airing in about **${timeUntilAiring} hours**.` });
+  };
+  // <--> schedule add command
+  async add(ctx, query, util) {
+    // <--> get guild settings
+    const guild = await ctx.getGuild();
+    const schedule = await guild.getSchedules();
+    const channel = ctx.getChannel("channel");
+    const aniFetch = new AniSchedule(ctx.client);
+    // <--> handle exceptions
+    if (schedule?.[0]?.anilistId) return this.throw("Baka, each server can only have **one schedule** running at a time.");
+    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return this.throw("Baka, you must have the `Manage Guild` permission to execute this command.");
+    if (channel.type != 0) return this.throw("I can't speak in there for you, baka. Just a normal channel, please.");
+    // <--> handle user query
+    const anilistId = await util.getMediaId(query);
+    if (!anilistId) return this.throw(this.ErrorMessages[400]);
+    const media = (await aniFetch.fetch(Watching, { 
+      watched: [anilistId],
+      page: 0
+    })).data.Page.media[0];
+    // <--> handle errors
+    if (!media) return this.throw(this.ErrorMessages[400]);
+    else if (media?.errors) {
+      const errorCodes = media.errors;
+      if (errorCodes.some(code => code.status >= 500)) {
+        return this.throw(this.ErrorMessages[500]);
+      } else if (errorCodes.some(code => code.status >= 400)) {
+        return this.throw(this.ErrorMessages[400]);
+      } else return this.throw(this.ErrorMessages.default);
+    };
+    if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return this.throw("Baka, that's not airing. It's not an upcoming one, too. Maybe even finished.");
+    // <--> update database
+    await guild.update({ channelId: ctx.channel.id, anilistId: media.id, nextEp: media.nextAiringEpisode.episode });
+    // <--> send result
+    const title = media.title.romaji;
+    const channelName = channel ? "<#" + channel.id + ">" : "**this channel**";
+    const timeUntilAiring = Math.round(media.nextAiringEpisode.timeUntilAiring / 3600, 0);
+    return await ctx.send({ content: `Tracking airing episodes for **${title}** in ${channelName}. Next episode is airing in about **${timeUntilAiring} hours**.` });
+  };
+  // <--> schedule remove command
+  async remove(ctx) {
+    // <--> get guild settings
+    const guild = await ctx.getGuild();
+    const schedule = await guild.getSchedules();
+    const aniFetch = new AniSchedule(ctx.client);
+    // <--> handle exceptions
+    if (!schedule?.[0]?.anilistId) return this.throw("Baka, this server has no anime subscription.");
+    if (!ctx.member.permissions.has(PermissionFlagsBits.ManageGuild)) return this.throw("Baka, you must have the `Manage Guild` permission to execute this command.");
+    // <--> get watching data
+    const res = (await aniFetch.fetch(Watching, { 
+      watched: [schedule[0].anilistId], 
+      page: 0 
+    })).data.Page.media[0];
+    // <--> handle errors
+    if (!res) return this.throw(this.ErrorMessages[400]);
+    else if (res?.errors) {
+      const errorCodes = res.errors;
+      if (errorCodes.some(code => code.status >= 500)) {
+        return this.throw(this.ErrorMessages[500]);
+      } else if (errorCodes.some(code => code.status >= 400)) {
+        return this.throw(this.ErrorMessages[400]);
+      } else return this.throw(this.ErrorMessages.default);
+    };
+    // <--> update database
+    await guild.update({ channelId: '0', anilistId: 0, nextEp: 0 });
+    // <--> send message
+    return await ctx.send({ content: `Stopped tracking airing episodes for **${res.title.romaji}**.` });
+  };
+  // <--> internal utilities
+  async throw(content) {
+    await this.ctx.send({ content });
+    return Promise.reject();
+  };
+  async fetch(url) {
+    return await fetch(url).then(async res => await res.json());
+  };
+  get embed() {
+    return new EmbedBuilder().setColor(16777215).setTimestamp();
+  };
 }

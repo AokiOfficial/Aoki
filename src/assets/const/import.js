@@ -5,7 +5,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
-  .setDescription("Long list of subcommands for... fun.")
+  .setDescription("long list of subcommands for... fun.")
   .addSubcommand(cmd => cmd
     .setName("8ball")
     .setDescription("ask me anything.")
@@ -14,16 +14,6 @@ const fun = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName('fact')
     .setDescription("gives you a random fact. Mostly useless though.")
-    .addStringOption(option => option
-      .setName("about")
-      .setDescription("whether to give facts about dogs, cats, or random")
-      .addChoices(...[
-        { name: "cat", value: "cat" },
-        { name: "dog", value: "dog" },
-        { name: "random", value: "random" }
-      ])  
-      .setRequired(true)
-    )
   )
   .addSubcommand(cmd => cmd
     .setName("owo")
@@ -79,62 +69,36 @@ const fun = new SlashCommandBuilder()
     .addStringOption(option => option.setName('top').setDescription('first text field (or top text)').setRequired(true))
     .addStringOption(option => option.setName("bottom").setDescription("second text field (or bottom text)").setRequired(true))
   )
-  .addSubcommand(cmd => cmd
-    .setName("toss")
-    .setDescription("test your chance to win some money off a randomizer.")
-    .addIntegerOption(option => option
-      .setName("amount")
-      .setDescription("the amount you want to place.")
-      .setRequired(true)  
-    )  
-    .addStringOption(option => option
-      .setName("level")
-      .setDescription("set the difficulty. The higher the difficulty, the more you earn.")
-      .addChoices(...[
-        { name: "Game", value: "ez" },
-        { name: "Bet", value: "normal" },
-        { name: "Double or Nothing", value: "hard" }
-      ])  
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("slot")
-    .setDescription("insert coin for slot machine gaming.")
-    .addIntegerOption(option => option
-      .setName("amount")
-      .setDescription("the amount you want to place.")
-      .setRequired(true)  
-    )  
-  )
   .toJSON()
 
 const util = new SlashCommandBuilder()
   .setName("utility")
-  .setDescription("The name says it all.")
+  .setDescription("the name says it all.")
   .addSubcommand(cmd => cmd
     .setName("avatar")
     .setDescription("display one's avatar.")
-    .addUserOption(option => option.setName("member").setDescription("...just the server member.").setRequired(true))
+    .addUserOption(option => option.setName("user").setDescription("user to check their avatar."))
   )
   .addSubcommand(cmd => cmd
     .setName("banner")
     .setDescription("display one's banner.")
-    .addUserOption(option => option.setName("member").setDescription("...just the server member.").setRequired(true))
+    .addUserOption(option => option.setName("user").setDescription("user to check their banner."))
   )
   .addSubcommand(cmd => cmd
     .setName("channel")
     .setDescription("display a channel's information.")
-    .addChannelOption(option => option.setName("channel").setDescription("...just the channel.").setRequired(true))
+    .addChannelOption(option => option.setName("channel").setDescription("...just the server channel."))
   )
   .addSubcommand(cmd => cmd
     .setName("github")
     .setDescription("display a (public) GitHub repo's information.")
-    .addStringOption(option => option.setName("name").setDescription("Format: [repo owner]/[repo name].").setRequired(true))
+    .addStringOption(option => option.setName("user").setDescription("the owner of the repository.").setRequired(true))
+    .addStringOption(option => option.setName("repo").setDescription("the name of the repository.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
     .setName("npm")
     .setDescription("display an npm package's information.")
-    .addStringOption(option => option.setName("name").setDescription("...just the package's name.").setRequired(true))
+    .addStringOption(option => option.setName("query").setDescription("...just the package's name.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
     .setName("server")
@@ -143,65 +107,38 @@ const util = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName("urban")
     .setDescription("the one dictionary you love.")
-    .addStringOption(option => option.setName("word").setDescription("...just the word you want to define.").setRequired(true))
+    .addStringOption(option => option.setName("query").setDescription("...just the word you want to define.").setRequired(true))
   )
   .addSubcommand(cmd => cmd
-    .setName("ask")
-    .setDescription("you're just lazy, aren't you. Please only ask short questions, I will only read only 140 characters.")
-    .addStringOption(option => option.setName("question").setDescription("thing you wanna ask").setRequired(true))
+    .setName("screenshot")
+    .setDescription("screenshot a webpage.")
+    .addStringOption(option => option.setName("query").setDescription("the URL of the webpage").setRequired(true))
   )
   .addSubcommand(cmd => cmd
-    .setName("profile")
-    .setDescription("check out both your balance and osu! skills in one image.")
-    .addUserOption(option => option
-      .setName("user")
-      .setDescription("the user you wanna check out. Default you.")  
-    )  
-    .addStringOption(option => option
-      .setName("mode")
-      .setDescription("if you wanna check out another mode. Default yours.")
-      .addChoices(...[
-        { name: "standard", value: "osu" },
-        { name: "taiko", value: "taiko" },
-        { name: "catch", value: "fruits" },
-        { name: "mania", value: "mania" }
-      ])  
-    )
+    .setName("wiki")
+    .setDescription("the one encyclopedia you love.")
+    .addStringOption(option => option.setName("query").setDescription("...just the definition you want to search for.").setRequired(true))
   )
   .toJSON()
 
 const my = new SlashCommandBuilder()
   .setName("my")
-  .setDescription("Commands directly related to me or my development.")
+  .setDescription("commands directly related to me or my development.")
   .addSubcommand(cmd => cmd
     .setName("ping")
     .setDescription("check latency... or it's you wanting to be insulted.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("terms")
-    .setDescription("read my neat version of Terms of Service.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName("beta")
-    .setDescription("enroll in the Neko Beta Program.")  
   )
   .addSubcommand(cmd => cmd
     .setName("vote")
     .setDescription("vote for me on top.gg to show some support!")
   )
   .addSubcommand(cmd => cmd
+    .setName("info")
+    .setDescription("essentially a \"help\" command.")  
+  )
+  .addSubcommand(cmd => cmd
     .setName("fault")
-    .setDescription("is anything wrong? Having good ideas? Share it!")
-    .addStringOption(option => option
-      .setName("type")
-      .setDescription("the type of this feedback")
-      .setRequired(true)
-      .addChoices(...[
-        { name: "issue", value: "Issue" },
-        { name: "suggestion", value: "Suggestion" }
-      ])
-      .setRequired(true)
-    )
+    .setDescription("is anything wrong? having good ideas? share it!")
     .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
     .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
   )
@@ -297,8 +234,8 @@ const anime = new SlashCommandBuilder()
     .setName("schedule")
     .setDescription("watchlist to notify you when a new anime episode airs.")
     .addSubcommand(cmd => cmd
-      .setName("list")
-      .setDescription("list your watchlist.")  
+      .setName("current")
+      .setDescription("check out your current watching anime.")  
     )
     .addSubcommand(cmd => cmd
       .setName("add")
@@ -337,10 +274,10 @@ const osugame = new SlashCommandBuilder()
       .setDescription("your main gamemode")
       .setRequired(true)  
       .addChoices(...[
-        { name: "standard", value: "0" },
-        { name: "taiko", value: "1" },
-        { name: "catch", value: "2" },
-        { name: "mania", value: "3" }
+        { name: "standard", value: "osu" },
+        { name: "taiko", value: "taiko" },
+        { name: "catch", value: "fruits" },
+        { name: "mania", value: "mania" }
       ])
     )
   )
@@ -352,11 +289,35 @@ const osugame = new SlashCommandBuilder()
       .setName("mode")
       .setDescription("the mode you wish to check out. Not required if you have one saved")
       .addChoices(...[
-        { name: "standard", value: "0" },
-        { name: "taiko", value: "1" },
-        { name: "catch", value: "2" },
-        { name: "mania", value: "3" }
+        { name: "standard", value: "osu" },
+        { name: "taiko", value: "taiko" },
+        { name: "catch", value: "fruits" },
+        { name: "mania", value: "mania" }
       ])
+    )
+    .addStringOption(option => option
+      .setName("type")
+      .setDescription("the output type. Defaults to info")
+      .addChoices(...[
+        { name: "info", value: "info" },
+        { name: "card", value: "card" }
+      ])  
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("customize")
+    .setDescription("customize your osu! card")
+    .addStringOption(option => option
+      .setName("color")
+      .setDescription("the color of the info field. Can be in hex or rgb")
+    )
+    .addStringOption(option => option
+      .setName("background")
+      .setDescription("the color of the background field. Can be in hex or rgb")
+    )
+    .addStringOption(option => option
+      .setName("description")
+      .setDescription("the field below your username. Limits to 75 characters")
     )
   )
   // future plan
@@ -452,129 +413,4 @@ const osugame = new SlashCommandBuilder()
   // )
   .toJSON()
 
-const social = new SlashCommandBuilder()
-  .setName("social")
-  .setDescription("collecting some yens, buying some stuff, all that.")
-  .addSubcommand(cmd => cmd
-    .setName("register")
-    .setDescription("if you don't have a bank account yet, start here.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("daily")
-    .setDescription("claim your daily allowance.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("deposit") 
-    .setDescription("deposit money from your pocket to the bank.")
-    .addIntegerOption(option => option
-      .setName("amount")
-      .setDescription("the amount you want to deposit.")
-      .setRequired(true)
-    ) 
-  )
-  .addSubcommand(cmd => cmd
-    .setName("withdraw") 
-    .setDescription("withdraw money from your bank to your pocket.")
-    .addIntegerOption(option => option
-      .setName("amount")
-      .setDescription("the amount you want to withdraw.")
-      .setRequired(true)
-    ) 
-  )
-  .addSubcommand(cmd => cmd
-    .setName("bank")
-    .setDescription("see how much you currently possess.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("transfer")
-    .setDescription("transfer money to other people.")
-    .addIntegerOption(option => option
-      .setName("amount")
-      .setDescription("the amount you want to transfer")
-      .setRequired(true)  
-    )  
-    .addUserOption(option => option
-      .setName("user")
-      .setDescription("whoever will receive this money.")
-      .setRequired(true)
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("store")
-    .setDescription("check out what you can buy from the store.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("work")
-    .setDescription("make money, buy things, make more money, buy more things.")  
-  )
-  .addSubcommand(cmd => cmd
-    .setName("steal")
-    .setDescription("steal money from people. Not intended, so much more strict when you fail.")
-    .addUserOption(option => option
-      .setName("user")
-      .setDescription("the user you want to steal from. Could be anyone, this system is global.")
-      .setRequired(true)  
-    )  
-    .addStringOption(option => option
-      .setName("level")
-      .setDescription("set the difficulty level of the mission. Defaults to Commit.")
-      .addChoices(...[
-        { name: "Snitch", value: "ez" },
-        { name: "Commit", value: "normal" },
-        { name: "Insane", value: "hard" }
-      ])  
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("customize")
-    .setDescription("customize your personal user card.")
-    .addStringOption(option => option
-      .setName("background")
-      .setDescription("set the image on your card. Must end with JPG or PNG.")  
-    )
-    .addStringOption(option => option
-      .setName("color")
-      .setDescription("set the color tint on your profile. Must be in rgb format.")  
-    )
-  )
-  .addSubcommandGroup(group => group
-    .setName("piggy")
-    .setDescription("start saving today.")
-    .addSubcommand(cmd => cmd
-      .setName("info")
-      .setDescription("read the piggy bank information before opening one.")  
-    )
-    .addSubcommand(cmd => cmd
-      .setName("open")
-      .setDescription("open a piggy bank. Make sure your bank has more than ¥5,000.")  
-    )  
-    .addSubcommand(cmd => cmd
-      .setName("withdraw")
-      .setDescription("withdraw money from your piggy bank.")
-      .addIntegerOption(option => option
-        .setName("amount")
-        .setDescription("the amount you want to withdraw")
-        .setRequired(true)  
-      )
-      .addBooleanOption(option => option
-        .setName("force")
-        .setDescription("whether to force close the bank if piggy has less than ¥2,500.")
-      )
-    )
-    .addSubcommand(cmd => cmd
-      .setName("deposit")
-      .setDescription("deposit money from your bank to the piggy bank.")
-      .addIntegerOption(option => option
-        .setName("amount")
-        .setDescription("the amount you want to deposit.")
-        .setRequired(true)  
-      )
-    )
-    .addSubcommand(cmd => cmd
-      .setName("paycheck")
-      .setDescription("perform a monthly paycheck.")  
-    )
-  )
-  .toJSON()
-
-export { fun, util, my, anime, osugame, social };
+export { fun, util, my, anime, osugame };

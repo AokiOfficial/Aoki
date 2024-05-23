@@ -1,13 +1,3 @@
-// big feature
-// before anything we're going to stumble through a few problems when drafting
-/**
- * 1: there's no long setTimeout() on cfworkers, because of course
- * 2: d1 database is a mystery
- * 3: we have a limit of 50 subrequests on the free plan
- */
-// for issue 1, we can use cron jobs each 30 minutes
-// for issue 2, we use the most simple methods to ensure accuracy
-// for issue 3... first, optimizations; second, ask cf for limit increase; and third, lock this to premium until then
 import { Schedule } from "../assets/const/graphql";
 import { EmbedBuilder } from "@discordjs/builders";
 
@@ -36,54 +26,38 @@ export default class AniSchedule {
    * @returns `void`
    */
   async init() {
-    // fetch all schedules set
-    // result format:
     /**
      * [
      *   {
      *     "id": "91275343627819",
      *     "channelId": "9283662783623525",
-     *     "anilistId": "21", // One Piece
-     *     "episode": "1100",
-     *     "beta": true
+     *     "anilistId": "21",
+     *     "episode": "1100"
      *   }, {...}, {...}, ...
      * ]
      */
     const { results: schedules } = await this.client.db.prepare("SELECT * FROM guilds;").all();
-    // if there's nothing don't do anything
     if (!schedules) return;
-    // map all ids to an array
-    // we'll request with this array
-    // TODO: implement pagination
+    // <--> map IDs
     let watched = [], episode = [], page = 0;
     for (const schedule of schedules) { 
-      // push all media ids in an array
       watched.push(schedule.anilistId);
-      // push all needed episodes info
       episode.push(schedule.nextEp);
     };
-    // clean up duplicates
+    // <--> clean up duplicates
     watched = [...new Set(watched)];
     episode = [...new Set(episode)];
-    // perform the request
+    // <--> perform the request
     const { data } = await this.fetch(this.schedule, { page, watched, episode });
-    // iterate through the schedule list
     for (const schedule of schedules) {
-      // filter the data to see which one we need to check out
+      // <--> filter needed data
       const filtered = data.Page.airingSchedules.filter(entry => {
         if (entry.episode == schedule.nextEp && entry.media.id == schedule.anilistId) return true;
       });
-      // if the filtered array has nothing
-      // that means the episode is not airing yet
-      // we simply ignore this schedule, move to the next
       if (!filtered || !filtered.length) continue;
-      // else that means the episode is airing
       else {
-        // define date
         const date = new Date(filtered[0].airingAt * 1000);
-        // make an embed
         const embed = this._makeAnnouncementEmbed(filtered[0], date);
-        // send the embed in that channel
         await this.client.util.call({
           method: "channelMessages",
           param: [schedule.channelID]
@@ -91,7 +65,6 @@ export default class AniSchedule {
           method: "POST",
           body: { embeds: [embed.toJSON()] }
         });
-        // increment episode up
         await this.client.db.prepare("UPDATE guilds SET nextEp = ?1 WHERE id = ?2;").bind(schedule.nextEp + 1, schedule.id).all();
       };
     };
