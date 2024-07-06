@@ -317,7 +317,6 @@ export default new class Anime extends Command {
   async current(i, _, util) {
     // get user sschedules
     const schedule = await i.user.getSchedule();
-    console.log(schedule)
     // handle exceptions
     if (!schedule) return this.throw("Baka, you have no anime subscription.");
     // get watching data

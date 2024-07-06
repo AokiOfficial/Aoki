@@ -35,7 +35,7 @@ class InteractionCreateEvent extends Event {
       await i.reply({ 
         content: `Oh, something happened. Give my sensei a yell by doing \`/my fault\`:\n\n\`\`\`fix\n${error}\n\`\`\``, 
         ephemeral: true 
-      });
+      }).catch(() => {});
     }
   }
 }
