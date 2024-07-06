@@ -1,44 +1,46 @@
-// ref!: error handling
-// <-->: block division
-// /**/: useless? notes
-import { SlashCommand } from "slash-create/web";
+import Command from '../struct/handlers/Command.js';
 import { EmbedBuilder } from "@discordjs/builders";
-import { format, formatDistance, parseISO } from "date-fns";
-import { util } from "../assets/const/import";
+import { util } from "../assets/const/import.js";
 
-export default class Utility extends SlashCommand {
-  constructor(creator) {
-    super(creator, util);
+export default new class Utility extends Command {
+  constructor() {
+    super({
+      data: util,
+      permissions: [],
+      cooldown: 0
+    });
     this.imgur = "https://i.imgur.com/";
     this.headers = {
       'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
     };
   };
-  // <--> main block
-  async run(ctx) {
-    this.ctx = ctx;
-    // <--> get command and define utilities
-    const sub = ctx.getSubcommand();
-    const util = ctx.client.util;
-    // <--> run command in try...catch
+  async execute(i) {
+    this.i = i;
+    const sub = i.options.getSubcommand();
+    const query = i.options.getString("query");
+    const util = i.client.util;
+
+    await i.deferReply();
+
     try {
-      await ctx.defer();
-      return await this[sub](ctx, util);
+      return await this[sub](i, query, util);
     } catch (err) {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
         return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
-      };
+      }
     };
   };
-  // <--> avatar command
-  async avatar(ctx) {
-    const user = ctx.getUser("user") || ctx.user;
-    // <--> handle different sizes
-    const avatar = (s) => {
-      return user.dynamicAvatarURL("png", s);
-    };
+  // avatar command
+  async avatar(i) {
+    const user = i.options.getUser("user") || i.user;
+    // handle different sizes
+    const avatar = (s) => user.avatarURL({
+      extension: "png",
+      dynamic: true,
+      size: s
+    });
     const description = [
       `Quality: `,
       `[x128](${avatar(128)}) | `,
@@ -51,36 +53,38 @@ export default class Utility extends SlashCommand {
       .setAuthor({ name: `${user.username}'s Avatar` })
       .setDescription(description)
       .setImage(avatar(2048));
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> avatar command
-  async banner(ctx, util) {
-    const user = ctx.getUser("user") || ctx.user;
-    // <--> force fetch user
-    const fetchedUser = await util.call({ method: "user", param: [user.id] });
-    if (!fetchedUser.banner) return this.throw("Baka, this user has no banner.");
-    // <--> handle different sizes
-    const banner = (s) => {
-      return util.getUserBanner(fetchedUser, s);
-    };
+  // banner command
+  async banner(i) {
+    const user = i.options.getUser("user") || i.user;
+    // force fetch user
+    const { banner } = await user.fetch();
+    if (!banner) return this.throw("Baka, this user has no banner.");
+    // handle different sizes
+    const bannerURL = (s) => user.bannerURL({
+      extension: "png",
+      dynamic: true,
+      size: s
+    });
     const description = [
       `Quality: `,
-      `[x128](${banner(128)}) | `,
-      `[x256](${banner(256)}) | `,
-      `[x512](${banner(512)}) | `,
-      `[x1024](${banner(1024)}) | `,
-      `[x2048](${banner(2048)})`
+      `[x128](${bannerURL(128)}) | `,
+      `[x256](${bannerURL(256)}) | `,
+      `[x512](${bannerURL(512)}) | `,
+      `[x1024](${bannerURL(1024)}) | `,
+      `[x2048](${bannerURL(2048)})`
     ].join("");
     const embed = this.embed
       .setAuthor({ name: `${user.username}'s Banner` })
       .setDescription(description)
-      .setImage(banner(2048));
-    await ctx.send({ embeds: [embed] });
+      .setImage(bannerURL(2048));
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> channel command
-  async channel(ctx, util) {
-    const channel = ctx.getChannel("channel") || ctx.channel;
-    // <--> utilities
+  // channel command
+  async channel(i, _, util) {
+    const channel = i.options.getChannel("channel") || i.channel;
+    // utilities
     const channelTypes = {
       0: { icon: `${this.imgur}IkQqhRj.png`, type: "Text Channel" },
       2: { icon: `${this.imgur}VuuMCXq.png`, type: "Voice Channel" },
@@ -94,8 +98,8 @@ export default class Utility extends SlashCommand {
       15: { icon: `${this.imgur}q13YoYu.png`, type: "Guild Forum" },
     };
     const { icon, type } = channelTypes[channel.type] || {};
-    const createdAt = new Date(util.getCreatedAt(channel.id));
-    const time = formatDistance(createdAt, new Date(), { addSuffix: true });
+    const createdAt = new Date(channel.createdAt);
+    const time = util.formatDistance(createdAt, new Date(), { addSuffix: true });
     const authorFieldName = `${channel.name}${channel.name.endsWith("s") ? "'" : "'s"} Information`;
     const field = util.keyValueField({
       "Position": channel.position || "Unknown",
@@ -106,66 +110,60 @@ export default class Utility extends SlashCommand {
       "ID": channel.id,
       "Topic": channel.topic
     }, 30);
-    // <--> make embed
+    // make embed
     const embed = this.embed
       .setAuthor({ name: authorFieldName })
       .setThumbnail(icon)
       .addFields([{ name: "\u2000", value: field }]);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> server command
-  async server(ctx, util) {
-    const guild = await ctx.getGuild();
-    // <--> handle extra info
-    const [channels, owner] = await Promise.all([
-      await util.call({ method: "guildChannels", param: [guild.id] }),
-      await util.call({ method: "user", param: [guild.owner_id] })
-    ]);
-    guild.channels = channels;
-    guild.owner = owner;
-    guild.icon = util.getGuildIcon(guild);
-    // <--> utilities
-    const since = format(new Date(util.getCreatedAt(guild.id)), 'MMMM yyyy');
-    const channelCounts = guild.channels.reduce((counts, channel) => {
-      counts[channel.type] = (counts[channel.type] || 0) + 1;
-      return counts;
-    }, {});
-    const { 0: text = 0, 2: voice = 0, 4: category = 0, 5: news = 0 } = channelCounts;
-    const description = `*${guild.description == null ? "Server has no description." : guild.description}*\n\n`;
+  // server command
+  async server(i, _, util) {
+    const guild = i.guild;
+    const owner = await i.client.users.fetch(guild.ownerId);
+    const icon = guild.iconURL({ dynamic: true, size: 1024 }) || "https://i.imgur.com/AWGDmiu.png";
+    // shortcuts
+    const since = util.formatDate(new Date(guild.createdAt), 'MMMM yyyy');
+    const channelTypeCount = (type) => guild.channels.cache.filter(channel => channel.type == type).size;
+    const text = channelTypeCount(0);
+    const voice = channelTypeCount(2);
+    const category = channelTypeCount(4);
+    const news = channelTypeCount(5);
     const generalInfoField = util.keyValueField({
       "Owner": util.textTruncate(owner.username, 20),
-      "Role Count": guild.roles.length,
-      "Emoji Count": guild.emojis.length,
+      "Role Count": i.guild.roles.cache.size,
+      "Emoji Count": i.guild.emojis.cache.size,
       "Created": since,
-      "Boosts": guild.premium_subscription_count,
-      "Main Locale": guild.preferred_locale,
-      "Verification": guild.verification_level,
-      "Filter": guild.explicit_content_filter
+      "Boosts": guild.premiumSubscriptionCount,
+      "Main Locale": guild.preferredLocale,
+      "Verification": guild.verificationLevel,
+      "Filter": guild.explicitContentFilter
     }, 30);
     const channelInfoField = util.keyValueField({
       "Categories": category,
       "Text Channels": text,
       "Voice Channels": voice,
       "News Channels": news,
-      "AFK Channel": guild.afk_channel?.name || "None"
+      "AFK Channel": guild.afkChannel?.name || "None"
     }, 30);
-    // <--> make embed
+    const description = `*${guild.description == null ? "Server has no description." : guild.description}*\n\n`;
+    // make embed
     const embed = this.embed
-      .setAuthor({ name: `${guild.name}`, iconURL: guild.icon })
+      .setAuthor({ name: `${guild.name}`, iconURL: icon })
       .setDescription(description)
       .addFields([
         { name: "General Info", value: generalInfoField },
         { name: "Channels Info", value: channelInfoField }
       ]);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> github command
-  async github(ctx, util) {
-    const user = ctx.getOption("user");
-    const repo = ctx.getOption("repo");
+  // github command
+  async github(i, _, util) {
+    const user = i.options.getString("user");
+    const repo = i.options.getString("repo");
     const res = await fetch(`https://api.github.com/repos/${user}/${repo}`, { headers: this.headers }).then(res => res.json());
     if (!res?.id) return this.throw("Baka, that repo doesn't exist.");
-    // <--> utilities
+    // utilities
     const formatBytes = (bytes) => {
       if (bytes == 0) return '0B';
       const sizes = ['B', 'KB', 'MB', 'GB', 'TB', "PB", 'EB', 'ZB', 'YB'];
@@ -187,7 +185,7 @@ export default class Utility extends SlashCommand {
       "Disabled?": res.disabled ? "Yes" : "No",
       "Forked?": res.fork ? "Yes" : "No"
     }, 30);
-    // <--> make embed
+    // make embed
     const embed = this.embed
       .setAuthor({ name: "GitHub", iconURL: icon })
       .setTitle(`${user}/${repo}`)
@@ -195,15 +193,14 @@ export default class Utility extends SlashCommand {
       .setThumbnail(res.owner.avatar_url)
       .setDescription(`${res.description}\n\n`)
       .addFields([{ name: "\u2000", value: field }]);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> npm command
-  async npm(ctx, util) {
-    const query = ctx.getOption("query");
+  // npm command
+  async npm(i, query, util) {
     const raw = await fetch(`https://registry.npmjs.org/-/v1/search?text=${query}&size=1`, { headers: this.headers }).then(res => res.json());
     const res = raw.objects?.[0]?.package;
     if (!res) return this.throw("Baka, that's an invalid repository. Or did you make a typo?");
-    // <--> utilities
+    // utilities
     const score = raw.objects[0].score;
     const maintainers = res.maintainers.map(maintainer => `\`${maintainer.username}\``).join(', ');
     const keywords = res.keywords?.map(keyword => `\`${keyword}\``).join(', ') || "None";
@@ -215,113 +212,102 @@ export default class Utility extends SlashCommand {
     const field = util.keyValueField({
       "Version": res.version || "Unknown",
       "Author": res.publisher.username,
-      "Modified": format(parseISO(res.date), 'EEEE, do MMMM yyyy'),
+      "Modified": util.formatDate(new Date(res.date), 'dd MMMM yyyy'),
       "Score": (score.final * 100).toFixed(1)
     }, 40);
-    // <--> make embed
+    // make embed
     const embed = this.embed
       .setAuthor({ name: "npm Registry", iconURL: 'https://i.imgur.com/24yrZxG.png' })
       .setTitle(`${res.name}`)
       .setURL(`https://www.npmjs.com/package/${res.name}`)
       .setDescription(description)
       .addFields([{ name: "\u2000", value: field }]);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> urban command
-  async urban(ctx, util) {
-    const query = ctx.getOption("query");
-    // <--> handle user query
-    if (util.isProfane(query) && !ctx.channel.nsfw) return this.throw("Your query has some profanity in there.\n\nEither get into a NSFW channel, or change your query.");
+  // urban command
+  async urban(i, query, util) {
+    // handle user query
+    if (util.isProfane(query) && !i.channel.nsfw) return this.throw("Your query has some profanity in there.\n\nEither get into a NSFW channel, or change your query.");
     const res = await fetch(`https://api.urbandictionary.com/v0/define?term=${query}`, { headers: this.headers }).then(res => res.json());
     if (!res?.list?.length) return this.throw("Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means.")
     const definition = res.list[0];
-    // <--> utilities
-    const nsfw = ctx.channel.nsfw;
+    // utilities
+    const nsfw = i.channel.nsfw;
     const truncateText = (text, maxLength) => util.textTruncate(nsfw ? text : util.cleanProfane(text), maxLength);
     const fields = {
       definition: '```fix\n' + truncateText(definition.definition, 1000) + '\n```',
       example: '```fix\n' + truncateText(definition.example || 'N/A', 1000) + '\n```',
       author: '```fix\n' + truncateText(definition.author || 'N/A', 250) + '\n```'
     };
-    // <--> make embed
+    // make embed
     const embed = this.embed
       .setTitle(`Definition of ${definition.word}`)
       .setURL(definition.urbanURL)
       .addFields([
-        { name: 'Definition', value: fields.definition },
+        { name: '...is', value: fields.definition },
         { name: 'Examples', value: fields.example },
         { name: 'Submitted by', value: fields.author },
         { name: 'Profane Word?', value: 'Yell at my sensei through `/my fault`, the patch should be added in a few working days.' }
       ]);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> screenshot command
-  async screenshot(ctx, util) {
-    const query = ctx.getOption("query");
-    // <--> handle user query
+  // screenshot command
+  async screenshot(i, query, util) {
+    // handle user query
     const url = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
     if (!query.match(url)) return this.throw("Baka, that's not a valid URL.\n\nMake sure it starts with either `https://` or `http://`.");
     const nsfwPages = await util.getStatic("nsfw");
-    if (nsfwPages.domains.includes(query) && !ctx.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
-    const res = await fetch(`https://safebrowsing.googleapis.com/v4/threatMatches:find?key=${ctx.client.env.URLSAFE_KEY}`, {
-      method: 'POST',
-      body: JSON.stringify({
-        "client": {
-          "clientId":      "neko-discord-bot",
-          "clientVersion": "3.0.0"
-        },
-        "threatInfo": {
-          "threatTypes":      ["MALWARE", "SOCIAL_ENGINEERING"],
-          "platformTypes":    ["ANY_PLATFORM"],
-          "threatEntryTypes": ["URL"],
-          "threatEntries": [
-            { "url": query }
-          ]
-        }
-      })
-    }).then(async res => await res.json());
-    if (res.matches) return this.throw("That's a dangerous URL, you moron!");
-    // <--> take screenshot
+    if (nsfwPages.domains.includes(query) && !i.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
+    // take screenshot
     try {
-      const screenshot = await util.screenshot(query);
-      const embed = this.embed.setImage(screenshot);
-      await ctx.send({ embeds: [embed] });
+      const screenshot = await fetch([
+        `https://api.screenshotone.com/take?`,
+        `access_key=${process.env.SCREENSHOT_KEY}&`,
+        `url=${query}&`,
+        `format=jpg&`,
+        `block_ads=true&`,
+        `block_cookie_banners=true&`,
+        `block_trackers=true&`,
+        `timeout=10`
+      ].join("")).then(async res => await res.arrayBuffer());
+      const image = await util.upload(Buffer.from(screenshot).toString('base64'));
+      const embed = this.embed.setImage(image);
+      await i.editReply({ embeds: [embed] });
     } catch {
       return this.throw("Something's wrong with that URL.\n\nCheck if you made a typo.");
     };
   };
-  // <--> wiki command
-  async wiki(ctx, util) {
-    const query = ctx.getOption("query");
-    // <--> handle exceptions
-    if (util.isProfane(query) && !ctx.channel.nsfw) return this.throw("Your query has something to do with profanity, baka.\n\nEither move to a NSFW channel, or change the query.");
+  // wiki command
+  async wiki(i, query, util) {
+    // handle exceptions
+    if (util.isProfane(query) && !i.channel.nsfw) return this.throw("Your query has something to do with profanity, baka.\n\nEither move to a NSFW channel, or change the query.");
     const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${query}`).then(async res => await res.json());
     if (!res?.title) return this.throw("Can't find that. Check your query.");
-    // <--> utilities
+    // utilities
     const timestamp = new Date(res.timestamp);
     const thumbnail = "https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/1122px-Wikipedia-logo-v2.svg.png";
     const description = [
-        `***Description:** ${res.description || "None"}*\n\n`,
-        `**Extract:** ${util.textTruncate(res.extract, 1000).split(". ").join(".\n- ")}`
+      `***Description:** ${res.description || "None"}*\n\n`,
+      `**Extract:** ${util.textTruncate(res.extract, 1000).split(". ").join(".\n- ")}`
     ].join("");
-    // <--> make embed
+    // make embed
     const embed = this.embed
       .setTimestamp(timestamp)
       .setTitle(res.title)
       .setThumbnail(thumbnail)
       .setURL(res.content_urls.desktop.page)
       .setDescription(description);
-    await ctx.send({ embeds: [embed] });
+    await i.editReply({ embeds: [embed] });
   };
-  // <--> internal utilities
+  // internal utilities
   async throw(content) {
-    await this.ctx.send({ content });
+    await this.i.editReply({ content });
     return Promise.reject();
   };
   get embed() {
     return new EmbedBuilder()
       .setColor(16777215)
-      .setFooter({ text: `Requested by ${this.ctx.user.username}`, iconURL: this.ctx.user.dynamicAvatarURL("png") })
+      .setFooter({ text: `Requested by ${this.i.user.username}`, iconURL: this.i.user.displayAvatarURL() })
       .setTimestamp();
   };
 }

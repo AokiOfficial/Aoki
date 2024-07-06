@@ -44,6 +44,14 @@ const fun = new SlashCommandBuilder()
     .setDescription("gives you a random fortune cookie's paper.")
   )
   .addSubcommand(cmd => cmd
+    .setName('advice')
+    .setDescription("gives you a random advice.")
+  )
+  .addSubcommand(cmd => cmd
+    .setName('affirmation')
+    .setDescription("gives you a random affirmation.")
+  )
+  .addSubcommand(cmd => cmd
     .setName('truth')
     .setDescription("gives you a random truth question, from the ol' truth or dare game.")
   )
@@ -69,7 +77,6 @@ const fun = new SlashCommandBuilder()
     .addStringOption(option => option.setName('top').setDescription('first text field (or top text)').setRequired(true))
     .addStringOption(option => option.setName("bottom").setDescription("second text field (or bottom text)").setRequired(true))
   )
-  .toJSON()
 
 const util = new SlashCommandBuilder()
   .setName("utility")
@@ -119,14 +126,13 @@ const util = new SlashCommandBuilder()
     .setDescription("the one encyclopedia you love.")
     .addStringOption(option => option.setName("query").setDescription("...just the definition you want to search for.").setRequired(true))
   )
-  .toJSON()
 
 const my = new SlashCommandBuilder()
   .setName("my")
   .setDescription("commands directly related to me or my development.")
   .addSubcommand(cmd => cmd
     .setName("ping")
-    .setDescription("check latency... or it's you wanting to be insulted.")  
+    .setDescription("check latency... or it's you wanting to be insulted.")
   )
   .addSubcommand(cmd => cmd
     .setName("vote")
@@ -134,7 +140,7 @@ const my = new SlashCommandBuilder()
   )
   .addSubcommand(cmd => cmd
     .setName("info")
-    .setDescription("essentially a \"help\" command.")  
+    .setDescription("essentially a \"help\" command.")
   )
   .addSubcommand(cmd => cmd
     .setName("fault")
@@ -142,7 +148,19 @@ const my = new SlashCommandBuilder()
     .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
     .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
   )
-  .toJSON()
+  .addSubcommand(cmd => cmd
+    .setName("stats")
+    .setDescription("my raw system stats about various things")
+  )
+  .addSubcommand(cmd => cmd
+    .setName("eval")
+    .setDescription("evaluates code. Only my sensei can use this.")
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("the code you wanna evaluate")
+      .setRequired(true)
+    )
+  )
 
 const anime = new SlashCommandBuilder()
   .setName("anime")
@@ -156,12 +174,12 @@ const anime = new SlashCommandBuilder()
       .addChoices(...[
         { name: "AniList", value: "al" },
         { name: "MyAnimeList", value: "mal" }
-      ])  
+      ])
       .setRequired(true)
-    )  
+    )
     .addStringOption(option => option
       .setName("query")
-      .setDescription("the profile username to search for")  
+      .setDescription("the profile username to search for")
       .setRequired(true)
     )
   )
@@ -176,12 +194,12 @@ const anime = new SlashCommandBuilder()
         { name: "manga", value: "manga" },
         { name: "character", value: "character" },
         { name: "seiyuu", value: "seiyuu" }
-      ])  
+      ])
       .setRequired(true)
-    )  
+    )
     .addStringOption(option => option
       .setName("query")
-      .setDescription("the name to search for")  
+      .setDescription("the name to search for")
       .setRequired(true)
     )
   )
@@ -206,7 +224,7 @@ const anime = new SlashCommandBuilder()
         { name: 'yeet', value: 'yeet' }, { name: 'hug', value: 'hug' },
         { name: 'lick', value: 'lick' }, { name: 'neko', value: 'neko' },
         { name: 'pat', value: 'pat' }, { name: 'blush', value: 'blush' },
-        { name: 'slap', value: 'Slap' }, { name: 'wave', value: 'wave' },
+        { name: 'slap', value: 'slap' }, { name: 'wave', value: 'wave' },
         { name: 'smile', value: 'smile' }, { name: 'smug', value: 'smug' },
         { name: 'highfive', value: 'highfive' }, { name: 'wink', value: 'wink' },
         { name: 'handhold', value: 'handhold' }, { name: "nom", value: "nom" },
@@ -227,36 +245,30 @@ const anime = new SlashCommandBuilder()
       .addChoices(...[
         { name: "anime", value: "anime" },
         { name: "manga", value: "manga" }
-      ]) 
+      ])
     )
   )
   .addSubcommandGroup(group => group
     .setName("schedule")
-    .setDescription("watchlist to notify you when a new anime episode airs.")
+    .setDescription("I'm assigned this task to tell you when a new episode airs.")
     .addSubcommand(cmd => cmd
       .setName("current")
-      .setDescription("check out your current watching anime.")  
+      .setDescription("check out your current watching anime.")
     )
     .addSubcommand(cmd => cmd
       .setName("add")
-      .setDescription("adds an anime to watchlist.")
+      .setDescription("add a new anime to your watchlist.")
       .addStringOption(option => option
         .setName("query")
         .setDescription("either an AniList URL or ID; or a MAL URL or MAL ID.")
-        .setRequired(true)  
-      )  
-      .addChannelOption(option => option
-        .setName("channel")
-        .setDescription("the channel to send announcements in.")  
         .setRequired(true)
       )
     )
     .addSubcommand(cmd => cmd
       .setName("remove")
-      .setDescription("remove the server's watchlist.")  
+      .setDescription("remove your watchlist.")
     )
   )
-  .toJSON()
 
 const osugame = new SlashCommandBuilder()
   .setName("osu")
@@ -267,12 +279,12 @@ const osugame = new SlashCommandBuilder()
     .addStringOption(option => option
       .setName("username")
       .setDescription("your in-game name")
-      .setRequired(true)  
-    )  
+      .setRequired(true)
+    )
     .addStringOption(option => option
       .setName("mode")
       .setDescription("your main gamemode")
-      .setRequired(true)  
+      .setRequired(true)
       .addChoices(...[
         { name: "standard", value: "osu" },
         { name: "taiko", value: "taiko" },
@@ -301,7 +313,7 @@ const osugame = new SlashCommandBuilder()
       .addChoices(...[
         { name: "info", value: "info" },
         { name: "card", value: "card" }
-      ])  
+      ])
     )
   )
   .addSubcommand(cmd => cmd
@@ -320,97 +332,96 @@ const osugame = new SlashCommandBuilder()
       .setDescription("the field below your username. Limits to 75 characters")
     )
   )
-  // future plan
-  // .addSubcommand(cmd => cmd
-  //   .setName("beatmap")
-  //   .setDescription("search for a beatmap.")
-  //   .addStringOption(option => option
-  //     .setName("query")
-  //     .setDescription("search query.")
-  //     .setRequired(true)
-  //   )
-  //   .addStringOption(option => option
-  //     .setName("mode")
-  //     .setDescription("gamemode to seach for.")  
-  //     .addChoices(...[
-  //       { name: "standard", value: "0" },
-  //       { name: "taiko", value: "1" },
-  //       { name: "catch", value: "2" },
-  //       { name: "mania", value: "3" }
-  //     ])
-  //   )
-  //   .addStringOption(option => option
-  //     .setName("status")
-  //     .setDescription("rank status") 
-  //     .addChoices(...[
-  //       { name: "any", value: "any" },
-  //       { name: "ranked", value: "ranked" },
-  //       { name: "loved", value: "loved" },
-  //       { name: "qualified", value: "qualified" },
-  //       { name: "pending", value: "pending" },
-  //       { name: "graveyard", value: "graveyard" }
-  //     ])
-  //   )
-  //   .addStringOption(option => option
-  //     .setName("sort")
-  //     .setDescription("sorting mode")  
-  //     .addChoices(...[
-  //       { name: "artist", value: "artist" },
-  //       { name: "favorites", value: "favorites" },
-  //       { name: "playcount", value: "playcount" },
-  //       { name: "ranked date", value: "ranked_date" },
-  //       { name: "rating", value: "rating" },
-  //       { name: "relevance", value: "relevance" },
-  //       { name: "stars", value: "stars" },
-  //       { name: "title", value: "title" }
-  //     ])
-  //   )
-  //   .addStringOption(option => option
-  //     .setName("genre")
-  //     .setDescription("genre of the map")  
-  //     .addChoices(...[
-  //       { name: "any", value: "artist" },
-  //       { name: "anime", value: "anime" },
-  //       { name: "classical", value: "classical" },
-  //       { name: "electronic", value: "stars" },
-  //       { name: "folk", value: "folk" },
-  //       { name: "hiphop", value: "hiphop" },
-  //       { name: "jazz", value: "jazz" },
-  //       { name: "metal", value: "metal" },
-  //       { name: "novelty", value: "novelty" },
-  //       { name: "pop", value: "pop" },
-  //       { name: "rock", value: "rock" },
-  //       { name: "video game", value: "video_game" },
-  //       { name: "other", value: "other" },
-  //       { name: "unspecified", value: "unspecified" }
-  //     ])
-  //   )
-  //   .addStringOption(option => option
-  //     .setName("language")
-  //     .setDescription("language of the song")  
-  //     .addChoices(...[
-  //       { name: "any", value: "artist" },
-  //       { name: "chinese", value: "chinese" },
-  //       { name: "english", value: "english" },
-  //       { name: "french", value: "french" },
-  //       { name: "german", value: "german" },
-  //       { name: "italian", value: "italian" },
-  //       { name: "japanese", value: "japanese" },
-  //       { name: "korean", value: "korean" },
-  //       { name: "polish", value: "polish" },
-  //       { name: "russian", value: "russian" },
-  //       { name: "spanish", value: "spanish" },
-  //       { name: "swedish", value: "swedish" },
-  //       { name: "instrumental", value: "instrumental" },
-  //       { name: "other", value: "other" },
-  //       { name: "unspecified", value: "unspecified" }
-  //     ])
-  //   )
-  //   .addBooleanOption(option => option
-  //     .setName("storyboard")
-  //     .setDescription("whether the map should have a storyboard")
-  //   )
-  // )
-  .toJSON()
+// future plan
+// .addSubcommand(cmd => cmd
+//   .setName("beatmap")
+//   .setDescription("search for a beatmap.")
+//   .addStringOption(option => option
+//     .setName("query")
+//     .setDescription("search query.")
+//     .setRequired(true)
+//   )
+//   .addStringOption(option => option
+//     .setName("mode")
+//     .setDescription("gamemode to seach for.")  
+//     .addChoices(...[
+//       { name: "standard", value: "0" },
+//       { name: "taiko", value: "1" },
+//       { name: "catch", value: "2" },
+//       { name: "mania", value: "3" }
+//     ])
+//   )
+//   .addStringOption(option => option
+//     .setName("status")
+//     .setDescription("rank status") 
+//     .addChoices(...[
+//       { name: "any", value: "any" },
+//       { name: "ranked", value: "ranked" },
+//       { name: "loved", value: "loved" },
+//       { name: "qualified", value: "qualified" },
+//       { name: "pending", value: "pending" },
+//       { name: "graveyard", value: "graveyard" }
+//     ])
+//   )
+//   .addStringOption(option => option
+//     .setName("sort")
+//     .setDescription("sorting mode")  
+//     .addChoices(...[
+//       { name: "artist", value: "artist" },
+//       { name: "favorites", value: "favorites" },
+//       { name: "playcount", value: "playcount" },
+//       { name: "ranked date", value: "ranked_date" },
+//       { name: "rating", value: "rating" },
+//       { name: "relevance", value: "relevance" },
+//       { name: "stars", value: "stars" },
+//       { name: "title", value: "title" }
+//     ])
+//   )
+//   .addStringOption(option => option
+//     .setName("genre")
+//     .setDescription("genre of the map")  
+//     .addChoices(...[
+//       { name: "any", value: "artist" },
+//       { name: "anime", value: "anime" },
+//       { name: "classical", value: "classical" },
+//       { name: "electronic", value: "stars" },
+//       { name: "folk", value: "folk" },
+//       { name: "hiphop", value: "hiphop" },
+//       { name: "jazz", value: "jazz" },
+//       { name: "metal", value: "metal" },
+//       { name: "novelty", value: "novelty" },
+//       { name: "pop", value: "pop" },
+//       { name: "rock", value: "rock" },
+//       { name: "video game", value: "video_game" },
+//       { name: "other", value: "other" },
+//       { name: "unspecified", value: "unspecified" }
+//     ])
+//   )
+//   .addStringOption(option => option
+//     .setName("language")
+//     .setDescription("language of the song")  
+//     .addChoices(...[
+//       { name: "any", value: "artist" },
+//       { name: "chinese", value: "chinese" },
+//       { name: "english", value: "english" },
+//       { name: "french", value: "french" },
+//       { name: "german", value: "german" },
+//       { name: "italian", value: "italian" },
+//       { name: "japanese", value: "japanese" },
+//       { name: "korean", value: "korean" },
+//       { name: "polish", value: "polish" },
+//       { name: "russian", value: "russian" },
+//       { name: "spanish", value: "spanish" },
+//       { name: "swedish", value: "swedish" },
+//       { name: "instrumental", value: "instrumental" },
+//       { name: "other", value: "other" },
+//       { name: "unspecified", value: "unspecified" }
+//     ])
+//   )
+//   .addBooleanOption(option => option
+//     .setName("storyboard")
+//     .setDescription("whether the map should have a storyboard")
+//   )
+// )
 
 export { fun, util, my, anime, osugame };

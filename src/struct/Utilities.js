@@ -1,15 +1,9 @@
 // settings and utils
-import { Routes, RouteBases, CDNRoutes } from "discord-api-types/v10";
-import { DiscordSnowflake } from "@sapphire/snowflake";
-import AniSchedule from "./Schedule";
-
 export default class Utilities {
-  constructor(client, env) {
+  constructor(client) {
     // <--> client properties
     this.client = client;
     this.id = "704992714109878312";
-    this.env = env;
-    this.db = env.database;
     this.logChannel = "864096602952433665";
     this.owners = ["586913853804249090", "809674940994420736"];
     // <--> utilities
@@ -44,6 +38,33 @@ export default class Utilities {
     ];
   }
   /**
+   * Logs an errornous action to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the error message
+   * @returns `void` to stdout
+   */
+  error(message, title = "Error") {
+    return console.log("\x1b[31m", title, "\x1b[0m", message);
+  };
+  /**
+   * Logs a successful action to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the success message
+   * @returns `void` to stdout
+   */
+  success(message, title = "Success") {
+    return console.log("\x1b[32m", title, "\x1b[0m", message);
+  };
+  /**
+   * Logs a warning to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the warning message
+   * @returns `void` to stdout
+   */
+  warn(message, title = "Warn") {
+    return console.log("\x1b[33m", title, "\x1b[0m", message);
+  };
+  /**
    * Search for profane words in a string.
    * This function is mainly to comply with top.gg's policies
    * @param { String } str String to search for profane words
@@ -58,9 +79,7 @@ export default class Utilities {
    * @returns `String` The filtered string
    */
   cleanProfane(str) {
-    return str.replace(this.badWordsRegex, function () {
-      return '####';
-    });
+    return str.replace(this.badWordsRegex, () => { return "####" });
   };
   /**
    * Probability of outputting `true`.
@@ -69,7 +88,7 @@ export default class Utilities {
    * @returns `boolean`
    */
   probability(int) {
-    const n = int / 100
+    const n = int / 100;
     return !!n && Math.random() <= n;
   };
   /**
@@ -79,11 +98,7 @@ export default class Utilities {
    * @returns typeof `Object`
    */
   async reddit(subr) {
-    const keys = [
-      "me_irl",
-      "memes",
-      "funny"
-    ];
+    const keys = ["me_irl", "memes", "funny"];
     const random = keys[Math.floor(Math.random() * keys.length)];
     const subreddit = subr == "random" ? random : subr;
     // keep reminding ourselves that we're on cfworkers
@@ -115,6 +130,12 @@ export default class Utilities {
    */
   textTruncate(str = '', length = 100, end = '...') {
     return String(str).substring(0, length - end.length) + (str.length > length ? end : '');
+  };
+  // Self-explanatory
+  commatize(number, maximumFractionDigits = 2) {
+    return Number(number || "").toLocaleString("en-US", {
+      maximumFractionDigits
+    });
   };
   /**
    * Joins an array and limits the string output
@@ -170,6 +191,43 @@ export default class Utilities {
     return (int instanceof String) ? int : ["osu", "taiko", "fruits", "mania"][int];
   };
   /**
+   * Convert a `Date` to a human-readable date.
+   * @param {Date} date A date object to format
+   * @param {String} format Resulting format
+   * @returns `String` Formatted date
+   */
+  formatDate(date, format) {
+    const options = {};
+    if (format.includes('MMMM')) options.month = 'long'; else if (format.includes('MMM')) options.month = 'short';
+    if (format.includes('yyyy')) options.year = 'numeric';
+    if (format.includes('dd')) options.day = '2-digit';
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+  };
+  /**
+   * Calculate the (approximated) time difference between 2 `Date`s
+   * @param {Date} date1 The date being compared
+   * @param {Date} date2 The date to compare against
+   * @returns `String` Time distance
+   */
+  formatDistance(date1, date2) {
+    const intervals = [
+      { label: 'year', ms: 365 * 24 * 60 * 60 * 1000 },
+      { label: 'month', ms: 30 * 24 * 60 * 60 * 1000 },
+      { label: 'day', ms: 24 * 60 * 60 * 1000 },
+      { label: 'hour', ms: 60 * 60 * 1000 },
+      { label: 'minute', ms: 60 * 1000 },
+      { label: 'second', ms: 1000 }
+    ];
+    const elapsed = Math.abs(date2 - date1);
+    for (const interval of intervals) {
+      const count = Math.floor(elapsed / interval.ms);
+      if (count >= 1) {
+        return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
+      }
+    }
+    return 'just now';
+  };
+  /**
    * Takes human-readable time input and outputs time in `ms` (e.g.: `5m 30s` -> `330000` | `3d 5h 2m` -> `277320000`)
    * @param {string} timeStr - Time input (e.g.: `1m 20s`, `1s`, `3h 20m`)
    */
@@ -177,17 +235,27 @@ export default class Utilities {
     return timeString.match(/\d+\s?\w/g).reduce((acc, cur) => {
       var multiplier = 1000;
       switch (cur.slice(-1)) {
-        case 'd':
-          multiplier *= 24;
-        case 'h':
-          multiplier *= 60;
-        case 'm':
-          multiplier *= 60;
+        case 'd': multiplier *= 24;
+        case 'h': multiplier *= 60;
+        case 'm': multiplier *= 60;
         case 's':
           return ((parseInt(cur) ? parseInt(cur) : 0) * multiplier) + acc;
       }
       return acc;
     }, 0);
+  };
+  /**
+   * Takes time in `ms` and outputs time in human-readable format
+   * @param {Number} ms Time in milliseconds
+   * @returns `String` `(x)d(y)h(z)m(t)s` e.g. `1d3h4m2s`
+   */
+  msToTimeString(ms) {
+    const s = Math.floor((ms / 1000) % 60);
+    const m = Math.floor((ms / (1000 * 60)) % 60);
+    const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  
+    return `${d ? d + "d" : ""}${d ? " " : ""}${h ? h + "h" : ""}${h ? " " : ""}${m ? m + "m" : ""}${m ? " " : ""}${s ? s + "s" : ""}`;
   };
   /**
    * Pseudo-randomly pick an entry from the given array
@@ -210,49 +278,6 @@ export default class Utilities {
       const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
       return '• ' + name + ':' + spacing + value;
     }).join('\n') + '```'
-  };
-  /**
-   * Gets a user banner URL.
-   * Note that it is necessary to force-fetch the user before using this method
-   * @param { Object } user The user object
-   * @param { Number } size The image size
-   * @returns `String` The image URL
-   */
-  getUserBanner(user, size = "256") {
-    // handle animated banners
-    let bannerExtension = "png";
-    if (user.banner.startsWith("a_")) bannerExtension = "gif";
-    return `${RouteBases.cdn}${CDNRoutes.userBanner(user.id, user.banner, bannerExtension)}?size=${size}`;
-  }
-  /**
-   * Gets a guild icon URL
-   * @param { Object } guild The guild object
-   * @param { Number } size The image size
-   * @returns `String` The image URL
-   */
-  getGuildIcon(guild, size = "256") {
-    // handle animated icons
-    let iconExtension = "png";
-    if (guild.icon.startsWith("a_")) iconExtension = "gif";
-    // please be extremely careful with the /
-    // it only applies for this guild icon method
-    return `${RouteBases.cdn}/${CDNRoutes.guildIcon(guild.id, guild.icon, iconExtension)}?size=${size}`;
-  }
-  /**
-   * Gets timestamp from a Discord Snowflake
-   * @param { String } timestamp The snowflake
-   * @returns `String` The timestamp
-   */
-  getCreatedTimestamp(timestamp) {
-    return DiscordSnowflake.timestampFrom(timestamp);
-  }
-  /**
-   * Gets date from a Discord Snowflake
-   * @param { String } timestamp The snowflake
-   * @returns `String` The date
-   */
-  getCreatedAt(timestamp) {
-    return new Date(this.getCreatedTimestamp(timestamp));
   };
   /**
    * Format string osu! mode to its numerical value
@@ -332,75 +357,19 @@ export default class Utilities {
   /**
    * Uploads an image to `imgbb`
    * @param {String} base64 The `base64` string of the Buffer
-   * @returns `String | undefined` The direct URL to the image
+   * @returns `String | null` The direct URL to the image
    */
   async upload(base64) {
     const form = new FormData();
     form.append("image", base64);
-    const res = await fetch(`https://api.imgbb.com/1/upload?expiration=${this.timeStringToMS("30m") / 1000}&key=${this.env.UPLOAD_KEY}`, {
+    const res = await fetch([
+      `https://api.imgbb.com/1/upload?`,
+      `expiration=${this.timeStringToMS("30m") / 1000}&`,
+      `key=${process.env.UPLOAD_KEY}`
+    ].join(""), {
       method: "POST",
       body: form
     }).then(async res => await res.json());
-    return res.data.url || null;
+    return res.data?.url || null;
   };
-  /**
-   * Screenshot a website and upload the image to imgbb
-   * @param {String} url The URL of the site to screenshot
-   * @returns `String` The URL of the screenshot'd image
-   */
-  async screenshot(url) {
-    const res = await fetch([
-      `https://api.screenshotone.com/take?`,
-      `access_key=${this.env.SCREENSHOT_KEY}&`,
-      `url=${url}&`,
-      `viewport_width=1920&`,
-      `viewport_height=1080&`,
-      `device_scale_factor=1&`,
-      `image_quality=80&`,
-      `format=jpg&`,
-      `block_ads=true&`,
-      `block_cookie_banners=true&`,
-      `full_page=false&`,
-      `block_trackers=true&`,
-      `block_banners_by_heuristics=false&`,
-      `delay=0&`,
-      `timeout=10`
-    ].join("")).then(async res => await res.arrayBuffer());
-    return await this.upload(Buffer.from(res).toString('base64'));
-  };
-  // sometimes we'll have to reach out to raw api calls 
-  // as a fallback solution when slash-create does not support something
-  // in that case we'll have to import Routes and RouteBases 
-  // from d-api-types
-  // and do RouteBases.api + Route...
-  // and then ask fetch to do the job, etc. etc.
-  // we want to simplify that
-  /**
-   * Do a raw API call to Discord
-   * 
-   * Using `discord-api-types/v10`'s API endpoint
-   * @param { String } method type of API call
-   * @param { String } param the param of the call
-   * @returns `Object` response
-   */
-  async call(method, options = {}) {
-    const apiCallURL = `${RouteBases.api}${Routes[method.method](...(method.param ? method.param : []))}`;
-    // stringify payloads
-    if (options.body) options.body = JSON.stringify(options.body);
-    // make request
-    const res = await fetch(apiCallURL, {
-      headers: {
-        Authorization: `Bot ${this.env.TOKEN}`,
-        'Content-Type': 'application/json; charset=UTF-8'
-      },
-      ...options
-    });
-    // throw API errors
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(JSON.stringify(data));
-    }
-    // return original response
-    if (options.method == "DELETE" || options.method == "POST") return true; else return await res.json();
-  }
 }

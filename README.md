@@ -1,24 +1,22 @@
 <h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Neko</br></h1>
 <p align="center">A multi-purpose Discord application to spice up your experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
-  <a href="https://forthebadge.com/">
+  <a href="https://nodejs.org/api/esm.html/">
     <img src="https://i.imgur.com/JJkdjKu.png" height="36"/>
   </a>
-  <a href="https://workers.cloudflare.com/">
-    <img src="https://i.imgur.com/WWKxNLN.png" height="36"/>
+  <a href="https://www.digitalocean.com/pricing/droplets/">
+    <img src="https://i.imgur.com/9rZ8bLb.png" height="36"/>
   </a>
 </p>
 
 ---
 ## About this project
 
-Serious, I'm writing Neko to be compatible with Cloudflare Workers.
+As I grow out of being broke as a developer, this is my another attempt at making a gateway-based app.
 
-I initially wrote this in CommonJS, but many and many and many problems arised about incompatibility, most of them came from Workers. Therefore I changed to ESModule.
+Took me a week of time to get everything up again, this was a very fun rewrite.
 
-It took me about a week just to understand the logic in writing Workers-compatible Discord app, and without the beauty core of [slash-create](https://github.com/Snazzah/slash-create) and Discord official documentation on [receiving and responding to interactions](https://discord.com/developers/docs/interactions/receiving-and-responding), this wouldn't even be possible.
-
-Setup procedures and extra information are in the [wiki page](https://github.com/NekoOfficial/Neko.cf/wiki), take a look there.
+Previous versions were exclusive for Cloudflare Workers, they're still working if you want them. Those versions are tagged, and easily findable.
 
 ---
 
@@ -31,14 +29,9 @@ License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other req
 ---
 ## Database
 
-Neko uses the new open-beta Workers D1 database, which is a SQL database.
+Neko is using MongoDB.
 
-Workers KV (key-value) proves to be useless for our use case as we're dealing with collections of data in tables/queries.
-
-It's built-in, so there's no need to install anything. Check it out by doing:
-```bash
-wrangler d1
-```
+The `mongoose` library proves to be useless as I dislike the idea of having small fragmented files just for schemas. And it's easier to extend with `mongodb`.
 
 About where all the JSONs are, they are stored online as the ever-expanding need of custom responses. `n:point` serves as a very good and simple JSON bin - and you can directly access anything with only the ID that you can predefine. One thing to note though, you **must lock any JSON made there**.
 
@@ -47,17 +40,20 @@ The function to access all of them are defined as `Util#getStatic()`.
 ---
 ## Common questions
 
-**Q:** Why not any other serverless platforms, like Vercel or AWS Lambda?
+**Q:** 2 packages? Is this any good?
 
-- You must have heard of **"cold starts"**. Serverless functions from there take time to turn their service up, *only then* it runs your code. That is not good for a Dicord app where it requires you to initially respond to an interaction within 3 seconds.
-- Cloudflare instead uses **V8 Isolates**, developed by Google. This is a game changer as we say goodbye to cold starts. Code runs within *miliseconds*.
-- There is a very big downside though, you are very limited in dependencies. Your package has something to do with polyfill? Too bad. Get that package out or it won't compile.
+- You can go check for yourself. I hate flooding my stuff with packages I won't need 90% of each.
+
+**Q:** 5 commands? Is this ANY good?
+
+- I prefer making sub-commands. Doing this reduces the hassle of the command limit in the future.
+- This is not a finished project, I'm still working on new stuff. Make an issue if you have an idea, I might get that in my bucket list.
 
 **Q:** Why so terrible code writing?
 
 - Some explanations of why I used certain "workarounds" and more chonky methods than normal should be on top of the line where those are located. Those are chonky with a reason!
 - I'm known for my terrible code optimizations, and I lean towards readable code. I make my code even more readable with lots, lots of comments, so that when I read back, I know what did I think.
-- Note that I lowercase and use abbr. in most of my comments. I'm usually in a tired state when writing code, because I write code before going to bed. And I go to bed at around 1AM.
+- Note that I lowercase and use abbreviations in most of my comments. I'm usually in a tired state when writing code, because I write code before going to bed. And I go to bed at around 1AM.
 
 **Q:** I wanna ask questions!
 
@@ -66,4 +62,4 @@ The function to access all of them are defined as `Util#getStatic()`.
 **Q:** I wanna contribute! How to do that?
 
 - That's great, there's a template ready for you to write a proper PR when you get on the tab, so there should be no major issues.
-- I appreciate even tiny fixes about basically anything, so get going and jump right on it!
+- I appreciate even tiny fixes about basically anything, so get going.
