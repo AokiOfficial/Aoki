@@ -182,7 +182,7 @@ export default new class My extends Command {
       'Free': `${(freeMem / 1024 / 1024).toFixed(2)}MB`,
       'Used Total': memUsage,
       'Process Use': processMemUsage,
-      'CPU Load': `${cpuLoad * 100}%`,
+      'CPU Load': `${cpuLoad}%`,
       'System Uptime': uptime
     }, 25);
     const botField = util.keyValueField({

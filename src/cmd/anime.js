@@ -1,6 +1,7 @@
-import Command from '../struct/handlers/Command.js';import { EmbedBuilder, PermissionFlagsBits } from "discord.js";
+import Command from '../struct/handlers/Command.js';
+import { EmbedBuilder } from "discord.js";
 import { convert as toMarkdown } from "../assets/util/html2md.js";
-import { Watching, User, Seiyuu, Character, Schedule } from "../assets/const/graphql.js";
+import { Watching, User, Seiyuu, Character } from "../assets/const/graphql.js";
 import { anime } from "../assets/const/import.js";
 import he from "../assets/util/he.js";
 

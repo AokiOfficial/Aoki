@@ -7,10 +7,13 @@
     "dev": "node --env-file=.env src/main --dev ",
     "run": "node --env-file=.env src/main"
   },
+  "engines": {
+    "node": ">=20.6.0"
+  },
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/buttermiilk/neko-next.git"
+    "url": "git+https://github.com/NekoOfficial/Neko"
   },
   "keywords": [
     "discord",
@@ -20,9 +23,9 @@
   "author": "shimeji.rin",
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/buttermiilk/neko-next/issues"
+    "url": "https://github.com/NekoOfficial/Neko/issues"
   },
-  "homepage": "https://github.com/buttermiilk/neko-next#readme",
+  "homepage": "https://github.com/NekoOfficial/Neko#readme",
   "dependencies": {
     "discord.js": "^14.15.3",
     "mongodb": "^6.7.0"
