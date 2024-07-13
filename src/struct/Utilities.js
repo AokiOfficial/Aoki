@@ -47,6 +47,14 @@ export default class Utilities {
     return console.log("\x1b[31m", title, "\x1b[0m", message);
   };
   /**
+   * Escapes special characters from a string
+   * @param {String} str
+   * @returns `String`
+   */
+  escapeRegex(str) {
+    return str.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  }
+  /**
    * Logs a successful action to console.
    * @param {String} message The message to log
    * @param {String} title The title of the success message
