@@ -38,7 +38,9 @@ export default class Settings {
     if (typeof obj !== "object") throw new Error("Expected an object.");
     const value = await this.client.db.collection(this.collection).findOneAndUpdate({ id }, { $set: obj }, {
       upsert: true,
-      returnOriginal: false,
+      // https://mongodb.github.io/node-mongodb-native/6.8/interfaces/FindOneAndUpdateOptions.html#returnDocument
+      // the importance of reading documentations
+      returnDocument: 'after',
       projection: { _id: 0 }
     });
     this.cache.set(id, this.mergeDefault(this.defaults, value));

@@ -39,7 +39,7 @@ export default new class OsuGame extends Command {
     const user = i.options.getString("username");
     const mode = i.options.getString("mode");
     // handle exceptions
-    const settings = await i.user.settings;
+    const settings = i.user.settings;
     if (!settings) await i.user.update({ inGameName: "", defaultMode: "osu" });
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
     const profile = await this.getProfile(user, mode);
@@ -61,7 +61,7 @@ export default new class OsuGame extends Command {
   };
   // profile command
   async profile(i, _, util) {
-    const settings = await i.user.settings;
+    const settings = i.user.settings;
     const type = i.options.getString("type") || "info";
     const user = i.options.getString("username") || settings?.inGameName;
     const mode = i.options.getString("mode") || settings?.defaultMode;
@@ -154,7 +154,7 @@ export default new class OsuGame extends Command {
   };
   // customize command
   async customize(i) {
-    const settings = await i.user.settings;
+    const settings = i.user.settings;
     const color = i.options.getString("color");
     const bgColor = i.options.getString("background");
     const description = i.options.getString("description");

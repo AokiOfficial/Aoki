@@ -1,4 +1,3 @@
-import { ObjectId } from "mongodb";
 /**
  * Get a global user's settings
  * @returns `void`
