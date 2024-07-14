@@ -42,6 +42,18 @@ export default new class My extends Command {
 
     await i.editReply({ content: reply });
   };
+  // permission command
+  async rights(i) {
+    const query = i.options.getString("to");
+    const value = i.options.getBoolean("should_be");
+    if (i.user.settings[query] == value) return this.throw(`Baka, that's your current settings.`);
+    const res = await i.user.update({ [query]: value });
+    if (res[query] == value) {
+      await i.editReply({ content: `Updated your **${query}** settings to **${value}**.` });
+    } else {
+      return this.throw("The database might be having problems. Try executing this again.");
+    };
+  };
   // vote command
   async vote(i, _, util) {
     // construct reply

@@ -8,7 +8,8 @@ export default {
     color: null,
     description: "wow so magical",
     ticket: 0,
-    inventory: []
+    inventory: [],
+    processMessagePermission: true
   },
   members: {
     infraction: 0,

@@ -153,6 +153,23 @@ const my = new SlashCommandBuilder()
     .setDescription("my raw system stats about various things")
   )
   .addSubcommand(cmd => cmd
+    .setName("rights")
+    .setDescription("can I access this data?")
+    .addStringOption(option => option
+      .setName("to")
+      .setDescription("the permission name")
+      .addChoices(...[
+        { name: "read & process your messages", value: "processMessagePermission" }
+      ])
+      .setRequired(true)
+    )
+    .addBooleanOption(option => option
+      .setName("should_be")
+      .setDescription("can I?")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
     .setName("eval")
     .setDescription("evaluates code. Only my sensei can use this.")
     .addStringOption(option => option

@@ -11,6 +11,8 @@ class MessageCreateEvent extends Event {
    * @param {Object} msg Message object from Discord
    */
   async execute(client, msg) {
+    // if the settings for processing this user's messages is off, do nothing
+    if (!msg.author.settings.processMessagePermission) return;
     if (msg.author.bot) return;
 
     // match "hey neko" or "yo neko" or bot mention
