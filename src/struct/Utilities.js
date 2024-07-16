@@ -102,6 +102,8 @@ export default class Utilities {
   /**
    * Get a post from a subreddit.
    * Either supply a subreddit name or nothing. Nothing returns a random meme.
+   * 
+   * `(this function is outdated as Reddit changed how they handle random posts)`
    * @param { String } subr Subreddit name
    * @returns typeof `Object`
    */
@@ -109,8 +111,6 @@ export default class Utilities {
     const keys = ["me_irl", "memes", "funny"];
     const random = keys[Math.floor(Math.random() * keys.length)];
     const subreddit = subr == "random" ? random : subr;
-    // keep reminding ourselves that we're on cfworkers
-    // make sure to add a user agent to stop 403s
     let data = await fetch(`https://www.reddit.com/r/${subreddit}/random/.json`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"

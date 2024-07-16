@@ -149,7 +149,6 @@ export default new class Fun extends Command {
   };
   // owo command
   async owo(i, query) {
-    if (query.length > 200) return this.throw("You throwing your essay homework in here?\n\nLess than 200 characters, please!");
     const res = await fetch(`https://nekos.life/api/v2/owoify?${query}`).then(res => res.json());
     await i.editReply({ content: res.owo });
   };

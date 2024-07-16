@@ -137,9 +137,6 @@ export default new class My extends Command {
     };
     // handle user query
     if (query && !attachment) {
-      if (query.length > 500 || query.length < 15) {
-        return await this.throw(`Baka, ${query.length > 1000 ? "are you trying to sneak in your homework essay? Make it shorter." : "are you too lazy to type out something meaningful? Write a bit more."}`);
-      };
       const gibberishCheck = await detectGibberish(query);
       if (gibberishCheck.noise > 0.5) {
         await sendErrorGibberish(i);
