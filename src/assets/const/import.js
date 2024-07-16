@@ -22,6 +22,7 @@ const fun = new SlashCommandBuilder()
       .setName("query")
       .setDescription("the text you wanna owoify")
       .setRequired(true)
+      .setMaxLength(200)
     )
   )
   .addSubcommand(cmd => cmd
@@ -145,7 +146,12 @@ const my = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName("fault")
     .setDescription("is anything wrong? having good ideas? share it!")
-    .addStringOption(option => option.setName("query").setDescription("the issue/suggestion you wanna send."))
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("the issue/suggestion you wanna send.")
+      .setMaxLength(1000)
+      .setMinLength(15)
+    )
     .addAttachmentOption(option => option.setName("attachment").setDescription("literally the attachment."))
   )
   .addSubcommand(cmd => cmd
@@ -218,6 +224,24 @@ const anime = new SlashCommandBuilder()
       .setName("query")
       .setDescription("the name to search for")
       .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("airing")
+    .setDescription("see what's airing on a given weekday.")
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("what weekday to check for?")
+      .setRequired(true)
+      .addChoices(...[
+        { name: "Monday", value: "Monday" },
+        { name: "Tuesday", value: "Tuesday" },
+        { name: "Wednesday", value: "Wednesday" },
+        { name: "Thursday", value: "Thursday" },
+        { name: "Friday", value: "Friday" },
+        { name: "Saturday", value: "Saturday" },
+        { name: "Sunday", value: "Sunday" }
+      ])
     )
   )
   .addSubcommand(cmd => cmd
@@ -347,6 +371,8 @@ const osugame = new SlashCommandBuilder()
     .addStringOption(option => option
       .setName("description")
       .setDescription("the field below your username. Limits to 75 characters")
+      .setMaxLength(75)
+      .setMinLength(1)
     )
   )
 // future plan

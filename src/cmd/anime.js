@@ -1,4 +1,5 @@
 import Command from '../struct/handlers/Command.js';
+import Pagination from '../struct/Paginator.js';
 import { EmbedBuilder } from "discord.js";
 import { convert as toMarkdown } from "../assets/util/html2md.js";
 import { Watching, User, Seiyuu, Character } from "../assets/const/graphql.js";
@@ -137,7 +138,7 @@ export default new class Anime extends Command {
     if (platform == "mal") {
       // processing api response
       /**
-       * util.formatDate AniList array inutil.formatDateion
+       * format AniList array information
        * 
        * Method scoped in here is exclusive for animes and mangas
        * @param {Array} arr Array of query info to work with
@@ -196,6 +197,79 @@ export default new class Anime extends Command {
         .setDescription(`***About the user:** ${description}*` + `\n${topFields}`);
       return await i.editReply({ embeds: [embed] });
     };
+  };
+  // schedule command
+  async airing(i, query, util) {
+    const res = await fetch(`https://api.jikan.moe/v4/schedules?filter=${query}${i.channel.nsfw ? "" : "&sfw=true"}`).then(async res => await res.json());
+    // handle error
+    if (!res) return this.throw(this.ErrorMessages[400]);
+    else if (res?.status) {
+      const errorCodes = res.status;
+      if (errorCodes.some(code => code.status >= 500)) {
+        return this.throw(this.ErrorMessages[500]);
+      } else if (errorCodes.some(code => code.status >= 400)) {
+        return this.throw(this.ErrorMessages[400]);
+      } else return this.throw(this.ErrorMessages.default);
+    };
+    // helpers
+    const elapsed = Date.now() - i.createdTimestamp;
+    const navigators = ['◀', '▶', '❌'];
+    // pagination
+    const pages = new Pagination();
+    for (const data of res.data) {
+      // helpers
+      const description = [
+       `${data.score ? `**Score**: ${data.score}\n` : ''}`,
+        `${data.genres.map(x => `[${x.name}](${x.url})`).join(' • ')}\n\n`,
+        `${data.synopsis ? util.textTruncate(data.synopsis, 300, `... *(read more [here](${data.url}))*`) : "*No synopsis available*"}`
+      ].join("");
+      const footer = [
+        `Search duration: ${Math.abs(elapsed / 1000).toFixed(2)} seconds`,
+        `Page ${pages.size == null ? 1 : pages.size + 1} of ${res.data.length}`,
+        `Data sent from MyAnimeList`
+      ].join(" | ");
+      const fields = [
+        { name: 'Type', value: `${data.type || 'Unknown'}`, inline: true },
+        { name: 'Started', value: `${new Date(data.aired.from).toISOString().substring(0, 10)}`, inline: true },
+        { name: 'Source', value: `${data.source || 'Unknown'}`, inline: true },
+        { name: 'Producers', value: `${data.producers.map(x => `[${x.name}](${x.url})`).join(' • ') || 'None'}`, inline: true },
+        { name: 'Licensors', value: `${data.licensors.join(' • ') || 'None'}`, inline: true },
+        { name: '\u200b', value: '\u200b', inline: true }
+      ];
+      // build base page embed
+      const page = new EmbedBuilder()
+        .setColor(16777215)
+        .setThumbnail(data.images.jpg.image_url)
+        .setDescription(description)
+        .setAuthor({ name: `${data.title}`, url: data.url })
+        .setFooter({ text: footer, iconURL: i.member.user.displayAvatarURL() })
+        .addFields(fields);
+      pages.add(page);
+    };
+    // send initial message
+    const msg = await i.editReply({ embeds: [pages.currentPage] });
+    // if page size is 1 do nothing else
+    if (pages.size == 1) return;
+    // collector
+    const filter = (_, user) => user.id == i.member.user.id;
+    const collector = msg.createReactionCollector(filter);
+    let timeout = setTimeout(() => collector.stop(), 90000);
+
+    for (let i = 0; i < navigators.length; i++) {
+      await msg.react(navigators[i]);
+    };
+
+    collector.on('collect', async r => {
+      switch (r.emoji.name) {
+        case navigators[0]: msg.edit({ embeds: [pages.previous()] }); break
+        case navigators[1]: msg.edit({ embeds: [pages.next()] }); break
+        case navigators[2]: collector.stop(); break
+      };
+      await r.users.remove(i.member.user.id);
+      timeout.refresh();
+    });
+
+    collector.on('end', async () => await msg.reactions.removeAll());
   };
   // search command
   async search(i, query, util) {
@@ -268,7 +342,7 @@ export default new class Anime extends Command {
     } else if (type == "seiyuu") {
       // processing api response
       /**
-       * util.formatDate AniList array inutil.formatDateion
+       * format AniList array information
        * 
        * Method scoped in here is exclusive for seiyuu
        * @param {Array} arr Array of query info to work with
