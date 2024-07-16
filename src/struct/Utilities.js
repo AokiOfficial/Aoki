@@ -1,18 +1,12 @@
 // settings and utils
-import { Routes, RouteBases, CDNRoutes } from "discord-api-types/v10";
-import { DiscordSnowflake } from "@sapphire/snowflake";
-import AniSchedule from "./Schedule";
-
 export default class Utilities {
-  constructor(client, env) {
-    // <--> client properties
+  constructor(client) {
+    // client properties
     this.client = client;
     this.id = "704992714109878312";
-    this.env = env;
-    this.db = env.database;
     this.logChannel = "864096602952433665";
     this.owners = ["586913853804249090", "809674940994420736"];
-    // <--> utilities
+    // utilities
     this.badWordsRegex = /\b(4r5e|5h1t|5hit|a55|anal|anus|ar5e|arrse|arse|ass|ass-fucker|asses|assfucker|assfukka|asshole|assholes|asswhole|a_s_s|b!tch|b00bs|b17ch|b1tch|ballbag|balls|ballsack|bastard|beastial|beastiality|bellend|bestial|bestiality|bi\+ch|biatch|bitch|bitcher|bitchers|bitches|bitchin|bitching|bloody|blow job|blowjob|blowjobs|boiolas|bollock|bollok|boner|boob|boobs|booobs|boooobs|booooobs|booooooobs|breasts|buceta|bugger|bum|bunny fucker|butt|butthole|buttmuch|buttplug|c0ck|c0cksucker|carpet muncher|cawk|chink|cipa|cl1t|clit|clitoris|clits|cnut|cock|cock-sucker|cockface|cockhead|cockmunch|cockmuncher|cocks|cocksuck|cocksucked|cocksucker|cocksucking|cocksucks|cocksuka|cocksukka|cok|cokmuncher|coksucka|coon|cox|crap|cum|cummer|cumming|cums|cumshot|cunilingus|cunillingus|cunnilingus|cunt|cuntlick|cuntlicker|cuntlicking|cunts|cyalis|cyberfuc|cyberfuck|cyberfucked|cyberfucker|cyberfuckers|cyberfucking|d1ck|damn|dick|dickhead|dildo|dildos|dink|dinks|dirsa|dlck|dog-fucker|doggin|dogging|donkeyribber|doosh|duche|dyke|ejaculate|ejaculated|ejaculates|ejaculating|ejaculatings|ejaculation|ejakulate|f u c k|f u c k e r|f4nny|fag|fagging|faggitt|faggot|faggs|fagot|fagots|fags|fanny|fannyflaps|fannyfucker|fanyy|fatass|fcuk|fcuker|fcuking|feck|fecker|felching|fellate|fellatio|fingerfuck|fingerfucked|fingerfucker|fingerfuckers|fingerfucking|fingerfucks|fistfuck|fistfucked|fistfucker|fistfuckers|fistfucking|fistfuckings|fistfucks|flange|fook|fooker|fuck|fucka|fucked|fucker|fuckers|fuckhead|fuckheads|fuckin|fucking|fuckings|fuckingshitmotherfucker|fuckme|fucks|fuckwhit|fuckwit|fudge packer|fudgepacker|fuk|fuker|fukker|fukkin|fuks|fukwhit|fukwit|fux|fux0r|f_u_c_k|gangbang|gangbanged|gangbangs|gaylord|gaysex|goatse|God|god-dam|god-damned|goddamn|goddamned|hardcoresex|hell|heshe|hoar|hoare|hoer|homo|hore|horniest|horny|hotsex|jack-off|jackoff|jap|jerk-off|jism|jiz|jizm|jizz|kawk|knob|knobead|knobed|knobend|knobhead|knobjocky|knobjokey|kock|kondum|kondums|kum|kummer|kumming|kums|kunilingus|l3i\+ch|l3itch|labia|lust|lusting|m0f0|m0fo|m45terbate|ma5terb8|ma5terbate|masochist|master-bate|masterb8|masterbat*|masterbat3|masterbate|masterbation|masterbations|masturbate|mo-fo|mof0|mofo|mothafuck|mothafucka|mothafuckas|mothafuckaz|mothafucked|mothafucker|mothafuckers|mothafuckin|mothafucking|mothafuckings|mothafucks|mother fucker|motherfuck|motherfucked|motherfucker|motherfuckers|motherfuckin|motherfucking|motherfuckings|motherfuckka|motherfucks|muff|mutha|muthafecker|muthafuckker|muther|mutherfucker|n1gga|n1gger|nazi|nigg3r|nigg4h|nigga|niggah|niggas|niggaz|nigger|niggers|nob|nob jokey|nobhead|nobjocky|nobjokey|numbnuts|nutsack|orgasim|orgasims|orgasm|orgasms|p0rn|pawn|pecker|penis|penisfucker|phonesex|phuck|phuk|phuked|phuking|phukked|phukking|phuks|phuq|pigfucker|pimpis|piss|pissed|pisser|pissers|pisses|pissflaps|pissin|pissing|pissoff|poop|porn|porno|pornography|pornos|prick|pricks|pron|pube|pusse|pussi|pussies|pussy|pussys|rectum|retard|rimjaw|rimming|s hit|s.o.b.|sadist|schlong|screwing|scroat|scrote|scrotum|semen|sex|sh!\+|sh!t|sh1t|shag|shagger|shaggin|shagging|shemale|shi\+|shit|shitdick|shite|shited|shitey|shitfuck|shitfull|shithead|shiting|shitings|shits|shitted|shitter|shitters|shitting|shittings|shitty|skank|slut|sluts|smegma|smut|snatch|son-of-a-bitch|spac|spunk|s_h_i_t|t1tt1e5|t1tties|teets|teez|testical|testicle|tit|titfuck|tits|titt|tittie5|tittiefucker|titties|tittyfuck|tittywank|titwank|tosser|turd|tw4t|twat|twathead|twatty|twunt|twunter|v14gra|v1gra|vagina|viagra|vulva|w00se|wang|wank|wanker|wanky|whoar|whore|willies|willy|xrated|xxx)\b/gi;
     this.mediaGenres = ["Action", "Adventure", "Comedy", "Drama", "Sci-Fi", "Mystery", "Supernatural", "Fantasy", "Sports", "Romance", "Slice of Life", "Horror", "Psychological", "Thriller", "Ecchi", "Mecha", "Music", "Mahou Shoujo", "Hentai"];
     this.mediaFormat = { TV: "TV", TV_SHORT: "TV Shorts", MOVIE: "Movie", SPECIAL: "Special", ONA: "ONA", OVA: "OVA", MUSIC: "Music", MANGA: "Manga", NOVEL: "Light Novel", ONE_SHOT: "One Shot Manga" };
@@ -44,6 +38,41 @@ export default class Utilities {
     ];
   }
   /**
+   * Logs an errornous action to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the error message
+   * @returns `void` to stdout
+   */
+  error(message, title = "Error") {
+    return console.log("\x1b[31m", title, "\x1b[0m", message);
+  };
+  /**
+   * Escapes special characters from a string
+   * @param {String} str
+   * @returns `String`
+   */
+  escapeRegex(str) {
+    return str.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&");
+  }
+  /**
+   * Logs a successful action to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the success message
+   * @returns `void` to stdout
+   */
+  success(message, title = "Success") {
+    return console.log("\x1b[32m", title, "\x1b[0m", message);
+  };
+  /**
+   * Logs a warning to console.
+   * @param {String} message The message to log
+   * @param {String} title The title of the warning message
+   * @returns `void` to stdout
+   */
+  warn(message, title = "Warn") {
+    return console.log("\x1b[33m", title, "\x1b[0m", message);
+  };
+  /**
    * Search for profane words in a string.
    * This function is mainly to comply with top.gg's policies
    * @param { String } str String to search for profane words
@@ -58,9 +87,7 @@ export default class Utilities {
    * @returns `String` The filtered string
    */
   cleanProfane(str) {
-    return str.replace(this.badWordsRegex, function () {
-      return '####';
-    });
+    return str.replace(this.badWordsRegex, () => { return "####" });
   };
   /**
    * Probability of outputting `true`.
@@ -69,25 +96,21 @@ export default class Utilities {
    * @returns `boolean`
    */
   probability(int) {
-    const n = int / 100
+    const n = int / 100;
     return !!n && Math.random() <= n;
   };
   /**
    * Get a post from a subreddit.
    * Either supply a subreddit name or nothing. Nothing returns a random meme.
+   * 
+   * `(this function is outdated as Reddit changed how they handle random posts)`
    * @param { String } subr Subreddit name
    * @returns typeof `Object`
    */
   async reddit(subr) {
-    const keys = [
-      "me_irl",
-      "memes",
-      "funny"
-    ];
+    const keys = ["me_irl", "memes", "funny"];
     const random = keys[Math.floor(Math.random() * keys.length)];
     const subreddit = subr == "random" ? random : subr;
-    // keep reminding ourselves that we're on cfworkers
-    // make sure to add a user agent to stop 403s
     let data = await fetch(`https://www.reddit.com/r/${subreddit}/random/.json`, {
       headers: {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
@@ -115,6 +138,12 @@ export default class Utilities {
    */
   textTruncate(str = '', length = 100, end = '...') {
     return String(str).substring(0, length - end.length) + (str.length > length ? end : '');
+  };
+  // Self-explanatory
+  commatize(number, maximumFractionDigits = 2) {
+    return Number(number || "").toLocaleString("en-US", {
+      maximumFractionDigits
+    });
   };
   /**
    * Joins an array and limits the string output
@@ -170,6 +199,43 @@ export default class Utilities {
     return (int instanceof String) ? int : ["osu", "taiko", "fruits", "mania"][int];
   };
   /**
+   * Convert a `Date` to a human-readable date.
+   * @param {Date} date A date object to format
+   * @param {String} format Resulting format
+   * @returns `String` Formatted date
+   */
+  formatDate(date, format) {
+    const options = {};
+    if (format.includes('MMMM')) options.month = 'long'; else if (format.includes('MMM')) options.month = 'short';
+    if (format.includes('yyyy')) options.year = 'numeric';
+    if (format.includes('dd')) options.day = '2-digit';
+    return new Intl.DateTimeFormat('en-US', options).format(date);
+  };
+  /**
+   * Calculate the (approximated) time difference between 2 `Date`s
+   * @param {Date} date1 The date being compared
+   * @param {Date} date2 The date to compare against
+   * @returns `String` Time distance
+   */
+  formatDistance(date1, date2) {
+    const intervals = [
+      { label: 'year', ms: 365 * 24 * 60 * 60 * 1000 },
+      { label: 'month', ms: 30 * 24 * 60 * 60 * 1000 },
+      { label: 'day', ms: 24 * 60 * 60 * 1000 },
+      { label: 'hour', ms: 60 * 60 * 1000 },
+      { label: 'minute', ms: 60 * 1000 },
+      { label: 'second', ms: 1000 }
+    ];
+    const elapsed = Math.abs(date2 - date1);
+    for (const interval of intervals) {
+      const count = Math.floor(elapsed / interval.ms);
+      if (count >= 1) {
+        return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
+      }
+    }
+    return 'just now';
+  };
+  /**
    * Takes human-readable time input and outputs time in `ms` (e.g.: `5m 30s` -> `330000` | `3d 5h 2m` -> `277320000`)
    * @param {string} timeStr - Time input (e.g.: `1m 20s`, `1s`, `3h 20m`)
    */
@@ -177,17 +243,27 @@ export default class Utilities {
     return timeString.match(/\d+\s?\w/g).reduce((acc, cur) => {
       var multiplier = 1000;
       switch (cur.slice(-1)) {
-        case 'd':
-          multiplier *= 24;
-        case 'h':
-          multiplier *= 60;
-        case 'm':
-          multiplier *= 60;
+        case 'd': multiplier *= 24;
+        case 'h': multiplier *= 60;
+        case 'm': multiplier *= 60;
         case 's':
           return ((parseInt(cur) ? parseInt(cur) : 0) * multiplier) + acc;
       }
       return acc;
     }, 0);
+  };
+  /**
+   * Takes time in `ms` and outputs time in human-readable format
+   * @param {Number} ms Time in milliseconds
+   * @returns `String` `(x)d(y)h(z)m(t)s` e.g. `1d3h4m2s`
+   */
+  msToTimeString(ms) {
+    const s = Math.floor((ms / 1000) % 60);
+    const m = Math.floor((ms / (1000 * 60)) % 60);
+    const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    const d = Math.floor(ms / (1000 * 60 * 60 * 24));
+  
+    return `${d ? d + "d" : ""}${d ? " " : ""}${h ? h + "h" : ""}${h ? " " : ""}${m ? m + "m" : ""}${m ? " " : ""}${s ? s + "s" : ""}`;
   };
   /**
    * Pseudo-randomly pick an entry from the given array
@@ -210,49 +286,6 @@ export default class Utilities {
       const spacing = ' '.repeat(cwidth - (3 + name.length + String(value).length));
       return '• ' + name + ':' + spacing + value;
     }).join('\n') + '```'
-  };
-  /**
-   * Gets a user banner URL.
-   * Note that it is necessary to force-fetch the user before using this method
-   * @param { Object } user The user object
-   * @param { Number } size The image size
-   * @returns `String` The image URL
-   */
-  getUserBanner(user, size = "256") {
-    // handle animated banners
-    let bannerExtension = "png";
-    if (user.banner.startsWith("a_")) bannerExtension = "gif";
-    return `${RouteBases.cdn}${CDNRoutes.userBanner(user.id, user.banner, bannerExtension)}?size=${size}`;
-  }
-  /**
-   * Gets a guild icon URL
-   * @param { Object } guild The guild object
-   * @param { Number } size The image size
-   * @returns `String` The image URL
-   */
-  getGuildIcon(guild, size = "256") {
-    // handle animated icons
-    let iconExtension = "png";
-    if (guild.icon.startsWith("a_")) iconExtension = "gif";
-    // please be extremely careful with the /
-    // it only applies for this guild icon method
-    return `${RouteBases.cdn}/${CDNRoutes.guildIcon(guild.id, guild.icon, iconExtension)}?size=${size}`;
-  }
-  /**
-   * Gets timestamp from a Discord Snowflake
-   * @param { String } timestamp The snowflake
-   * @returns `String` The timestamp
-   */
-  getCreatedTimestamp(timestamp) {
-    return DiscordSnowflake.timestampFrom(timestamp);
-  }
-  /**
-   * Gets date from a Discord Snowflake
-   * @param { String } timestamp The snowflake
-   * @returns `String` The date
-   */
-  getCreatedAt(timestamp) {
-    return new Date(this.getCreatedTimestamp(timestamp));
   };
   /**
    * Format string osu! mode to its numerical value
@@ -332,75 +365,19 @@ export default class Utilities {
   /**
    * Uploads an image to `imgbb`
    * @param {String} base64 The `base64` string of the Buffer
-   * @returns `String | undefined` The direct URL to the image
+   * @returns `String | null` The direct URL to the image
    */
   async upload(base64) {
     const form = new FormData();
     form.append("image", base64);
-    const res = await fetch(`https://api.imgbb.com/1/upload?expiration=${this.timeStringToMS("30m") / 1000}&key=${this.env.UPLOAD_KEY}`, {
+    const res = await fetch([
+      `https://api.imgbb.com/1/upload?`,
+      `expiration=${this.timeStringToMS("30m") / 1000}&`,
+      `key=${process.env.UPLOAD_KEY}`
+    ].join(""), {
       method: "POST",
       body: form
     }).then(async res => await res.json());
-    return res.data.url || null;
+    return res.data?.url || null;
   };
-  /**
-   * Screenshot a website and upload the image to imgbb
-   * @param {String} url The URL of the site to screenshot
-   * @returns `String` The URL of the screenshot'd image
-   */
-  async screenshot(url) {
-    const res = await fetch([
-      `https://api.screenshotone.com/take?`,
-      `access_key=${this.env.SCREENSHOT_KEY}&`,
-      `url=${url}&`,
-      `viewport_width=1920&`,
-      `viewport_height=1080&`,
-      `device_scale_factor=1&`,
-      `image_quality=80&`,
-      `format=jpg&`,
-      `block_ads=true&`,
-      `block_cookie_banners=true&`,
-      `full_page=false&`,
-      `block_trackers=true&`,
-      `block_banners_by_heuristics=false&`,
-      `delay=0&`,
-      `timeout=10`
-    ].join("")).then(async res => await res.arrayBuffer());
-    return await this.upload(Buffer.from(res).toString('base64'));
-  };
-  // sometimes we'll have to reach out to raw api calls 
-  // as a fallback solution when slash-create does not support something
-  // in that case we'll have to import Routes and RouteBases 
-  // from d-api-types
-  // and do RouteBases.api + Route...
-  // and then ask fetch to do the job, etc. etc.
-  // we want to simplify that
-  /**
-   * Do a raw API call to Discord
-   * 
-   * Using `discord-api-types/v10`'s API endpoint
-   * @param { String } method type of API call
-   * @param { String } param the param of the call
-   * @returns `Object` response
-   */
-  async call(method, options = {}) {
-    const apiCallURL = `${RouteBases.api}${Routes[method.method](...(method.param ? method.param : []))}`;
-    // stringify payloads
-    if (options.body) options.body = JSON.stringify(options.body);
-    // make request
-    const res = await fetch(apiCallURL, {
-      headers: {
-        Authorization: `Bot ${this.env.TOKEN}`,
-        'Content-Type': 'application/json; charset=UTF-8'
-      },
-      ...options
-    });
-    // throw API errors
-    if (!res.ok) {
-      const data = await res.json();
-      throw new Error(JSON.stringify(data));
-    }
-    // return original response
-    if (options.method == "DELETE" || options.method == "POST") return true; else return await res.json();
-  }
 }

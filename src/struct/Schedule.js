@@ -1,4 +1,4 @@
-import { Schedule } from "../assets/const/graphql";
+import { Schedule } from "../assets/const/graphql.js";
 import { EmbedBuilder } from "@discordjs/builders";
 
 export default class AniSchedule {
@@ -30,27 +30,26 @@ export default class AniSchedule {
      * [
      *   {
      *     "id": "91275343627819",
-     *     "channelId": "9283662783623525",
      *     "anilistId": "21",
      *     "episode": "1100"
      *   }, {...}, {...}, ...
      * ]
      */
-    const { results: schedules } = await this.client.db.prepare("SELECT * FROM guilds;").all();
-    if (!schedules) return;
-    // <--> map IDs
+    const schedules = await this.client.db.collection("schedules").find({}).toArray().catch(() => []);
+    if (!schedules?.length) return;
+    // map IDs
     let watched = [], episode = [], page = 0;
-    for (const schedule of schedules) { 
+    for (const schedule of schedules) {
       watched.push(schedule.anilistId);
       episode.push(schedule.nextEp);
     };
-    // <--> clean up duplicates
+    // clean up duplicates
     watched = [...new Set(watched)];
     episode = [...new Set(episode)];
-    // <--> perform the request
+    // perform the request
     const { data } = await this.fetch(this.schedule, { page, watched, episode });
     for (const schedule of schedules) {
-      // <--> filter needed data
+      // filter needed data
       const filtered = data.Page.airingSchedules.filter(entry => {
         if (entry.episode == schedule.nextEp && entry.media.id == schedule.anilistId) return true;
       });
@@ -58,14 +57,9 @@ export default class AniSchedule {
       else {
         const date = new Date(filtered[0].airingAt * 1000);
         const embed = this._makeAnnouncementEmbed(filtered[0], date);
-        await this.client.util.call({
-          method: "channelMessages",
-          param: [schedule.channelID]
-        }, {
-          method: "POST",
-          body: { embeds: [embed.toJSON()] }
-        });
-        await this.client.db.prepare("UPDATE guilds SET nextEp = ?1 WHERE id = ?2;").bind(schedule.nextEp + 1, schedule.id).all();
+        const user = await this.client.users.fetch(schedule.id);
+        await user.send({ embeds: [embed] });
+        await user.setSchedule({ nextEp: schedule.nextEp + 1 });
       };
     };
   };
@@ -86,15 +80,25 @@ export default class AniSchedule {
       return `[${x.site}](${x.url})`;
     }).join(' • ') || [];
 
+    const randomResponses = [
+      'Not like I wanted to remind you or something.',
+      'Sensei made me DM you. I didn\'t want to do that.',
+      'Alright, me back to my routine.',
+      'Whether you knew this or not is irrelevant. It is my job.',
+      'Also, have you seen my sensei?',
+      'Didn\'t expect to meet me, did you.'
+    ];
+    const pick = this.client.util.random(randomResponses);
+
     return new EmbedBuilder()
-      .setColor(this.client.util.color)
+      .setColor(16777215)
       .setThumbnail(entry.media.coverImage.large)
-      .setAuthor({ name: 'AniSchedule' })
+      .setTitle('AniSchedule')
       .setTimestamp(date)
       .setDescription(`${[
-        `Episode **${entry.episode}** of **[${entry.media.title.romaji}](${entry.media.siteUrl})**`,
-        `${entry.media.episodes === entry.episode ? ' **(Final Episode)** ' : ' '}`,
-        `has just aired.${watch ? `\n\nWatch: ${watch}` : '*None yet*'}${visit ? `\n\nVisit: ${visit}` : '*None yet*'}`,
+        `You baka, episode **${entry.episode}** of **[${entry.media.title.romaji}](${entry.media.siteUrl})**`,
+        `${entry.media.episodes === entry.episode ? ' **(it\'s the final episode)** ' : ' '}`,
+        `is up. ${pick}${watch ? `\n\nWatch: ${watch}` : '*None yet*'}${visit ? `\n\nVisit: ${visit}` : '*None yet*'}`,
         `\n\nIt may take some time to appear on the above service(s).`
       ].join('')}`)
       .setFooter({

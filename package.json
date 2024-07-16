@@ -1,34 +1,33 @@
 {
-  "name": "neko-cf",
-  "version": "3.0.0",
-  "description": "neko, but written to work in workers",
-  "main": "src/main",
-  "type": "module",
+  "name": "neko-next",
+  "version": "4.0.0",
+  "description": "neko, but working with discord gateway",
+  "main": "main.js",
   "scripts": {
-    "dev": "wrangler dev --test-scheduled",
-    "deploy": "wrangler deploy"
+    "dev": "node --env-file=.env src/main --dev ",
+    "start": "node --env-file=.env src/main"
   },
+  "engines": {
+    "node": ">=20.6.0"
+  },
+  "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NekoOfficial/Neko.cf.git"
+    "url": "git+https://github.com/NekoOfficial/Neko"
   },
   "keywords": [
     "discord",
     "discord-bot",
-    "discord-app",
-    "serverless",
-    "cloudflare-workers"
+    "discord-app"
   ],
   "author": "shimeji.rin",
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/NekoOfficial/Neko.cf/issues"
+    "url": "https://github.com/NekoOfficial/Neko/issues"
   },
-  "homepage": "https://github.com/NekoOfficial/Neko.cf#readme",
-  "devDependencies": {
-    "@discordjs/builders": "^1.7.0",
-    "@sapphire/snowflake": "^3.5.3",
-    "date-fns": "^3.3.1",
-    "slash-create": "^6.1.2"
+  "homepage": "https://github.com/NekoOfficial/Neko#readme",
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "mongodb": "^6.8.0"
   }
 }
