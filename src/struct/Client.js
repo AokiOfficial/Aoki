@@ -15,7 +15,7 @@ class NekoClient extends Client {
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.DirectMessages,
-        GatewayIntentBits.MessageContent,
+        // GatewayIntentBits.MessageContent,
         GatewayIntentBits.GuildMessageReactions
       ],
       allowedMentions: { parse: ['users'] },

@@ -64,18 +64,14 @@ export default new class Fun extends Command {
       "You've been ignored.", "He he he haw.", "Baka, you're unlucky. Get cancelled."
     ]);
     if (util.probability(10)) return this.throw(`${cancelled}\n\n||Execute the command again.||`);
-    try {
-      const res = await util.reddit(query || "random");
-      if (res.nsfw && !i.channel.nsfw) throw new Error(`${cancelled}\n\n||This meme is NSFW.||`);
-      const meme = this.embed
-        .setTitle(`**${res.title}**`)
-        .setURL(res.url)
-        .setDescription(`*Posted in **r/${query || res.randomKey}** by **${res.author}***`)
-        .setImage(res.image)
-      return await i.editReply({ embeds: [meme] });
-    } catch (err) {
-      return this.throw(err.message);
-    };
+    const res = await util.reddit(query || "random");
+    if (res.nsfw && !i.channel.nsfw) throw new Error(`${cancelled}\n\n||This meme is NSFW.||`);
+    const meme = this.embed
+      .setTitle(`**${res.title}**`)
+      .setURL(res.url)
+      .setDescription(`*Posted in **r/${query || res.randomKey}** by **${res.author}***`)
+      .setImage(res.image)
+    return await i.editReply({ embeds: [meme] });
   };
   // ship command
   async ship(i, _, util) {
