@@ -8,7 +8,7 @@ import schema from '../assets/const/schema.js';
 import processEvents from '../assets/util/exceptions.js';
 import fs from 'fs';
 
-class NekoClient extends Client {
+class AokiClient extends Client {
   constructor(dev) {
     super({
       intents: [
@@ -136,4 +136,4 @@ class NekoClient extends Client {
   };
 }
 
-export default NekoClient;
+export default AokiClient;

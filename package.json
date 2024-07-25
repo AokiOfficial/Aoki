@@ -1,7 +1,7 @@
 {
-  "name": "neko-next",
+  "name": "aoki-next",
   "version": "4.0.0",
-  "description": "neko, but working with discord gateway",
+  "description": "aoki, but working with discord gateway",
   "main": "main.js",
   "scripts": {
     "dev": "node --env-file=.env src/main --dev ",
@@ -13,7 +13,7 @@
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/NekoOfficial/Neko"
+    "url": "git+https://github.com/AokiOfficial/Aoki"
   },
   "keywords": [
     "discord",
@@ -23,9 +23,9 @@
   "author": "shimeji.rin",
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/NekoOfficial/Neko/issues"
+    "url": "https://github.com/AokiOfficial/Aoki/issues"
   },
-  "homepage": "https://github.com/NekoOfficial/Neko#readme",
+  "homepage": "https://github.com/AokiOfficial/Aoki#readme",
   "dependencies": {
     "discord.js": "^14.15.3",
     "mongodb": "^6.8.0"

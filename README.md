@@ -1,4 +1,4 @@
-<h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Neko</br></h1>
+<h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Aoki</br></h1>
 <p align="center">A multi-purpose Discord application to spice up your experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
   <a href="https://nodejs.org/api/esm.html/">
@@ -29,7 +29,7 @@ License, [GPL-3.0 license](/LICENSE), read that file. I don't have any other req
 ---
 ## Database
 
-Neko is using MongoDB.
+Aoki is using MongoDB.
 
 The `mongoose` library proves to be useless as I dislike the idea of having small fragmented files just for schemas. And it's easier to extend with `mongodb`.
 

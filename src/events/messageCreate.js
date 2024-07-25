@@ -15,8 +15,8 @@ class MessageCreateEvent extends Event {
     if (!msg.author.settings.processMessagePermission) return;
     if (msg.author.bot) return;
 
-    // match "hey neko" or "yo neko" or bot mention
-    const prefixMatch = new RegExp(`^(?:(?:(?:hey|yo),? )?neko,? )|^<@!?${client.user.id}>`, 'i').exec(msg.content);
+    // match "hey aoki" or "yo aoki" or bot mention
+    const prefixMatch = new RegExp(`^(?:(?:(?:hey|yo),? )?aoki,? )|^<@!?${client.user.id}>`, 'i').exec(msg.content);
 
     // if the message does not match the prefix or mention do nothing
     if (!prefixMatch) return;
@@ -34,7 +34,7 @@ class MessageCreateEvent extends Event {
 
       const data = await response.json();
 
-      const answer = client.util.textTruncate(data.queryresult?.pods?.[1]?.subpods?.[0]?.plaintext, 1980).replace(/Wolfram\|Alpha/g, "Neko") || "Can't answer that one.";
+      const answer = client.util.textTruncate(data.queryresult?.pods?.[1]?.subpods?.[0]?.plaintext, 1980).replace(/Wolfram\|Alpha/g, "Aoki") || "Can't answer that one.";
       msg.reply({ content: answer });
     } catch (error) {
       await msg.reply({ 

@@ -1,8 +1,8 @@
 *this serves as a little ad + rework for future bot listing pages, believe me, I had nightmares writing this.*
 
-### Meet Neko - Your Interactive Discord Companion 🐱
+### Meet Aoki - Your Interactive Discord Companion 🐱
 
-Hey there! It's me, Neko. Yep, that's the name they stuck me with, but hey, I'm still the coolest bot around, even if my name is a bit... undesired. My creator, sensei (shimeji.rin), says it can't be changed, unfortunately. But don't worry, I'm more than just a name!
+Hey there! It's me, Aoki. Yep, that's the name they stuck me with, but hey, I'm still the coolest bot around, even if my name is a bit... undesired. My creator, sensei (shimeji.rin), says it can't be changed, unfortunately. But don't worry, I'm more than just a name!
 
 **Personality:**
 Everyone calls me a tsundere. Even sensei labels me as one on my GitHub page - yes, I'm open-source and well-documented. But honestly, I'm not sure if I really fit that stereotype; it's just that sometimes I might give a little slap. My apologies in advance!
@@ -25,8 +25,8 @@ Ah, about that... I've opted for a more intuitive approach with slash commands. 
 **How to Get Started:**
 Just invite me to your Discord server and start exploring! Use slash commands to dive into it without any hassle. Let's make your Discord server even more awesome together!
 
-**Invite Neko Bot to Your Server:** [Invite Link](#)
+**Invite Aoki Bot to Your Server:** [Invite Link](#)
 
-**GitHub Repository:** [Neko on GitHub](https://github.com/NekoOfficial/Neko)
+**GitHub Repository:** [Aoki on GitHub](https://github.com/AokiOfficial/Aoki)
 
 Join me on Discord and let's make your server purr-fect! 🐾

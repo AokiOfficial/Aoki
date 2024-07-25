@@ -67,8 +67,8 @@ export default new class My extends Command {
   async info(i) {
     // construct message parts
     const description = [
-      "Oh, it's you? Hey, I'm **Neko**. That's an undesired name, but sensei (`shimeji.rin`, by the way) can't change it, unfortunately.\n",
-      "Everyone calls me a tsundere. Even my sensei does that on my [Github](https://github.com/NekoOfficial/Neko) - yes, I'm **open-source**, and documented. But I don't think I am one, it's just because *I occasionally slap people*, sorry."
+      "Oh, it's you? Hey, I'm **Aoki**. That's an undesired name, but sensei (`shimeji.rin`, by the way) can't change it, unfortunately.\n",
+      "Everyone calls me a tsundere. Even my sensei does that on my [Github](https://github.com/AokiOfficial/Aoki) - yes, I'm **open-source**, and documented. But I don't think I am one, it's just because *I occasionally slap people*, sorry."
     ].join("\n");
     const fields = [
       {
