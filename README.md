@@ -1,4 +1,4 @@
-<h1 align="center"><img src='https://cdn.discordapp.com/avatars/704992714109878312/36238cb1bb35c62b251691553f8380f3?size=128' height='100'><br>Aoki</br></h1>
+<h1 align="center"><img src='https://i.imgur.com/Nar1fRE.png' height='100'><br>Aoki</br></h1>
 <p align="center">A multi-purpose Discord application to spice up your experiences.<br>Focus mainly on Anime, Fun and Utility.</br></p>
 <p align="center">
   <a href="https://nodejs.org/api/esm.html/">
@@ -8,6 +8,8 @@
     <img src="https://i.imgur.com/9rZ8bLb.png" height="36"/>
   </a>
 </p>
+
+#### **Note:** *Neko has been rebranded into Aoki. Future versions will only mention Aoki. Older versions will be kept as-is.* 
 
 ---
 ## About this project
