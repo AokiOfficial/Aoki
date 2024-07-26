@@ -56,7 +56,7 @@ class Command {
   }
   // Preset embed
   get embed() {
-    return new EmbedBuilder().setColor(16777215).setTimestamp();
+    return new EmbedBuilder().setColor(10800862).setTimestamp();
   }
 }
 

@@ -238,7 +238,7 @@ export default new class Anime extends Command {
       ];
       // build base page embed
       const page = new EmbedBuilder()
-        .setColor(16777215)
+        .setColor(10800862)
         .setThumbnail(data.images.jpg.image_url)
         .setDescription(description)
         .setAuthor({ name: `${data.title}`, url: data.url })
@@ -482,6 +482,6 @@ export default new class Anime extends Command {
     return await fetch(url).then(async res => await res.json());
   };
   get embed() {
-    return new EmbedBuilder().setColor(16777215).setTimestamp();
+    return new EmbedBuilder().setColor(10800862).setTimestamp();
   };
 }

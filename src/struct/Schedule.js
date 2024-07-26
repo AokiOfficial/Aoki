@@ -91,7 +91,7 @@ export default class AniSchedule {
     const pick = this.client.util.random(randomResponses);
 
     return new EmbedBuilder()
-      .setColor(16777215)
+      .setColor(10800862)
       .setThumbnail(entry.media.coverImage.large)
       .setTitle('AniSchedule')
       .setTimestamp(date)

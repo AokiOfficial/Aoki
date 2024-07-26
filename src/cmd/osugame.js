@@ -215,7 +215,7 @@ export default new class OsuGame extends Command {
   };
   get embed() {
     return new EmbedBuilder()
-      .setColor(16777215)
+      .setColor(10800862)
       .setTimestamp()
       .setFooter({
         text: "Ooh",

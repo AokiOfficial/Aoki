@@ -167,7 +167,7 @@ export default new class Fun extends Command {
   };
   get embed() {
     return new EmbedBuilder()
-      .setColor(16777215)
+      .setColor(10800862)
       .setFooter({ text: `Requested by ${this.i.user.username}`, iconURL: this.i.user.displayAvatarURL() })
       .setTimestamp();
   };
