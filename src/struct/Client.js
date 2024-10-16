@@ -22,6 +22,7 @@ class AokiClient extends Client {
       ],
       allowedMentions: { parse: ['users'] },
       partials: [Partials.Channel],
+      sweepers: Options.DefaultSweeperSettings,
       makeCache: Options.cacheWithLimits({
         ApplicationCommandManager: 0,
         BaseGuildEmojiManager: 0,

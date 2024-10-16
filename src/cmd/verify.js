@@ -90,19 +90,19 @@ export default new class VerifyCommand extends Command {
     const message = await i.fetchReply();
     const collector = message.createMessageComponentCollector({ time: 300000 }); // 5 minutes
 
-    collector.on('collect', async (interaction) => {
-      if (interaction.customId === 'edit_verification') {
-        await this.showEditModal(interaction, customization, updatePreview);
-      } else if (interaction.customId === 'save_verification') {
-        await this.saveVerification(interaction, customization);
+    collector.on('collect', async (i) => {
+      if (i.customId === 'edit_verification') {
+        await this.showEditModal(i, customization, updatePreview);
+      } else if (i.customId === 'save_verification') {
+        await this.saveVerification(i, customization);
         collector.stop();
-      } else if (interaction.customId === 'select_role') {
-        customization.roleId = interaction.values[0];
-        await interaction.reply({ content: `Verification role updated.`, ephemeral: true });
+      } else if (i.customId === 'select_role') {
+        customization.roleId = i.values[0];
+        await i.reply({ content: `Verification role updated.`, ephemeral: true });
         await updatePreview();
-      } else if (interaction.customId === 'select_channel') {
-        customization.channelId = interaction.values[0];
-        await interaction.reply({ content: `Verification channel updated.`, ephemeral: true });
+      } else if (i.customId === 'select_channel') {
+        customization.channelId = i.values[0];
+        await i.reply({ content: `Verification channel updated.`, ephemeral: true });
         await updatePreview();
       }
     });
@@ -157,7 +157,7 @@ export default new class VerifyCommand extends Command {
     );
   }
 
-  async showEditModal(interaction, customization, updatePreview) {
+  async showEditModal(i, customization, updatePreview) {
     const modal = new ModalBuilder()
       .setCustomId('edit_verification_modal')
       .setTitle('Edit Verification Message');
@@ -198,10 +198,10 @@ export default new class VerifyCommand extends Command {
       new ActionRowBuilder().addComponents(colorInput)
     );
   
-    await interaction.showModal(modal);
+    await i.showModal(modal);
   
     try {
-      const modalSubmission = await interaction.awaitModalSubmit({ 
+      const modalSubmission = await i.awaitModalSubmit({ 
         filter: i => i.customId === 'edit_verification_modal', 
         time: 300000 
       });
@@ -215,35 +215,35 @@ export default new class VerifyCommand extends Command {
       await modalSubmission.reply({ content: 'Preview updated. You can make more changes or save the configuration.', ephemeral: true });
     } catch (error) {
       console.error('Modal submission error:', error);
-      await interaction.followUp({ content: 'An error occurred while processing your input. Please try again.', ephemeral: true }).catch(console.error);
+      await i.followUp({ content: 'An error occurred while processing your input. Please try again.', ephemeral: true }).catch(console.error);
     }
   }
 
-  async saveVerification(interaction, customization) {
+  async saveVerification(i, customization) {
     if (!customization.channelId) {
-      await interaction.reply({ content: 'Please select a channel for the verification message.', ephemeral: true });
+      await i.reply({ content: 'Please select a channel for the verification message.', ephemeral: true });
       return;
     }
 
-    const channel = await interaction.guild.channels.fetch(customization.channelId);
+    const channel = await i.guild.channels.fetch(customization.channelId);
     if (!channel) {
-      await interaction.reply({ content: 'Selected channel not found. Please try again.', ephemeral: true });
+      await i.reply({ content: 'Selected channel not found. Please try again.', ephemeral: true });
       return;
     }
 
     const verificationEmbed = this.createPreviewEmbed(customization);
     const verificationRow = new ActionRowBuilder().addComponents(
       new ButtonBuilder()
-        .setCustomId(`verify_${interaction.guild.id}`)
+        .setCustomId(`verify_${i.guild.id}`)
         .setLabel('Verify')
         .setStyle(ButtonStyle.Primary)
     );
 
     // check if there is already a message before
     // delete the old one to send the newer one
-    if (interaction.guild.settings?.verification?.messageId) {
-      const fetchChannel = interaction.guild.channels.cache.get(interaction.guild.settings?.verification?.channelId);
-      const oldMessage = fetchChannel ? await fetchChannel.messages.fetch(interaction.guild.settings?.verification?.messageId) : null;
+    if (i.guild.settings?.verification?.messageId) {
+      const fetchChannel = i.guild.channels.cache.get(i.guild.settings?.verification?.channelId);
+      const oldMessage = fetchChannel ? await fetchChannel.messages.fetch(i.guild.settings?.verification?.messageId) : null;
       if (oldMessage) {
         await oldMessage.delete().catch(console.error);
       }
@@ -251,7 +251,7 @@ export default new class VerifyCommand extends Command {
 
     const verificationMessage = await channel.send({ embeds: [verificationEmbed], components: [verificationRow] });
     
-    await interaction.guild.update({ 
+    await i.guild.update({ 
       verification: { 
         ...customization, 
         messageId: verificationMessage.id,
@@ -259,7 +259,7 @@ export default new class VerifyCommand extends Command {
       } 
     });
     
-    await interaction.reply({ content: 'Verification message saved and posted in the selected channel.\n\nPlease **DO NOT** delete the verification message. You\'ll have to set it up again.', ephemeral: true });
+    await i.reply({ content: 'Verification message saved and posted in the selected channel.\n\nPlease **DO NOT** delete the verification message. You\'ll have to set it up again.', ephemeral: true });
   }
   // internal utilities
   async throw(content) {

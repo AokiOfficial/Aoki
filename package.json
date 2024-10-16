@@ -7,9 +7,6 @@
     "dev": "bun src/main.js --dev ",
     "start": "bun src/main.js"
   },
-  "engines": {
-    "node": ">=20.6.0"
-  },
   "type": "module",
   "repository": {
     "type": "git",

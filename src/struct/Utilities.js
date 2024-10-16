@@ -129,35 +129,6 @@ export default class Utilities {
     return !!n && Math.random() <= n;
   };
   /**
-   * Get a post from a subreddit.
-   * Either supply a subreddit name or nothing. Nothing returns a random meme.
-   * 
-   * `(this function is outdated as Reddit changed how they handle random posts)`
-   * @param {String} subr Subreddit name
-   * @returns {Object}
-   */
-  async reddit(subr) {
-    const keys = ["me_irl", "memes", "funny"];
-    const random = keys[Math.floor(Math.random() * keys.length)];
-    const subreddit = subr == "random" ? random : subr;
-    let data = await fetch(`https://www.reddit.com/r/${subreddit}/random/.json`, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.3"
-      }
-    }).then(async res => await res.json());
-    data = data[0].data;
-    let permalink = data.children[0].data.permalink;
-    let url = `https://reddit.com${permalink}`;
-    let upVotes = data.children[0].data.ups;
-    let downVotes = data.children[0].data.downs;
-    let image = data.children[0].data.url;
-    let nsfw = data.children[0].data.over_18;
-    let title = data.children[0].data.title;
-    let numComments = data.children[0].data.num_comments;
-    let author = data.children[0].data.author;
-    return { url, upVotes, downVotes, image, nsfw, title, numComments, author, randomKey: subreddit };
-  }
-  /**
    * Truncates a string.
    * Mostly used for trimming long descriptions from APIs
    * @param {String} str The string to truncate
@@ -168,7 +139,13 @@ export default class Utilities {
   textTruncate(str = '', length = 100, end = '...') {
     return String(str).substring(0, length - end.length) + (str.length > length ? end : '');
   };
-  // Self-explanatory
+  /**
+   * Formats a number with commas as thousands separators and limits the number of decimal places.
+   *
+   * @param {Number|String} number - The number to format.
+   * @param {Number} [maximumFractionDigits=2] - The maximum number of decimal places to display
+   * @returns {String} The formatted number
+   */
   commatize(number, maximumFractionDigits = 2) {
     return Number(number || "").toLocaleString("en-US", {
       maximumFractionDigits
