@@ -2,6 +2,7 @@
 // constructed in only one file for maintenance
 // so when I have to check on a command I won't have to scroll 100 lines of code
 import { SlashCommandBuilder } from "@discordjs/builders";
+import { PermissionFlagsBits } from "discord.js";
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
@@ -135,10 +136,10 @@ const my = new SlashCommandBuilder()
     .setName("ping")
     .setDescription("check latency... or it's you wanting to be insulted.")
   )
-  .addSubcommand(cmd => cmd
-    .setName("vote")
-    .setDescription("vote for me on top.gg to show some support!")
-  )
+  // .addSubcommand(cmd => cmd
+  //   .setName("vote")
+  //   .setDescription("vote for me on top.gg to show some support!")
+  // )
   .addSubcommand(cmd => cmd
     .setName("info")
     .setDescription("essentially a \"help\" command.")
@@ -311,6 +312,19 @@ const anime = new SlashCommandBuilder()
     )
   )
 
+const verify = new SlashCommandBuilder()
+  .setName('verify')
+  .setDescription('set up osu! account verification for your server')
+  .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
+  .addSubcommand(cmd => cmd
+    .setName('toggle')
+    .setDescription('enable or disable the verification feature')
+  )
+  .addSubcommand(cmd => cmd
+    .setName('customize')
+    .setDescription('customize the verification message, channel and role')
+  )
+
 const osugame = new SlashCommandBuilder()
   .setName("osu")
   .setDescription("the bizzare game that you react to whatever appears on the screen.")
@@ -375,96 +389,104 @@ const osugame = new SlashCommandBuilder()
       .setMinLength(1)
     )
   )
-// future plan
-// .addSubcommand(cmd => cmd
-//   .setName("beatmap")
-//   .setDescription("search for a beatmap.")
-//   .addStringOption(option => option
-//     .setName("query")
-//     .setDescription("search query.")
-//     .setRequired(true)
-//   )
-//   .addStringOption(option => option
-//     .setName("mode")
-//     .setDescription("gamemode to seach for.")  
-//     .addChoices(...[
-//       { name: "standard", value: "0" },
-//       { name: "taiko", value: "1" },
-//       { name: "catch", value: "2" },
-//       { name: "mania", value: "3" }
-//     ])
-//   )
-//   .addStringOption(option => option
-//     .setName("status")
-//     .setDescription("rank status") 
-//     .addChoices(...[
-//       { name: "any", value: "any" },
-//       { name: "ranked", value: "ranked" },
-//       { name: "loved", value: "loved" },
-//       { name: "qualified", value: "qualified" },
-//       { name: "pending", value: "pending" },
-//       { name: "graveyard", value: "graveyard" }
-//     ])
-//   )
-//   .addStringOption(option => option
-//     .setName("sort")
-//     .setDescription("sorting mode")  
-//     .addChoices(...[
-//       { name: "artist", value: "artist" },
-//       { name: "favorites", value: "favorites" },
-//       { name: "playcount", value: "playcount" },
-//       { name: "ranked date", value: "ranked_date" },
-//       { name: "rating", value: "rating" },
-//       { name: "relevance", value: "relevance" },
-//       { name: "stars", value: "stars" },
-//       { name: "title", value: "title" }
-//     ])
-//   )
-//   .addStringOption(option => option
-//     .setName("genre")
-//     .setDescription("genre of the map")  
-//     .addChoices(...[
-//       { name: "any", value: "artist" },
-//       { name: "anime", value: "anime" },
-//       { name: "classical", value: "classical" },
-//       { name: "electronic", value: "stars" },
-//       { name: "folk", value: "folk" },
-//       { name: "hiphop", value: "hiphop" },
-//       { name: "jazz", value: "jazz" },
-//       { name: "metal", value: "metal" },
-//       { name: "novelty", value: "novelty" },
-//       { name: "pop", value: "pop" },
-//       { name: "rock", value: "rock" },
-//       { name: "video game", value: "video_game" },
-//       { name: "other", value: "other" },
-//       { name: "unspecified", value: "unspecified" }
-//     ])
-//   )
-//   .addStringOption(option => option
-//     .setName("language")
-//     .setDescription("language of the song")  
-//     .addChoices(...[
-//       { name: "any", value: "artist" },
-//       { name: "chinese", value: "chinese" },
-//       { name: "english", value: "english" },
-//       { name: "french", value: "french" },
-//       { name: "german", value: "german" },
-//       { name: "italian", value: "italian" },
-//       { name: "japanese", value: "japanese" },
-//       { name: "korean", value: "korean" },
-//       { name: "polish", value: "polish" },
-//       { name: "russian", value: "russian" },
-//       { name: "spanish", value: "spanish" },
-//       { name: "swedish", value: "swedish" },
-//       { name: "instrumental", value: "instrumental" },
-//       { name: "other", value: "other" },
-//       { name: "unspecified", value: "unspecified" }
-//     ])
-//   )
-//   .addBooleanOption(option => option
-//     .setName("storyboard")
-//     .setDescription("whether the map should have a storyboard")
-//   )
-// )
+  .addSubcommand(cmd => cmd
+    .setName("set_timestamp_channel")
+    .setDescription("a channel where any osu! editor timestamp gets edited into clickable ones.")
+    .addChannelOption(option => option
+      .setName("channel")
+      .setDescription("the channel to track")
+      .setRequired(true)
+    )
+  )
+  .addSubcommand(cmd => cmd
+    .setName("beatmap")
+    .setDescription("search for a beatmap.")
+    .addStringOption(option => option
+      .setName("query")
+      .setDescription("search query.")
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName("mode")
+      .setDescription("gamemode to seach for.")
+      .addChoices(...[
+        { name: "standard", value: "0" },
+        { name: "taiko", value: "1" },
+        { name: "catch", value: "2" },
+        { name: "mania", value: "3" }
+      ])
+    )
+    .addStringOption(option => option
+      .setName("status")
+      .setDescription("rank status")
+      .addChoices(...[
+        { name: "any", value: "any" },
+        { name: "ranked", value: "ranked" },
+        { name: "loved", value: "loved" },
+        { name: "qualified", value: "qualified" },
+        { name: "pending", value: "pending" },
+        { name: "graveyard", value: "graveyard" }
+      ])
+    )
+    .addStringOption(option => option
+      .setName("sort")
+      .setDescription("sorting mode")
+      .addChoices(...[
+        { name: "artist", value: "artist" },
+        { name: "favorites", value: "favorites" },
+        { name: "playcount", value: "playcount" },
+        { name: "ranked date", value: "ranked_date" },
+        { name: "rating", value: "rating" },
+        { name: "relevance", value: "relevance" },
+        { name: "stars", value: "stars" },
+        { name: "title", value: "title" }
+      ])
+    )
+    .addStringOption(option => option
+      .setName("genre")
+      .setDescription("genre of the map")
+      .addChoices(...[
+        { name: "any", value: "artist" },
+        { name: "anime", value: "anime" },
+        { name: "classical", value: "classical" },
+        { name: "electronic", value: "stars" },
+        { name: "folk", value: "folk" },
+        { name: "hiphop", value: "hiphop" },
+        { name: "jazz", value: "jazz" },
+        { name: "metal", value: "metal" },
+        { name: "novelty", value: "novelty" },
+        { name: "pop", value: "pop" },
+        { name: "rock", value: "rock" },
+        { name: "video game", value: "video_game" },
+        { name: "other", value: "other" },
+        { name: "unspecified", value: "unspecified" }
+      ])
+    )
+    .addStringOption(option => option
+      .setName("language")
+      .setDescription("language of the song")
+      .addChoices(...[
+        { name: "any", value: "artist" },
+        { name: "chinese", value: "chinese" },
+        { name: "english", value: "english" },
+        { name: "french", value: "french" },
+        { name: "german", value: "german" },
+        { name: "italian", value: "italian" },
+        { name: "japanese", value: "japanese" },
+        { name: "korean", value: "korean" },
+        { name: "polish", value: "polish" },
+        { name: "russian", value: "russian" },
+        { name: "spanish", value: "spanish" },
+        { name: "swedish", value: "swedish" },
+        { name: "instrumental", value: "instrumental" },
+        { name: "other", value: "other" },
+        { name: "unspecified", value: "unspecified" }
+      ])
+    )
+    .addBooleanOption(option => option
+      .setName("storyboard")
+      .setDescription("whether the map should have a storyboard")
+    )
+  )
 
-export { fun, util, my, anime, osugame };
+export { fun, util, my, anime, osugame, verify };

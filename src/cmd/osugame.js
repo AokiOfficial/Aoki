@@ -1,6 +1,15 @@
 import Command from '../struct/handlers/Command.js';
-import { EmbedBuilder } from "discord.js";
+import { 
+  AttachmentBuilder, 
+  EmbedBuilder, 
+  ActionRowBuilder, 
+  StringSelectMenuBuilder, 
+  ButtonBuilder, 
+  ButtonStyle,
+  PermissionsBitField 
+} from "discord.js";
 import { osugame } from "../assets/const/import.js";
+import { v1, v2 } from 'osu-api';
 
 export default new class OsuGame extends Command {
   constructor() {
@@ -93,14 +102,14 @@ export default new class OsuGame extends Command {
     // handle types
     if (type == "info") {
       // utilities
-      const rawImage = await fetch([
+      const url = [
         `https://lemmmy.pw/osusig/sig.php?`,
         `colour=pink&`,
         `uname=${profile.username}&`,
         `mode=${util.osuNumberModeFormat(mode)}&`,
         `pp=0`
-      ].join("")).then(async res => await res.arrayBuffer());
-      profile.image = await util.upload(Buffer.from(rawImage).toString('base64'));
+      ].join("")
+      profile.image = new AttachmentBuilder(url, { name: 'profile.png' });
       const grades = [];
       const { XH, X, SH, S, A } = util.rankEmotes;
         grades.push(`${XH}\`${Number(profile.ssh)}\``);
@@ -128,11 +137,11 @@ export default new class OsuGame extends Command {
       const embed = this.embed
         .setAuthor(author)
         .setDescription(description)
-        .setImage(profile.image)
-      await i.editReply({ embeds: [embed] });
+        .setImage("attachment://profile.png")
+      await i.editReply({ embeds: [embed], files: [profile.image] });
     } else if (type == "card") {
       // forward info to web
-      const res = await fetch([
+      const url = [
         `https://osu-skill.vercel.app/render?`,
         `id=${profile.userId}&`,
         `mode=${mode}&`,
@@ -141,15 +150,15 @@ export default new class OsuGame extends Command {
         `${settings.background ? `bgColor=${settings.background}&` : ""}`,
         `${settings.description ? `description=${settings.description}&` : ""}`,
         `key=${process.env.RENDER_KEY}`
-      ].join("")).then(async res => await res.arrayBuffer());
+      ].join("");
       // utilities
-      const image = await util.upload(Buffer.from(res).toString('base64'));
-      const embed = this.embed.setImage(image).setAuthor({
+      const image = new AttachmentBuilder(url, { name: 'profile.png' });
+      const embed = this.embed.setImage("attachment://profile.png").setAuthor({
         name: `osu!${profile.properMode} card for ${profile.username}`,
         iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
         url: `${this.baseUrl}/u/${profile.userId}`
       });
-      await i.editReply({ embeds: [embed] });
+      await i.editReply({ embeds: [embed], files: [image] });
     };
   };
   // customize command
@@ -199,6 +208,135 @@ export default new class OsuGame extends Command {
       `${parts.length > 1 ? ` and ${parts.slice(-1)}` : parts.join('')}.`
     ].join("");
     return await i.editReply({ content });
+  };
+  // set_timestamp_channel command
+  async set_timestamp_channel(i) {
+    const channel = i.options.getChannel("channel");
+    // check if channel is of text type
+    if (channel.type != 0) return this.throw("Baka, this feature can only be toggled in text channels.");
+    // TODO: make shorthand function for permissions
+    // check if the member who executed this was an admin // mod
+    if (!channel.permissionsFor(i.guild.members.cache.get(i.user.id)).has(PermissionsBitField.Flags.ManageChannels)) return this.throw("Baka, you don't have the **Manage Channels** permission. You can't edit this settings.");
+    // check if we have permission to see the channel
+    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.ViewChannel)) return this.throw("Baka, I can't see that channel. Enable **View Channel** in permissions view, please.");
+    // check if we have permissions to send messages in there
+    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.SendMessages)) return this.throw("Baka, I can't send messages in there. Enable **Send Messages** in permissions view, please.");
+    // save the channel
+    await i.guild.update({ timestampChannel: channel.id });
+    return i.editReply({ content: `Updated the timestamp channel to <#${channel.id}>.` });
+  };
+  // beatmap search utility
+  async beatmap(i, query, util) {
+    const mode = i.options.getString("mode") || "0";
+    const status = i.options.getString("status") || "any";
+    const sort = i.options.getString("sort") || "relevance";
+    const genre = i.options.getString("genre") || "any";
+    const language = i.options.getString("language") || "any";
+    const storyboard = i.options.getBoolean("storyboard");
+  
+    try {
+      const searchParams = {
+        query: query,
+        mode: Number(mode),
+        status: status,
+        genre: genre,
+        language: language,
+        sort: sort,
+      };
+  
+      if (storyboard !== null) {
+        searchParams.storyboard = storyboard ? '1' : '0';
+      }
+  
+      const { beatmapsets } = await v2.search({
+        type: "beatmaps",
+        ...searchParams
+      });
+  
+      if (beatmapsets.length === 0) {
+        return this.throw("No beatmaps found matching your criteria.");
+      }
+      // nsfw stuff
+      const beatmapsFiltered = beatmapsets.filter(beatmap => {
+        if (i.channel.nsfw) return true;
+        else return !beatmap.nsfw;
+      });
+      // take only 25 first results
+      const beatmaps = beatmapsFiltered.slice(0, 25);
+      const selectMenu = new StringSelectMenuBuilder()
+        .setCustomId('beatmap_select')
+        .setPlaceholder(`Listing ${beatmaps.length} top result${beatmaps.length == 1 ? "" : "s"}. Select to view.`)
+        .addOptions(beatmaps.map((beatmap, index) => ({
+          label: `${beatmap.artist} - ${beatmap.title}`,
+          description: `Mapper: ${beatmap.creator} | Status: ${util.toProperCase(beatmap.status)}`,
+          value: index.toString()
+        })));
+  
+      const row = new ActionRowBuilder().addComponents(selectMenu);
+  
+      const message = await i.editReply({ components: [row] });
+  
+      const filter = (interaction) => interaction.customId === 'beatmap_select' && interaction.user.id === i.user.id;
+      const collector = message.createMessageComponentCollector({ filter, time: 120000 }); // 2 minutes
+  
+      collector.on('collect', async (interaction) => {
+        const selectedIndex = parseInt(interaction.values[0]);
+        const selectedBeatmap = beatmaps[selectedIndex];
+
+        const detailedEmbed = new EmbedBuilder()
+          .setColor(10800862)
+          .setAuthor({ 
+            name: `Mapped by ${selectedBeatmap.creator}`, 
+            iconURL: `https://a.ppy.sh/${selectedBeatmap.user_id}`
+          })
+          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${selectedBeatmap.id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${selectedBeatmap.id}/covers/raw.jpg)`)
+          .setTitle(`${util.escapeMarkdown(selectedBeatmap.artist)} - ${util.escapeMarkdown(selectedBeatmap.title)}`)
+          .setURL(`https://osu.ppy.sh/beatmapsets/${selectedBeatmap.id}`)
+          .setImage(`https://assets.ppy.sh/beatmaps/${selectedBeatmap.id}/covers/cover.jpg`)
+          .addFields(
+            { name: "Raw Title", value: `${util.escapeMarkdown(selectedBeatmap.artist_unicode)} - ${util.escapeMarkdown(selectedBeatmap.title_unicode)}`, inline: false },
+            { name: "Source", value: selectedBeatmap.source || "None", inline: false },
+            { name: "BPM", value: selectedBeatmap.bpm.toString(), inline: true },
+            { name: "Favorites", value: selectedBeatmap.favourite_count.toString(), inline: true },
+            { name: "Spotlight Status", value: util.toProperCase(selectedBeatmap.spotlight.toString()), inline: true },
+            { name: "Beatmap ID", value: selectedBeatmap.id.toString(), inline: true },
+            { name: "Is NSFW?", value: util.toProperCase(selectedBeatmap.nsfw.toString()), inline: true },
+            { name: "Last updated", value: util.formatDistance(new Date(selectedBeatmap.last_updated), new Date()), inline: true },
+            { name: "Status", value: `${util.toProperCase(selectedBeatmap.status)}${selectedBeatmap.ranked_date ? ` on ${util.formatDate(new Date(selectedBeatmap.ranked_date), "ddMMMMyyyy")}` : ""}`, inline: false },
+          )
+          .setFooter({ text: `This set has ${selectedBeatmap.beatmaps.length} ${selectedBeatmap.status} beatmaps` })
+          .setTimestamp();
+
+        const downloadButton = new ButtonBuilder()
+          .setLabel('osu!web download')
+          .setURL(`https://osu.ppy.sh/beatmapsets/${selectedBeatmap.id}`)
+          .setStyle(ButtonStyle.Link);
+
+        const directButton = new ButtonBuilder()
+          .setLabel('osu!direct')
+          .setURL(`https://aoki.hackers.moe/osu/direct?id=${selectedBeatmap.id}`)
+          .setStyle(ButtonStyle.Link);
+
+        const nerinyanButton = new ButtonBuilder()
+          .setLabel('nerinyan')
+          .setURL(`https://api.nerinyan.moe/d/${selectedBeatmap.id}`)
+          .setStyle(ButtonStyle.Link);
+
+        const buttonRow = new ActionRowBuilder()
+          .addComponents(downloadButton, directButton, nerinyanButton);
+  
+        await interaction.update({ embeds: [detailedEmbed], components: [row, buttonRow] });
+      });
+  
+      collector.on('end', () => {
+        selectMenu.setDisabled(true);
+        i.editReply({ components: [row] }).catch(console.error);
+      });
+  
+    } catch (error) {
+      console.error("Error fetching beatmap:", error);
+      return this.throw("An error occurred while searching for beatmaps. Please try again later.");
+    }
   };
   // internal utilities
   async throw(content) {
