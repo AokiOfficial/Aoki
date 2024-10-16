@@ -1,3 +1,5 @@
 .env
-package-lock.json
+bun.lockb
 node_modules
+client.json
+package-lock.json
