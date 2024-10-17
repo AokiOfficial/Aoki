@@ -94,6 +94,11 @@ export default class Settings {
       .find({}, { projection: { _id: 0 } })
       .toArray();
 
+    // set verification collection ttl to 1h
+    if (this.collection == "verifications") await this.client.db
+      .collection(this.collection)
+      .createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+
     for (const doc of docs) this.cache.set(doc.id, this.mergeDefault(this.defaults, doc));
   };
   // discord late v14 removed this bit of utility

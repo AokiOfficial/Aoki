@@ -48,20 +48,9 @@ export default new class Anime extends Command {
   // quote command
   async quote(i) {
     const { author, anime, quote } = await fetch(`https://waifu.it/api/v4/quote`, {
-      headers: { 'Authorization': process.env.WAIFU_KEY }
+      headers: { 'Authorization': process.env.WAIFU_IT }
     }).then(async res => await res.json());
     return await i.editReply({ content: `**${author}** from **${anime}**:\n\n*${quote}*` });
-  };
-  // meme command
-  async meme(i, _, util) {
-    const res = await util.reddit("animemes");
-    const meme = this.embed
-      .setTitle(`**${res.title}**`)
-      .setURL(res.url)
-      .setDescription(`*Posted by **${res.author}***`)
-      .setImage(res.image)
-      .setFooter({ text: `${res.upVotes} likes`, iconURL: i.user.displayAvatarURL() });
-    return await i.editReply({ embeds: [meme] });
   };
   // random command
   async random(i, _, util) {
@@ -99,6 +88,8 @@ export default new class Anime extends Command {
       `\n• **Main Theme:** ${res.themes?.[0]?.name || 'Unspecified'}`,
       `• **Demographics:** ${res.demographics?.[0]?.name || 'Unspecified'}`,
       `• **Air Season:** ${res.season ? util.toProperCase(res.season) : "Unknown"}`,
+      // the banner must be served as a hotlink
+      // top.gg does check the setImage field and the setThumbnail field
       `\n*More about the ${type} can be found [here](${res.url}), and the banner can be found [here](${res.images?.jpg.image_url}).*`
     ].join('\n');
     // extending preset embed

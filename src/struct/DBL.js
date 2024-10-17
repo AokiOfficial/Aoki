@@ -1,4 +1,4 @@
-// a mock for not using any kind of packages (it's just one simple task why bother?)
+// a mock
 export default class DBL {
   constructor(client) {
     this.client = client;
