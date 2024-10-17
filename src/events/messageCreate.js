@@ -16,9 +16,9 @@ class MessageCreateEvent extends Event {
     if (msg.author.bot || !msg.author.settings.processMessagePermission) return;
 
     // match "hey aoki" or "yo aoki" or bot mention
-    const prefixMatch = new RegExp(`^(?:(?:(?:hey|yo),? )?aoki,? )|^<@!?${client.user.id}>`, 'i');
-    // if the message does not match the prefix or mention do nothing
-    if (prefixMatch.test(msg.content)) return await wolframAnswerPlease(msg);
+    const prefixRegex = new RegExp(`^(?:(?:hey|yo),? aoki,? )|^<@!?${client.user.id}>`, 'i');
+    const prefixMatch = prefixRegex.exec(msg.content);
+    if (prefixMatch) return await wolframAnswerPlease(prefixMatch, msg);
 
     // match timestamp if the message is in the designated channel of the guild
     const timestampChannel = msg.guild.settings.timestampChannel;

@@ -29,7 +29,7 @@ const followUpWithProperTimestamp = async (msg, timestamps, timestampRegex) => {
   return msg.reply({ content: message, allowedMentions: { repliedUser: false } });
 };
 
-const wolframAnswerPlease = async (msg) => {
+const wolframAnswerPlease = async (prefixMatch, msg) => {
   // extract the question
   const commandBody = msg.content.slice(prefixMatch[0].length).trim();
   if (!commandBody) return;

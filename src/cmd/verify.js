@@ -1,16 +1,17 @@
 // some methods here does not belong to a command
 // it's for splitting up functions for fixing in the future
-import { 
-  ActionRowBuilder, 
-  ButtonBuilder, 
-  ButtonStyle, 
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   EmbedBuilder,
   ModalBuilder,
   TextInputBuilder,
   TextInputStyle,
   RoleSelectMenuBuilder,
   ChannelSelectMenuBuilder,
-  ChannelType
+  ChannelType,
+  PermissionFlagsBits
 } from 'discord.js';
 import Command from '../struct/handlers/Command';
 import { verify } from '../assets/const/import';
@@ -63,7 +64,7 @@ export default new class VerifyCommand extends Command {
   async customize(i) {
     await i.deferReply({ ephemeral: true });
     const guildSettings = i.guild.settings;
-    
+
     let customization = guildSettings?.verification || {
       title: 'Verify your osu! account',
       thumbnail: i.guild.iconURL(),
@@ -78,7 +79,7 @@ export default new class VerifyCommand extends Command {
       const roleRow = this.createRoleSelectRow();
       const channelRow = this.createChannelSelectRow();
 
-      await i.editReply({ 
+      await i.editReply({
         content: 'Preview of the verification message:',
         embeds: [previewEmbed],
         components: [row, roleRow, channelRow],
@@ -97,10 +98,25 @@ export default new class VerifyCommand extends Command {
         await this.saveVerification(i, customization);
         collector.stop();
       } else if (i.customId === 'select_role') {
+        const role = await i.guild.roles.fetch(i.values[0]);
+        if (!role) {
+          return await i.reply({ content: 'Selected role not found. Please try again.', ephemeral: true });
+        }
+        if (role.position >= i.guild.members.me.roles.highest.position) {
+          return await i.reply({ content: 'Baka, that role is higher than my highest role. I can\'t assign that to other users.', ephemeral: true });
+        }
         customization.roleId = i.values[0];
         await i.reply({ content: `Verification role updated.`, ephemeral: true });
         await updatePreview();
-      } else if (i.customId === 'select_channel') {
+      } else if(i.customId === 'select_channel') {
+        const channel = await i.guild.channels.fetch(i.values[0]);
+        if (!channel) {
+          return await i.reply({ content: 'Selected channel not found. Please try again.', ephemeral: true });
+        }
+        if (!channel.permissionsFor(i.client.user).has(PermissionFlagsBits.SendMessages)) {
+          await i.reply({ content: 'Baka, I can\'t send messages in there. Check the permissions you gave me.', ephemeral: true });
+          return;
+        }
         customization.channelId = i.values[0];
         await i.reply({ content: `Verification channel updated.`, ephemeral: true });
         await updatePreview();
@@ -161,21 +177,21 @@ export default new class VerifyCommand extends Command {
     const modal = new ModalBuilder()
       .setCustomId('edit_verification_modal')
       .setTitle('Edit Verification Message');
-  
+
     const titleInput = new TextInputBuilder()
       .setCustomId('title')
       .setLabel('Title')
       .setStyle(TextInputStyle.Short)
       .setValue(customization.title || "Verify your osu! account")
       .setRequired(true);
-  
+
     const descriptionInput = new TextInputBuilder()
       .setCustomId('description')
       .setLabel('Description')
       .setStyle(TextInputStyle.Paragraph)
       .setValue(customization.description || "Click the button below to verify your osu! account and gain access to the server.")
       .setRequired(true);
-  
+
     const thumbnailInput = new TextInputBuilder()
       .setCustomId('thumbnail')
       .setLabel('Thumbnail URL')
@@ -197,20 +213,20 @@ export default new class VerifyCommand extends Command {
       new ActionRowBuilder().addComponents(thumbnailInput),
       new ActionRowBuilder().addComponents(colorInput)
     );
-  
+
     await i.showModal(modal);
-  
+
     try {
-      const modalSubmission = await i.awaitModalSubmit({ 
-        filter: i => i.customId === 'edit_verification_modal', 
-        time: 300000 
+      const modalSubmission = await i.awaitModalSubmit({
+        filter: i => i.customId === 'edit_verification_modal',
+        time: 300000
       });
-  
+
       customization.title = modalSubmission.fields.getTextInputValue('title');
       customization.description = modalSubmission.fields.getTextInputValue('description');
       customization.thumbnail = modalSubmission.fields.getTextInputValue('thumbnail');
       customization.color = modalSubmission.fields.getTextInputValue('color');
-  
+
       await updatePreview();
       await modalSubmission.reply({ content: 'Preview updated. You can make more changes or save the configuration.', ephemeral: true });
     } catch (error) {
@@ -242,23 +258,29 @@ export default new class VerifyCommand extends Command {
     // check if there is already a message before
     // delete the old one to send the newer one
     if (i.guild.settings?.verification?.messageId) {
-      const fetchChannel = i.guild.channels.cache.get(i.guild.settings?.verification?.channelId);
-      const oldMessage = fetchChannel ? await fetchChannel.messages.fetch(i.guild.settings?.verification?.messageId) : null;
-      if (oldMessage) {
-        await oldMessage.delete().catch(console.error);
+      try {
+        const fetchChannel = i.guild.channels.cache.get(i.guild.settings?.verification?.channelId);
+        const oldMessage = fetchChannel ? await fetchChannel.messages.fetch(i.guild.settings?.verification?.messageId) : null;
+        if (oldMessage) {
+          await oldMessage.delete();
+        }
+      } catch (error) {
+        if (error.code !== 10008) { // 10008 is the error code for Unknown Message
+          console.error('Failed to delete old verification message:', error);
+        }
       }
     }
 
     const verificationMessage = await channel.send({ embeds: [verificationEmbed], components: [verificationRow] });
-    
-    await i.guild.update({ 
-      verification: { 
-        ...customization, 
+
+    await i.guild.update({
+      verification: {
+        ...customization,
         messageId: verificationMessage.id,
         status: true
-      } 
+      }
     });
-    
+
     await i.reply({ content: 'Verification message saved and posted in the selected channel.\n\nPlease **DO NOT** delete the verification message. You\'ll have to set it up again.', ephemeral: true });
   }
   // internal utilities
