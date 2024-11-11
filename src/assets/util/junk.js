@@ -1,13 +1,6 @@
 // specific functions
 // these do super specific things to be here
 // generally these won't fit in the main code, so I name it junk.js
-import {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle
-} from 'discord.js';
-
 const logOnReady = (client) => {
   const channel = client.channels.cache.get("864096602952433665");
   channel.send({ content: `Woke up ${client.dev ? "for your development" : "to work"}.\n\nWorking with **${client.util.commatize(client.guilds.cache.size)}** servers, **${client.util.commatize(client.guilds.cache.reduce((a, b) => a + b.memberCount, 0))}** users. Also reloaded **${client.commands.size}** commands.` })

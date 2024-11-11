@@ -1,14 +1,15 @@
 import Command from '../struct/handlers/Command.js';
-import { 
-  AttachmentBuilder, 
-  EmbedBuilder, 
-  ActionRowBuilder, 
-  StringSelectMenuBuilder, 
-  ButtonBuilder, 
+import {
+  AttachmentBuilder,
+  EmbedBuilder,
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  ButtonBuilder,
   ButtonStyle,
-  PermissionsBitField 
+  PermissionsBitField
 } from "discord.js";
 import { osugame } from "../assets/const/import.js";
+import Pagination from '../struct/Paginator.js';
 import { v1, v2 } from 'osu-api';
 
 export default new class OsuGame extends Command {
@@ -32,7 +33,7 @@ export default new class OsuGame extends Command {
     const util = i.client.util;
 
     await i.deferReply();
-    
+
     try {
       return await this[sub](i, query, util);
     } catch (err) {
@@ -112,11 +113,11 @@ export default new class OsuGame extends Command {
       profile.image = new AttachmentBuilder(url, { name: 'profile.png' });
       const grades = [];
       const { XH, X, SH, S, A } = util.rankEmotes;
-        grades.push(`${XH}\`${Number(profile.ssh)}\``);
-        grades.push(`${X}\`${Number(profile.ss)}\``);
-        grades.push(`${SH}\`${Number(profile.sh)}\``);
-        grades.push(`${S}\`${Number(profile.s)}\``);
-        grades.push(`${A}\`${Number(profile.a)}\``);
+      grades.push(`${XH}\`${Number(profile.ssh)}\``);
+      grades.push(`${X}\`${Number(profile.ss)}\``);
+      grades.push(`${SH}\`${Number(profile.sh)}\``);
+      grades.push(`${S}\`${Number(profile.s)}\``);
+      grades.push(`${A}\`${Number(profile.a)}\``);
       const combinedGrades = grades.join('');
       const playTime = `${profile.playTime} hrs`;
       const level = `${profile.level[1]}% of level ${profile.level[0]}`;
@@ -203,8 +204,8 @@ export default new class OsuGame extends Command {
       description && `description is \`${description}\``
     ].filter(Boolean);
     const content = [
-      `Received your ticket.\n\nYour current `, 
-      `${parts.slice(0, -1).join(', ')}`, 
+      `Received your ticket.\n\nYour current `,
+      `${parts.slice(0, -1).join(', ')}`,
       `${parts.length > 1 ? ` and ${parts.slice(-1)}` : parts.join('')}.`
     ].join("");
     return await i.editReply({ content });
@@ -225,6 +226,137 @@ export default new class OsuGame extends Command {
     await i.guild.update({ timestampChannel: channel.id });
     return i.editReply({ content: `Updated the timestamp channel to <#${channel.id}>.` });
   };
+  // country-leaderboard
+  async country_leaderboard(i, _, util) {
+    const beatmapId = i.options.getInteger('beatmap_id');
+    const countryCode = i.options.getString('country_code').toUpperCase();
+    const mode = i.options.getString('mode') || 'osu';
+
+    // Validate inputs
+    if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
+    if (!countryCode || countryCode.length !== 2) {
+      return this.throw('Please provide a valid 2-letter country code.');
+    }
+
+    try {
+      // Fetch the country rankings to get user IDs
+      const countryRankings = await v2.ranking.list({
+        type: "performance",
+        country_code: countryCode,
+        mode: mode,
+        limit: 100,
+      });
+
+      if (!countryRankings || !countryRankings.ranking || countryRankings.ranking.length === 0) {
+        return this.throw(`No players found for country code ${countryCode}.`);
+      }
+
+      // Get list of user IDs
+      const userIds = countryRankings.ranking.map(player => player.user.id);
+
+      // For each user, fetch their score on the specified beatmap
+      const userScoresPromises = userIds.map(userId =>
+        v2.scores.list({
+          type: "user_beatmap_all",
+          user_id: userId,
+          beatmap_id: beatmapId,
+          mode: mode,
+          include_fails: 0,
+          limit: 1,
+        }).catch(() => null)
+      );
+
+      // Wait for all promises to settle
+      const userScoresResults = await Promise.allSettled(userScoresPromises);
+
+      // Collect scores where users have played the beatmap
+      const countryScores = [];
+      for (let i = 0; i < userScoresResults.length; i++) {
+        const result = userScoresResults[i];
+        if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
+          const score = result.value[0];
+          countryScores.push(score);
+        }
+      }
+
+      if (countryScores.length === 0) {
+        return this.throw(`No scores found for ${countryCode} on this beatmap.`);
+      }
+
+      // Sort the scores
+      countryScores.sort((a, b) => b.total_score - a.total_score);
+
+      // Prepare pagination
+      const scoresPerPage = 5;
+      const totalPages = Math.ceil(countryScores.length / scoresPerPage);
+
+      // beatmap title
+      const beatmapDetails = await v2.beatmaps.details({
+        type: "difficulty",
+        id: beatmapId
+      });
+      const beatmapTitle = `${beatmapDetails.beatmapset.artist} - ${beatmapDetails.beatmapset.title} [${beatmapDetails.version}]`;
+
+      // make pagination
+      const pages = new Pagination();
+
+      for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
+        const start = pageIndex * scoresPerPage;
+        const end = start + scoresPerPage;
+        const pageScores = countryScores.slice(start, end);
+
+        const description = (await Promise.all(pageScores.map(async (score, index) => {
+          const user = await v1.user.details(score.user_id, { type: "id" });
+          const rankEmote = util.rankEmotes[score.rank] || score.rank;
+          return [
+        `${start + index + 1}) **${user.name}**`,
+        `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
+        `▸ ${score.total_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${score.statistics.great}/${score.statistics.ok || "0"}/${score.statistics.miss || "0"}]`,
+        `▸ \`+${score.mods.map(obj => obj.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
+          ].join('\n');
+        }))).join('\n\n');
+
+        const embed = new EmbedBuilder()
+          .setAuthor({ name: `${beatmapTitle}`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
+          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.id}/covers/raw.jpg)\n\n` + description)
+          .setFooter({ text: `Page ${pageIndex + 1} of ${totalPages}` })
+          .setTimestamp()
+          .setColor(10800862);
+
+        pages.add(embed);
+      }
+
+      // Send paginated message
+      const msg = await i.editReply({ embeds: [pages.currentPage] });
+
+      if (pages.size == 1) return;
+      // collector
+      const filter = (_, user) => user.id == i.member.user.id;
+      const collector = msg.createReactionCollector(filter);
+      let timeout = setTimeout(() => collector.stop(), 90000);
+
+      const navigators = ['◀', '▶', '❌'];
+
+      for (let i = 0; i < navigators.length; i++) {
+        await msg.react(navigators[i]);
+      };
+
+      collector.on('collect', async r => {
+        switch (r.emoji.name) {
+          case navigators[0]: msg.edit({ embeds: [pages.previous()] }); break
+          case navigators[1]: msg.edit({ embeds: [pages.next()] }); break
+          case navigators[2]: collector.stop(); break
+        };
+        await r.users.remove(i.member.user.id);
+        timeout.refresh();
+      });
+
+      collector.on('end', async () => await msg.reactions.removeAll());
+    } catch (error) {
+      console.error('Error fetching country leaderboard:', error);
+      this.throw('An error occurred while fetching the country leaderboard. Please try again later.');
+    }
+  }
   // beatmap search utility
   async beatmap(i, query, util) {
     const mode = i.options.getString("mode") || "0";
@@ -233,7 +365,7 @@ export default new class OsuGame extends Command {
     const genre = i.options.getString("genre") || "any";
     const language = i.options.getString("language") || "any";
     const storyboard = i.options.getBoolean("storyboard");
-  
+
     try {
       const searchParams = {
         query: query,
@@ -243,16 +375,16 @@ export default new class OsuGame extends Command {
         language: language,
         sort: sort,
       };
-  
+
       if (storyboard !== null) {
         searchParams.storyboard = storyboard ? '1' : '0';
       }
-  
+
       const { beatmapsets } = await v2.search({
         type: "beatmaps",
         ...searchParams
       });
-  
+
       if (beatmapsets.length === 0) {
         return this.throw("No beatmaps found matching your criteria.");
       }
@@ -271,22 +403,22 @@ export default new class OsuGame extends Command {
           description: `Mapper: ${beatmap.creator} | Status: ${util.toProperCase(beatmap.status)}`,
           value: index.toString()
         })));
-  
+
       const row = new ActionRowBuilder().addComponents(selectMenu);
-  
+
       const message = await i.editReply({ components: [row] });
-  
+
       const filter = (interaction) => interaction.customId === 'beatmap_select' && interaction.user.id === i.user.id;
       const collector = message.createMessageComponentCollector({ filter, time: 120000 }); // 2 minutes
-  
+
       collector.on('collect', async (interaction) => {
         const selectedIndex = parseInt(interaction.values[0]);
         const selectedBeatmap = beatmaps[selectedIndex];
 
         const detailedEmbed = new EmbedBuilder()
           .setColor(10800862)
-          .setAuthor({ 
-            name: `Mapped by ${selectedBeatmap.creator}`, 
+          .setAuthor({
+            name: `Mapped by ${selectedBeatmap.creator}`,
             iconURL: `https://a.ppy.sh/${selectedBeatmap.user_id}`
           })
           .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${selectedBeatmap.id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${selectedBeatmap.id}/covers/raw.jpg)`)
@@ -324,15 +456,15 @@ export default new class OsuGame extends Command {
 
         const buttonRow = new ActionRowBuilder()
           .addComponents(downloadButton, directButton, nerinyanButton);
-  
+
         await interaction.update({ embeds: [detailedEmbed], components: [row, buttonRow] });
       });
-  
+
       collector.on('end', () => {
         selectMenu.setDisabled(true);
         i.editReply({ components: [row] }).catch(console.error);
       });
-  
+
     } catch (error) {
       console.error("Error fetching beatmap:", error);
       return this.throw("An error occurred while searching for beatmaps. Please try again later.");

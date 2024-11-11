@@ -36,10 +36,11 @@ class AokiClient extends Client {
         },
         GuildScheduledEventManager: 0,
         GuildStickerManager: 0,
-        MessageManager: 0,
+        MessageManager: {
+          maxSize: 200,
+          keepOverLimit: message => message.author.id === this.user?.id
+        },
         PresenceManager: 0,
-        ReactionManager: 0,
-        ReactionUserManager: 0,
         StageInstanceManager: 0,
         ThreadManager: 0,
         ThreadMemberManager: 0,
@@ -161,6 +162,10 @@ class AokiClient extends Client {
       client_id: "14095",
       client_secret: process.env.OSU_SECRET,
       cachedTokenPath: './client.json'
+    });
+    await auth.login({
+      type: 'v1',
+      api_key: process.env.OSU_KEY
     });
 
     this.util.success("Loaded v2 credentials", "[osu!]");

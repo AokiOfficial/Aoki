@@ -488,5 +488,30 @@ const osugame = new SlashCommandBuilder()
       .setDescription("whether the map should have a storyboard")
     )
   )
+  .addSubcommand(cmd => cmd
+    .setName('country_leaderboard')
+    .setDescription('View the country leaderboard for a beatmap.')
+    .addIntegerOption(option => option
+      .setName('beatmap_id')
+      .setDescription('The ID of the beatmap.')
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName('country_code')
+      .setDescription('The 2-letter country code (e.g., US, JP).')
+      .setRequired(true)
+    )
+    .addStringOption(option => option
+      .setName('mode')
+      .setDescription('Game mode for the leaderboard.')
+      .setRequired(false)
+      .addChoices(
+        { name: 'osu', value: 'osu' },
+        { name: 'taiko', value: 'taiko' },
+        { name: 'catch', value: 'fruits' },
+        { name: 'mania', value: 'mania' },
+      )
+    )
+  );
 
 export { fun, util, my, anime, osugame, verify };

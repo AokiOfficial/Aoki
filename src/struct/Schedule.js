@@ -54,6 +54,8 @@ export default class AniSchedule {
     episode = [...new Set(episode)];
     // perform the request
     const { data } = await this.fetch(this.schedule, { page, watched, episode });
+    // if data doesn't exist log it so we know
+    if (!data) return this.client.util.warn('No data found for schedules.', '[AniSchedule]');
     for (const schedule of schedules) {
       // filter needed data
       const filtered = data.Page?.airingSchedules.filter(entry => {
