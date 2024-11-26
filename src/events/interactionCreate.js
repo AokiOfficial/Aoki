@@ -13,16 +13,15 @@ class InteractionCreateEvent extends Event {
 
     if (i.isButton()) {
       if (i.customId.startsWith("verify_")) {
-        const guildId = i.customId.split("_")[1];
         return await i.reply({ 
-          content: `Start your verification by clicking [here](${client.dev ? "http://localhost:8080/" : "https://aoki.hackers.moe"}/login?id=${i.user.id}&guildId=${guildId}).`, 
+          content: `Start your verification by clicking [here](${client.dev ? "http://localhost:8080/" : "https://aoki.hackers.moe"}/login?id=${i.user.id}&guildId=${i.guild.id}).`, 
           ephemeral: true 
         });
       } else { return };
     }
 
     const command = i.client.commands.get(i.commandName);
-    if (!command) return await i.reply({ content: 'That command is probably gone. It\'ll disappear in a while.', ephemeral: true });;
+    if (!command) return await i.reply({ content: 'That command is probably gone. It\'ll disappear in a while.', ephemeral: true });
 
     if (!command.hasPermissions(i)) {
       await i.reply({ content: 'Baka, you don\'t have the permissions to use this command.', ephemeral: true });

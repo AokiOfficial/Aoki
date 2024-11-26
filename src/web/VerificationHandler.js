@@ -72,14 +72,22 @@ export default class VerificationHandler {
 
   async grantRoles(id, guildId, user) {
     const guild = this.client.guilds.cache.get(guildId);
+    const member = await this.fetchMember(guild, id);
+
+    // Special case for the specific guild with two-role verification
+    if (guildId === process.env.VERIF_GUILD) {
+      await member.roles.add(guild.roles.cache.find((r) => r.name === this.VERIFY_ROLE));
+      const vnRole = guild.roles.cache.find((r) => r.name === this.VIETNAM_ROLE);
+      if (user.country.code.toLowerCase() === "vn" && vnRole) {
+        await member.roles.add(vnRole);
+      }
+    }
 
     const guildSettings = await this.client.settings.guilds.findOne({ id: guildId });
 
     if (!guildSettings?.verification?.status) {
       return new Response("Verification is not enabled for this server.");
     }
-
-    const member = await this.fetchMember(guild, id);
 
     if (!member) {
       throw new Error("Member not found in guild. Either the cache is broken or something is wrong.");
@@ -91,14 +99,6 @@ export default class VerificationHandler {
     }
 
     await member.roles.add(role);
-
-    // Special case for the specific guild with two-role verification
-    if (guildId === process.env.VERIF_GUILD) {
-      const vnRole = guild.roles.cache.find((r) => r.name === this.VIETNAM_ROLE);
-      if (user.country.code.toLowerCase() === "vn" && vnRole) {
-        await member.roles.add(vnRole);
-      }
-    }
 
     return new Response("Verification successful. You can now return to Discord.");
   }
