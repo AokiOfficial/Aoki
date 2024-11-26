@@ -1,47 +1,66 @@
-// the beginning of the future
-import * as Bun from "bun";
+import fastify from 'fastify';
 import VerificationHandler from "./VerificationHandler";
 import OsuGameHandler from "./OsuGameHandler";
 
 export default class AokiWebAPI {
   constructor(client) {
     this.client = client;
-    this.port = process.env.PORT;
+    this.port = parseInt(process.env.PORT || '3000', 10);
     this.verificationHandler = new VerificationHandler(client);
     this.osuGameHandler = new OsuGameHandler(client);
-    // ensures 'this' in _fetch always refer to this instance
-    this._fetch = this._fetch.bind(this);
+    this.URI = client.dev ? "http://localhost:8080" : "https://aoki.hackers.moe";
+
+    this.server = fastify();
+    this.setupRoutes();
   }
 
   /**
-   * Serve the API for verification
+   * Setup routes for the API
    */
-  serve() {
-    Bun.serve({
-      port: this.port,
-      fetch: this._fetch,
+  setupRoutes() {
+    this.server.get('/login', async (request, reply) => {
+      const url = new URL(`${this.URI}${request.url}`);
+      return this.verificationHandler.handleLogin(url);
+    });
+
+    this.server.get('/callback', async (request, reply) => {
+      const url = new URL(`${this.URI}${request.url}`);
+      return this.verificationHandler.handleCallback(url);
+    });
+
+    this.server.get('/osuedit', async (request, reply) => {
+      const url = new URL(`${this.URI}${request.url}`);
+      return this.osuGameHandler.handleOsuRedirect(url);
+    });
+
+    this.server.get('/osudirect', async (request, reply) => {
+      const url = new URL(`${this.URI}${request.url}`);
+      return this.osuGameHandler.handleOsuDirect(url);
+    });
+
+    this.server.get('/verify', async (request, reply) => {
+      const url = new URL(`${this.URI}${request.url}`);
+      return this.verificationHandler.verify(url);
+    });
+
+    this.server.get('/', async (request, reply) => {
+      return "Why would you be here? I'll work on this later!";
+    });
+
+    this.server.setNotFoundHandler((request, reply) => {
+      reply.status(404).send('Not Found');
     });
   }
 
   /**
-   * Internal method for Bun.serve()
-   * @param {Object} req The request
-   * @returns {Promise<Response>}
+   * Start the server
    */
-  async _fetch(req) {
-    const url = new URL(req.url);
-    const path = url.pathname.replace(/\//g, "");
-
-    const routes = {
-      login: () => this.verificationHandler.handleLogin(url),
-      callback: () => this.verificationHandler.handleCallback(url),
-      osuedit: () => this.osuGameHandler.handleOsuRedirect(url),
-      osudirect: () => this.osuGameHandler.handleOsuDirect(url),
-      verify: async () => await this.verificationHandler.verify(url),
-      "": () => new Response("Why would you be here? I'll work on this later!"),
-    };
-
-    // checks if the url path exists in our routes
-    return routes[path]?.() || new Response("Not Found", { status: 404 });
+  async serve() {
+    try {
+      await this.server.listen({ port: this.port });
+    } catch (err) {
+      this.server.log.error(err);
+      process.exit(1);
+    }
   }
 }

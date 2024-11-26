@@ -8,7 +8,6 @@ import AokiWebAPI from '../web/WebAPI.js';
 import DBL from "./DBL.js";
 import schema from '../assets/const/schema.js';
 import processEvents from '../assets/util/exceptions.js';
-import fs from 'fs';
 
 class AokiClient extends Client {
   constructor(dev) {
@@ -75,14 +74,21 @@ class AokiClient extends Client {
    * @returns {Promise<void>}
    */
   async loadCommands() {
-    const commandFiles = fs.readdirSync(`${process.cwd()}/src/cmd`).filter(file => file.endsWith('.js'));
     const commands = [];
 
-    for (const file of commandFiles) {
-      await import(`../cmd/${file}`).then((command) => {
-        this.commands.set(command.default.data.name, command.default);
-        commands.push(command.default.data.toJSON());
-      });
+    const commandModules = await Promise.all([
+      import('../cmd/anime.js'),
+      import('../cmd/fun.js'),
+      import('../cmd/my.js'),
+      import('../cmd/osugame.js'),
+      import('../cmd/utility.js'),
+      import('../cmd/verify.js'),
+    ]);
+
+    for (const commandModule of commandModules) {
+      const command = commandModule.default;
+      this.commands.set(command.data.name, command);
+      commands.push(command.data.toJSON());
     }
 
     const rest = new REST({ version: '10' }).setToken(this.dev ? process.env.TOKEN_DEV : process.env.TOKEN);
@@ -93,27 +99,31 @@ class AokiClient extends Client {
     } else {
       rest.put(Routes.applicationCommands(process.env.APPID), { body: commands })
         .catch(console.error);
-    };
-  };
+    }
+  }
+
   /**
    * Load events
    * @returns {Promise<void>}
    */
-  loadEvents() {
-    const eventFiles = fs.readdirSync(`${process.cwd()}/src/events`).filter(file => file.endsWith('.js'));
+  async loadEvents() {
+    const eventModules = await Promise.all([
+      import('../events/interactionCreate.js'),
+      import('../events/messageCreate.js'),
+      import('../events/ready.js'),
+    ]);
 
-    for (const file of eventFiles) {
-      import(`../events/${file}`).then((event) => {
-        this.events.set(event.default.name, event.default);
+    for (const eventModule of eventModules) {
+      const event = eventModule.default;
+      this.events.set(event.name, event);
 
-        if (event.default.once) {
-          this.once(event.default.name, (...args) => event.default.execute(this, ...args));
-        } else {
-          this.on(event.default.name, (...args) => event.default.execute(this, ...args));
-        }
-      });
+      if (event.once) {
+        this.once(event.name, (...args) => event.execute(this, ...args));
+      } else {
+        this.on(event.name, (...args) => event.execute(this, ...args));
+      }
     }
-  };
+  }
   /**
    * Listen to internal exception throws
    * @param {Array} events Exception names
