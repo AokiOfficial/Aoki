@@ -26,7 +26,6 @@
   "dependencies": {
     "discord.js": "^14.15.3",
     "mongodb": "^6.8.0",
-    "osu-api": "npm:osu-api-extended@^3.0.0",
-    "rosu-pp": "npm:rosu-pp-js@^1.1.0"
+    "osu-api": "npm:osu-api-extended@^3.0.0"
   }
 }
