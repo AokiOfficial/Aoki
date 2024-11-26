@@ -230,9 +230,9 @@ export default new class OsuGame extends Command {
   async country_leaderboard(i, _, util) {
     const beatmapId = i.options.getInteger('beatmap_id');
     const countryCode = i.options.getString('country_code').toUpperCase();
-    const mode = i.options.getString('mode') || 'osu';
+    const mode = i.options.getString('mode');
 
-    // Validate inputs
+    // Validate inputs\
     if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
     if (!countryCode || countryCode.length !== 2) {
       return this.throw('Please provide a valid 2-letter country code.');
@@ -240,12 +240,20 @@ export default new class OsuGame extends Command {
 
     try {
       // Fetch the country rankings to get user IDs
-      const countryRankings = await v2.ranking.list({
+      const countryRankingsPage1 = await v2.ranking.list({
+        type: "performance",
+        country_code: countryCode,
+        mode: mode
+      });
+      const countryRankingsPage2 = await v2.ranking.list({
         type: "performance",
         country_code: countryCode,
         mode: mode,
-        limit: 100,
+        page: 2
       });
+      const countryRankings = {
+        ranking: [...countryRankingsPage1.ranking, ...countryRankingsPage2.ranking]
+      };
 
       if (!countryRankings || !countryRankings.ranking || countryRankings.ranking.length === 0) {
         return this.throw(`No players found for country code ${countryCode}.`);
@@ -308,26 +316,49 @@ export default new class OsuGame extends Command {
         const description = (await Promise.all(pageScores.map(async (score, index) => {
           const user = await v1.user.details(score.user_id, { type: "id" });
           const rankEmote = util.rankEmotes[score.rank] || score.rank;
+          const statistics = score.statistics;
+          let statsString = '';
+
+          switch (mode) {
+            case 'osu':
+              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
+              break;
+            case 'taiko':
+              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.miss || "0"}`;
+              break;
+            case 'fruits':
+              statsString = `${statistics.great || "0"}/${statistics.large_tick_hit || "0"}/${statistics.small_tick_hit || "0"}/${statistics.miss || "0"}`;
+              break;
+            case 'mania':
+              statsString = `${statistics.perfect || "0"}/${statistics.great || "0"}/${statistics.good || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
+              break;
+          }
+
           return [
-        `${start + index + 1}) **${user.name}**`,
-        `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
-        `▸ ${score.total_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${score.statistics.great}/${score.statistics.ok || "0"}/${score.statistics.miss || "0"}]`,
-        `▸ \`+${score.mods.map(obj => obj.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
+            `**${start + index + 1}) ${user.name}**`,
+            `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
+            `▸ ${score.total_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
+            `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
           ].join('\n');
         }))).join('\n\n');
 
         const embed = new EmbedBuilder()
-          .setAuthor({ name: `${beatmapTitle}`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
-          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.id}/covers/raw.jpg)\n\n` + description)
+          .setTitle(`${beatmapTitle}`)
+          .setURL(`https://osu.ppy.sh/b/${beatmapId}`)
+          .setAuthor({ name: `Country leaderboard`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
+          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + description)
           .setFooter({ text: `Page ${pageIndex + 1} of ${totalPages}` })
           .setTimestamp()
+          .setImage(`https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/cover.jpg`)
           .setColor(10800862);
 
         pages.add(embed);
       }
 
       // Send paginated message
-      const msg = await i.editReply({ embeds: [pages.currentPage] });
+      const content = 
+        "**Notes:** \n- This feature is experimental and may not work as expected.\n- Due to the limitation of this implementation, scores from inactive players will not be shown.\n- Due to osu!API constraints, only players in the top 100 of that country are fetched.";
+      const msg = await i.editReply({ content, embeds: [pages.currentPage] });
 
       if (pages.size == 1) return;
       // collector
@@ -343,8 +374,8 @@ export default new class OsuGame extends Command {
 
       collector.on('collect', async r => {
         switch (r.emoji.name) {
-          case navigators[0]: msg.edit({ embeds: [pages.previous()] }); break
-          case navigators[1]: msg.edit({ embeds: [pages.next()] }); break
+          case navigators[0]: msg.edit({ content, embeds: [pages.previous()] }); break
+          case navigators[1]: msg.edit({ content, embeds: [pages.next()] }); break
           case navigators[2]: collector.stop(); break
         };
         await r.users.remove(i.member.user.id);
@@ -431,7 +462,7 @@ export default new class OsuGame extends Command {
             { name: "BPM", value: selectedBeatmap.bpm.toString(), inline: true },
             { name: "Favorites", value: selectedBeatmap.favourite_count.toString(), inline: true },
             { name: "Spotlight Status", value: util.toProperCase(selectedBeatmap.spotlight.toString()), inline: true },
-            { name: "Beatmap ID", value: selectedBeatmap.id.toString(), inline: true },
+            { name: "Set ID", value: selectedBeatmap.id.toString(), inline: true },
             { name: "Is NSFW?", value: util.toProperCase(selectedBeatmap.nsfw.toString()), inline: true },
             { name: "Last updated", value: util.formatDistance(new Date(selectedBeatmap.last_updated), new Date()), inline: true },
             { name: "Status", value: `${util.toProperCase(selectedBeatmap.status)}${selectedBeatmap.ranked_date ? ` on ${util.formatDate(new Date(selectedBeatmap.ranked_date), "ddMMMMyyyy")}` : ""}`, inline: false },

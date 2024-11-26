@@ -159,16 +159,15 @@ class AokiClient extends Client {
 
     await auth.login({
       type: 'v2',
-      client_id: "14095",
-      client_secret: process.env.OSU_SECRET,
-      cachedTokenPath: './client.json'
+      client_id: this.dev ? process.env.OSU_DEV_ID : process.env.OSU_ID,
+      client_secret: this.dev ? process.env.OSU_DEV_SECRET : process.env.OSU_SECRET
     });
     await auth.login({
       type: 'v1',
       api_key: process.env.OSU_KEY
     });
 
-    this.util.success("Loaded v2 credentials", "[osu!]");
+    this.util.success("osu! API authorized", "[osu!]");
 
     new AokiWebAPI(this).serve();
 

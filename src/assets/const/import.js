@@ -504,7 +504,7 @@ const osugame = new SlashCommandBuilder()
     .addStringOption(option => option
       .setName('mode')
       .setDescription('Game mode for the leaderboard.')
-      .setRequired(false)
+      .setRequired(true)
       .addChoices(
         { name: 'osu', value: 'osu' },
         { name: 'taiko', value: 'taiko' },
