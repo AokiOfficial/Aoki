@@ -63,7 +63,7 @@ export default class VerificationHandler {
       await this.saveUserData(verificationData.id, user);
       await this.grantRoles(verificationData.id, verificationData.guildId, user);
 
-      return new Response("Verification successful. You can now return to Discord.");
+      return new Response("Verification successful. You can now return to Discord.", { status: 200 });
     } catch (err) {
       console.error("Error during verification process:", err);
       return new Response(err.message || "An error occurred during verification", { status: 500 });
@@ -86,21 +86,21 @@ export default class VerificationHandler {
     const guildSettings = await this.client.settings.guilds.findOne({ id: guildId });
 
     if (!guildSettings?.verification?.status) {
-      return new Response("Verification is not enabled for this server.");
+      return new Response("Verification is not enabled for this server.", { status: 400 });
     }
 
     if (!member) {
-      throw new Error("Member not found in guild. Either the cache is broken or something is wrong.");
+      throw new Error("Member not found in guild. Either the cache is broken or something is wrong.", { status: 400 });
     }
 
     const role = await guild.roles.cache.get(guildSettings.verification.roleId);
     if (!role) {
-      return new Response("Verification role not found. Please contact the server administrator.");
+      return new Response("Verification role not found. Please contact the server administrator.", { status: 500 });
     }
 
     await member.roles.add(role);
 
-    return new Response("Verification successful. You can now return to Discord.");
+    return new Response("Verification successful. You can now return to Discord.", { status: 200 });
   }
 
   /**
