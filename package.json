@@ -2,10 +2,10 @@
   "name": "aoki-next",
   "version": "4.1.0",
   "description": "aoki, but working with discord gateway",
-  "main": "dist/main.js",
+  "main": "src/main.js",
   "scripts": {
     "dev": "bun src/main.js --dev",
-    "build": "node src/build.js",
+    "build": "bun src/build.js",
     "start": "bun main.js"
   },
   "type": "module",
