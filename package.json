@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "bun src/main.js --dev",
     "build": "node src/build.js",
-    "start": "bun dist/main.js"
+    "start": "bun main.js"
   },
   "type": "module",
   "repository": {
