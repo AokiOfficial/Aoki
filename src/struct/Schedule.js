@@ -22,8 +22,14 @@ export default class AniSchedule {
     return await this.client.util.anilist(query, variables);
   };
   /**
+   * Run again after a set amount of time
+   */
+  reInit() {
+    setTimeout(async () => await this.init(), 90000);
+  };
+  /**
    * Initialize the scheduler
-   * @returns `void`
+   * @returns {Promise<void>}
    */
   async init() {
     /**
@@ -48,9 +54,11 @@ export default class AniSchedule {
     episode = [...new Set(episode)];
     // perform the request
     const { data } = await this.fetch(this.schedule, { page, watched, episode });
+    // if data doesn't exist log it so we know
+    if (!data) return this.client.util.warn('No data found for schedules.', '[AniSchedule]');
     for (const schedule of schedules) {
       // filter needed data
-      const filtered = data.Page.airingSchedules.filter(entry => {
+      const filtered = data.Page?.airingSchedules.filter(entry => {
         if (entry.episode == schedule.nextEp && entry.media.id == schedule.anilistId) return true;
       });
       if (!filtered || !filtered.length) continue;
@@ -62,6 +70,7 @@ export default class AniSchedule {
         await user.setSchedule({ nextEp: schedule.nextEp + 1 });
       };
     };
+    this.reInit();
   };
   /**
    * Embed a media object

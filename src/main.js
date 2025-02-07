@@ -3,4 +3,6 @@ import "./struct/extenders/index.js";
 
 const dev = process.argv.includes("--dev");
 
-new Client(dev).login();
+const client = new Client(dev);
+
+client.login();

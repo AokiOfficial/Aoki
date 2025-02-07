@@ -1,6 +1,7 @@
 import Command from '../struct/handlers/Command.js';
 import { EmbedBuilder } from "@discordjs/builders";
 import { util } from "../assets/const/import.js";
+import { AttachmentBuilder } from 'discord.js';
 
 export default new class Utility extends Command {
   constructor() {
@@ -260,7 +261,7 @@ export default new class Utility extends Command {
     if (nsfwPages.domains.includes(query) && !i.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
     // take screenshot
     try {
-      const screenshot = await fetch([
+      const url = [
         `https://api.screenshotone.com/take?`,
         `access_key=${process.env.SCREENSHOT_KEY}&`,
         `url=${query}&`,
@@ -269,10 +270,10 @@ export default new class Utility extends Command {
         `block_cookie_banners=true&`,
         `block_trackers=true&`,
         `timeout=10`
-      ].join("")).then(async res => await res.arrayBuffer());
-      const image = await util.upload(Buffer.from(screenshot).toString('base64'));
-      const embed = this.embed.setImage(image);
-      await i.editReply({ embeds: [embed] });
+      ].join("");
+      const image = new AttachmentBuilder(url, { name: 'image.png' });
+      const embed = this.embed.setImage("attachment://image.png");
+      await i.editReply({ embeds: [embed], files: [image] });
     } catch {
       return this.throw("Something's wrong with that URL.\n\nCheck if you made a typo.");
     };

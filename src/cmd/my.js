@@ -157,21 +157,26 @@ export default new class My extends Command {
       return await this.throw('Baka, you can\'t do that. This command is for my sensei.');
     };
     try {
-      let evaled = eval(query);
-      if (typeof evaled !== 'string') {
-        evaled = JSON.stringify(evaled, null, 2);
-      };
-      if (evaled?.length > 1000) return i.editReply({ content: "Output too big. Do this with `console.log()`." });
+      const evaled = (0, eval)(query);
+      const processedEval = typeof evaled !== 'string' 
+        ? JSON.stringify(evaled, null, 2)
+        : evaled;
+    
+      if (processedEval?.length > 1000) {
+        return i.editReply({ content: "Output too big. Do this with `console.log()`." });
+      }
+    
       const embed = this.embed.addFields([
         {
-          name: "\\> Input",
+          name: "\> Input",
           value: `\`\`\`fix\n${query}\`\`\``
         },
         {
-          name: "\\> Output",
-          value: `\`\`\`fix\n${evaled}\n\`\`\``
+          name: "\> Output",
+          value: `\`\`\`fix\n${processedEval}\n\`\`\``
         }
       ]);
+    
       await i.editReply({ embeds: [embed] });
     } catch (error) {
       console.error(error);

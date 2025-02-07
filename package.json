@@ -2,13 +2,11 @@
   "name": "aoki-next",
   "version": "4.1.0",
   "description": "aoki, but working with discord gateway",
-  "main": "main.js",
+  "main": "src/main.js",
   "scripts": {
-    "dev": "bun src/main.js --dev ",
-    "start": "bun src/main.js"
-  },
-  "engines": {
-    "node": ">=20.6.0"
+    "dev": "bun src/main.js --dev",
+    "build": "bun src/build.js",
+    "start": "bun main.js"
   },
   "type": "module",
   "repository": {
@@ -26,10 +24,11 @@
     "url": "https://github.com/AokiOfficial/Aoki/issues"
   },
   "homepage": "https://github.com/AokiOfficial/Aoki#readme",
-  "dependencies": {
+  "devDependencies": {
     "discord.js": "^14.15.3",
+    "esbuild": "^0.24.0",
+    "fastify": "^5.1.0",
     "mongodb": "^6.8.0",
-    "osu-api": "npm:osu-api-extended@^3.0.0",
-    "rosu-pp": "npm:rosu-pp-js@^1.1.0"
+    "osu-api": "npm:osu-api-extended@^3.0.0"
   }
 }

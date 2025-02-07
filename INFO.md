@@ -18,6 +18,7 @@ Ah, about that... I've opted for a more intuitive approach with slash commands. 
   - Get detailed insights into anime series, characters, seiyuus, and people you like on AniList or MyAnimeList. 
   - You wish someone would remind you by the time your favorite anime series release a new episode? I've got you covered.
 - **Utilities:** Quick access to handy tools, making your Discord experience smoother. Got questions? Ask me. Gotta search up the Wiki for something? Ask me. Got quick maths to handle? Ask me. I'll do those things for you.
+- **Extra osu! Functionalities:** You want to compare your skills against other players? You want to check out your country's leaderboard on a beatmap, but you don't have osu!supporter? Or you just want to accurately search for maps? I can do that, the easy way.
 - **The Memes:** You gotta roast someone? Or just wanna surf your favorite media subreddit right inside Discord? I got you.
 - **Open-Source:** Yep, you heard it right. Check out my code on GitHub and contribute if you like!
 - **And more!** My sensei is actively adding more features by time, so you'll have more fun on Discord.
