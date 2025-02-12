@@ -4,8 +4,8 @@ const _defProp = Object.defineProperties;
 import * as AokiUser from './user.js';
 _defProp(User.prototype, {
   settings: { get: AokiUser.settings },
-  owner: { get: AokiUser.owner },
-  voted: { get: AokiUser.voted },
+  isOwner: { get: AokiUser.isOwner },
+  checkIfVoted: { get: AokiUser.checkIfVoted },
   getSchedule: { value: AokiUser.getSchedule },
   setSchedule: { value: AokiUser.setSchedule },
   update: { value: AokiUser.update }

@@ -1,3 +1,5 @@
+// the main purpose to implement this is to make things other bots don't have
+// there are bots around doing the things that would otherwise take infinite time to implement here in JS
 import Command from '../struct/handlers/Command.js';
 import {
   AttachmentBuilder,
@@ -7,7 +9,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   PermissionsBitField
-} from "discord.js";
+} from 'discord.js';
 import { osugame } from "../assets/const/import.js";
 import Pagination from '../struct/Paginator.js';
 import { v1, v2 } from 'osu-api';
@@ -231,6 +233,17 @@ export default new class OsuGame extends Command {
     const beatmapId = i.options.getInteger('beatmap_id');
     const countryCode = i.options.getString('country_code').toUpperCase();
     const mode = i.options.getString('mode');
+    const sort_mode = i.options.getString("sort") || "lazer_score";
+
+    let sorting;
+    switch (sort_mode) {
+      case "performance": sorting = 0; break;
+      case "lazer_score": sorting = 1; break;
+      case "stable_score": sorting = 2; break;
+      case "combo": sorting = 3; break;
+      case "accuracy": sorting = 4; break;
+      default: sorting = 0;
+    };
 
     // Validate inputs\
     if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
@@ -292,7 +305,15 @@ export default new class OsuGame extends Command {
       }
 
       // Sort the scores
-      countryScores.sort((a, b) => b.total_score - a.total_score);
+      countryScores.sort((a, b) => {
+        switch (sorting) {
+          case 0: return b.pp - a.pp;
+          case 1: return b.total_score - a.total_score;
+          case 2: return b.legacy_total_score - a.legacy_total_score;
+          case 3: return b.max_combo - a.max_combo;
+          case 4: return b.accuracy - a.accuracy;
+        }
+      });
 
       // Prepare pagination
       const scoresPerPage = 5;
@@ -334,20 +355,32 @@ export default new class OsuGame extends Command {
               break;
           }
 
+          const displayed_score = sorting == 2 ? score.legacy_total_score : score.total_score;
+
           return [
             `**${start + index + 1}) ${user.name}**`,
             `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
-            `▸ ${score.total_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
+            `▸ ${displayed_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
             `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
           ].join('\n');
         }))).join('\n\n');
+
+        const sortString = (() => {
+          switch (sorting) {
+            case 0: return "Performance";
+            case 1: return "ScoreV3 (lazer)";
+            case 2: return "ScoreV1 (stable)";
+            case 3: return "Combo";
+            case 4: return "Accuracy";
+          }
+        })();
 
         const embed = new EmbedBuilder()
           .setTitle(`${beatmapTitle}`)
           .setURL(`https://osu.ppy.sh/b/${beatmapId}`)
           .setAuthor({ name: `Country leaderboard`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
           .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + description)
-          .setFooter({ text: `Page ${pageIndex + 1} of ${totalPages}` })
+          .setFooter({ text: `Sorted by ${sortString} | Page ${pageIndex + 1} of ${totalPages}` })
           .setTimestamp()
           .setImage(`https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/cover.jpg`)
           .setColor(10800862);
