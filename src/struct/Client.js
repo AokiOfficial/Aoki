@@ -1,6 +1,6 @@
-import { Client, Collection, GatewayIntentBits, Options, Partials, REST, Routes } from 'discord.js';
-import { MongoClient, ServerApiVersion } from "mongodb";
+import { Client, GatewayIntentBits, Partials, Options, Collection, REST, Routes } from 'discord.js';
 import { auth } from "osu-api";
+import * as mongoose from "mongoose";
 import Settings from './Settings.js';
 import Utilities from './Utilities.js';
 import Schedule from './Schedule.js';
@@ -57,7 +57,6 @@ class AokiClient extends Client {
     this.schedule = new Schedule(this);
     this.dev = dev;
     this.lastStats = null;
-    this.dbClient = null;
     this.db = null;
     this.settings = {
       users: new Settings(this, "users", schema.users),
@@ -76,6 +75,7 @@ class AokiClient extends Client {
   async loadCommands() {
     const commands = [];
 
+    // static import in order to make esbuild work
     const commandModules = await Promise.all([
       import('../cmd/anime.js'),
       import('../cmd/fun.js'),
@@ -155,17 +155,11 @@ class AokiClient extends Client {
     this.loadEvents();
 
     const url = process.env.MONGO_KEY;
-    this.dbClient = await MongoClient.connect(url, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      }
-    });
+    await mongoose.connect(url);
     this.util.success("Connected to database", "[Database]");
-    this.db = this.dbClient.db();
+    this.db = mongoose.connection;
     
-    for (const [_, settings] of Object.entries(this.settings)) { await settings.init() };
+    for (const settings of Object.values(this.settings)) { await settings.init() };
 
     await auth.login({
       type: 'v2',

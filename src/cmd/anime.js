@@ -1,6 +1,6 @@
 import Command from '../struct/handlers/Command.js';
 import Pagination from '../struct/Paginator.js';
-import { EmbedBuilder } from "discord.js";
+import { EmbedBuilder } from 'discord.js';
 import { convert as toMarkdown } from "../assets/util/html2md.js";
 import { Watching, User, Seiyuu, Character } from "../assets/const/graphql.js";
 import { anime } from "../assets/const/import.js";

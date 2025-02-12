@@ -1,4 +1,5 @@
 // @ravener wrote the logics, check out his miyako discord app on github for this
+import * as mongoose from 'mongoose';
 /**
  * Manages settings for a specific table.
  * To make sure the cache is in sync methods from here must be used.
@@ -10,103 +11,139 @@
  * this.client.settings[prop].update({ ... });
  */
 export default class Settings {
+  /**
+   * @param {Object} client - The client instance.
+   * @param {String} collection - The name of the collection.
+   * @param {Object} defaults - Default settings for this collection.
+   */
   constructor(client, collection, defaults = {}) {
     this.client = client;
     this.cache = new Map();
     this.collection = collection;
     this.defaults = defaults;
-  };
+
+    // Create a flexible schema that stores an "id" and allows any other fields.
+    const settingsSchema = new mongoose.Schema(
+      {
+        id: { type: String, required: true, unique: true }
+      },
+      { strict: false, versionKey: false }
+    );
+
+    // For the "verifications" collection, add a createdAt field and a TTL index.
+    if (collection === 'verifications') {
+      settingsSchema.add({
+        createdAt: { type: Date, default: Date.now }
+      });
+      settingsSchema.index({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+    }
+
+    // Use an existing model if available to avoid OverwriteModelError
+    this.model =
+      mongoose.models[collection] ||
+      mongoose.model(collection, settingsSchema, collection);
+  }
+
   /**
-   * Get an entry by ID from cache.
-   * @param {String} id - The ID to lookup the cache.
-   * @returns {?Object} The document from the cache if available.
+   * Retrieve a document from the cache by its id.
+   * @param {String} id 
+   * @returns {?Object}
    */
   get(id) {
     return this.cache.get(id);
-  };
+  }
+
   /**
-   * Updates settings for the table this settings instance manages.
-   * 
-   * The input is safe for upserts. If the document does not exist it inserts it.
-   * @example
-   * update(id, { something: true, another_thing: [] });
-   * @param {String} id - The ID of the document to update.
-   * @param {Object} obj - An object with key-value changes to apply.
-   * @returns {Object} The updated object from the database.
+   * Update a document by its id. If it doesn’t exist, it is created.
+   * @param {String} id 
+   * @param {Object} obj - Object with key-value changes.
+   * @returns {Object} The updated document.
    */
   async update(id, obj) {
-    if (typeof obj !== "object") throw new Error("Expected an object.");
-    const value = await this.client.db.collection(this.collection).findOneAndUpdate({ id }, { $set: obj }, {
-      upsert: true,
-      // https://mongodb.github.io/node-mongodb-native/6.8/interfaces/FindOneAndUpdateOptions.html#returnDocument
-      // the importance of reading documentations
-      returnDocument: 'after',
-      projection: { _id: 0 }
-    });
-    this.cache.set(id, this.mergeDefault(this.defaults, value));
-    return value;
-  };
+    if (typeof obj !== 'object') {
+      throw new Error('Expected an object.');
+    }
+
+    // findOneAndUpdate: upsert if not found, return the new document,
+    // remove _id, and return a plain JavaScript object via lean().
+    const updatedDoc = await this.model
+      .findOneAndUpdate({ id }, { $set: obj }, { upsert: true, new: true })
+      .select('-_id')
+      .lean();
+
+    const merged = this.mergeDefault(this.defaults, updatedDoc);
+    this.cache.set(id, merged);
+    return merged;
+  }
+
   /**
-   * Syncs the cache with the database.
-   * Use this in case the cache becomes outdated.
-   * @param {String} id - ID of the document to sync.
-   * @returns {Object} The newly fetched data from the database.
+   * Sync a document from the database to the cache.
+   * @param {String} id 
+   * @returns {Object} The fetched document.
    */
   async sync(id) {
-    const doc = await this.client.db.collection(this.collection).findOne({ id }, { projection: { _id: 0 } });
+    const doc = await this.model.findOne({ id }).select('-_id').lean();
     if (!doc) return;
-    this.cache.set(id, this.mergeDefault(this.defaults, doc));
-    return doc;
-  };
+    const merged = this.mergeDefault(this.defaults, doc);
+    this.cache.set(id, merged);
+    return merged;
+  }
+
   /**
-   * Deletes a document with the given ID.
-   * @param {String} id - ID of the document to delete.
+   * Delete a document by its id.
+   * @param {String} id 
    */
   async delete(id) {
-    await this.client.db.collection(this.collection).deleteOne({ id });
+    await this.model.deleteOne({ id });
     this.cache.delete(id);
-  };
+  }
+
   /**
-   * Alias to db.collection(col).find(...)
+   * Alias for model.find(...)
    */
   find(...args) {
-    return this.client.db.collection(this.collection).find(...args);
-  };
+    return this.model.find(...args);
+  }
+
   /**
-   * Alias to db.collection(col).findOne(...)
+   * Alias for model.findOne(...)
    */
   findOne(...args) {
-    return this.client.db.collection(this.collection).findOne(...args);
-  };
+    return this.model.findOne(...args);
+  }
+
   /**
-  * Return cache if available, else return the default values.
-  */
+   * Returns the document from the cache if it exists, otherwise returns the default values.
+   * @param {String} id 
+   */
   getDefaults(id) {
     return this.cache.get(id) || this.defaults;
   }
+
   /**
-   * Initializes this settings by loading the cache.
-   * Call this before the client is logged in.
+   * Load all documents from the database into the cache.
+   * Call this before the client is fully ready.
    */
   async init() {
-    const docs = await this.client.db
-      .collection(this.collection)
-      .find({}, { projection: { _id: 0 } })
-      .toArray();
+    const docs = await this.model.find({}).select('-_id').lean();
 
-    // set verification collection ttl to 1h
-    if (this.collection == "verifications") await this.client.db
-      .collection(this.collection)
-      .createIndex({ createdAt: 1 }, { expireAfterSeconds: 3600 });
+    // For the "verifications" collection, ensure the TTL index exists.
+    if (this.collection === 'verifications') {
+      await this.model.collection.createIndex(
+        { createdAt: 1 },
+        { expireAfterSeconds: 3600 }
+      );
+    }
 
-    for (const doc of docs) this.cache.set(doc.id, this.mergeDefault(this.defaults, doc));
-  };
-  // discord late v14 removed this bit of utility
-  // bringing back for local use because this method is pretty good for our use case
+    for (const doc of docs) {
+      this.cache.set(doc.id, this.mergeDefault(this.defaults, doc));
+    }
+  }
+
   /**
-   * Sets default properties on an object that aren't already specified.
-   * @param {Object} def Default properties
-   * @param {Object} given Object to assign defaults to
+   * Recursively applies default properties to an object.
+   * @param {Object} def - Default properties.
+   * @param {Object} given - Object to apply defaults to.
    * @returns {Object}
    */
   mergeDefault(def, given) {
@@ -118,7 +155,6 @@ export default class Settings {
         given[key] = this.mergeDefault(def[key], given[key]);
       }
     }
-
     return given;
-  };
-};
+  }
+}

@@ -9,14 +9,14 @@ const settings = function () {
  * Check if this user is the bot owner
  * @returns {Boolean}
  */
-const owner = function () {
+const isOwner = function () {
   return this.id === this.client.config.owners;
 };
 /**
  * Check if this user has voted today
  * @returns `void`
  */
-const voted = async function () {
+const checkIfVoted = async function () {
   const userId = this.id;
   return fetch(`https://top.gg/api/bots/${this.client.user.id}/check`, {
     query: { userId },
@@ -46,9 +46,9 @@ const update = function (obj) {
 
 export {
   settings,
-  owner,
+  isOwner,
   update,
-  voted,
+  checkIfVoted,
   getSchedule,
   setSchedule
 };
