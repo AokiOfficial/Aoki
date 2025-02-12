@@ -41,7 +41,8 @@ export default class AniSchedule {
      *   }, {...}, {...}, ...
      * ]
      */
-    const schedules = await this.client.db.collection("schedules").find({}).toArray().catch(() => []);
+    // lean() is for read-only operations!
+    const schedules = await this.client.settings.schedules.find({}).lean().exec().catch(() => []);
     if (!schedules?.length) return;
     // map IDs
     let watched = [], episode = [], page = 0;

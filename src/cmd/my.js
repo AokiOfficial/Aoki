@@ -1,7 +1,7 @@
 import Command from '../struct/handlers/Command.js';
 import os from "os";
 import * as pkg from "../../package.json" with { type: 'json' };
-import { version as DiscordVersion } from "discord.js";
+import { version as DiscordVersion } from 'discord.js';
 import { my } from '../assets/const/import.js';
 
 export default new class My extends Command {

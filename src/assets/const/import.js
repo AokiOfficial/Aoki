@@ -2,7 +2,7 @@
 // constructed in only one file for maintenance
 // so when I have to check on a command I won't have to scroll 100 lines of code
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from 'discord.js';
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
@@ -29,11 +29,6 @@ const fun = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName('today')
     .setDescription("gives you a random fact of today, in the past.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName('meme')
-    .setDescription("gives you a random meme, with 10% chance cancelling you.")
-    .addStringOption(option => option.setName("query").setDescription("the subreddit name. If you just want to see average memes, skip."))
   )
   .addSubcommand(cmd => cmd
     .setName('ship')
@@ -244,10 +239,6 @@ const anime = new SlashCommandBuilder()
         { name: "Sunday", value: "Sunday" }
       ])
     )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("meme")
-    .setDescription("peaceful command, it won't cancel you like what /fun meme do")
   )
   .addSubcommand(cmd => cmd
     .setName("quote")
@@ -490,26 +481,37 @@ const osugame = new SlashCommandBuilder()
   )
   .addSubcommand(cmd => cmd
     .setName('country_leaderboard')
-    .setDescription('View the country leaderboard for a beatmap.')
+    .setDescription('view the country leaderboard for a beatmap.')
     .addIntegerOption(option => option
       .setName('beatmap_id')
-      .setDescription('The ID of the beatmap.')
+      .setDescription('the ID of the beatmap.')
       .setRequired(true)
     )
     .addStringOption(option => option
       .setName('country_code')
-      .setDescription('The 2-letter country code (e.g., US, JP).')
+      .setDescription('the 2-letter country code (e.g., US, JP).')
       .setRequired(true)
     )
     .addStringOption(option => option
       .setName('mode')
-      .setDescription('Game mode for the leaderboard.')
+      .setDescription('game mode for the leaderboard.')
       .setRequired(true)
       .addChoices(
         { name: 'osu', value: 'osu' },
         { name: 'taiko', value: 'taiko' },
         { name: 'catch', value: 'fruits' },
         { name: 'mania', value: 'mania' },
+      )
+    )
+    .addStringOption(option => option
+      .setName('sort')
+      .setDescription('sort the leaderboard by a specific category.')
+      .addChoices(
+        { name: 'Performance', value: "performance" },
+        { name: 'Accuracy', value: "accuracy" },
+        { name: 'Combo', value: "combo" },
+        { name: 'ScoreV3 (lazer)', value: "lazer_score" },
+        { name: 'ScoreV1 (stable)', value: "stable_score" },
       )
     )
   );

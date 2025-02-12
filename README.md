@@ -10,54 +10,32 @@
 </p>
 
 ---
-## About this project
+## Information about this project
 
-As I grow out of being broke as a developer, this is my another attempt at making a gateway-based app.
+***For users***, Aoki is your tsundere helper in Discord, the modern world's favorite messaging app. She "specializes in providing advanced anime information and handy utilities, all within your Discord server." Soon, she'll have native support for [osu!](https://osu.ppy.sh), but now with various things not available in other applications.
 
-Took me a week of time to get everything up again, this was a very fun rewrite.
+You want to know more right now? Head to the [info file](/INFO.md), or [invite her now](https://discord.com/oauth2/authorize?client_id=704992714109878312).
 
-Previous versions were exclusive for Cloudflare Workers, they're still working if you want them. Those versions are tagged, and easily findable.
-
----
-
-## About the code & license
-
-A lot of logic stays behind a file, [Utilities.js](/src/struct/Utilities.js). I put comments on every function in there.
-
-License, [GPL-3.0 license](/LICENSE). I don't have any other requirements, this is a learning project pushed to production. 
-
-A lot of secret keys are missing though, you should go find out what are those if you want to self-host.
+***For developers***, Aoki is a Discord application, available as both a gateway-based app (the current release) and a serverless app (before v4). The serverless app is for Cloudflare Workers. Tagged versions after v3 can be hosted anywhere with Node.js (or Bun) and process persistence.
 
 ---
-## Database
+## Tech stacks
+Aoki is written in **JavaScript**. There are no plans to rewrite it into another language. Community rewrites are welcome, but they are **not official**.
 
-Aoki is using MongoDB.
+**CommonJS** is not supported. This project uses ESM.
 
-It's easier to extend with `mongodb` library.
+Aoki uses **MongoDB**. She uses the mongodb library, but this branch has experimental support for mongoose. Both logics are interchargable, please check the [Settings.js](/src/struct/Settings.js) file and the [Client.js](/src/struct/Client.js) file for more info.
 
-`n:point` is a simple JSON bin, you can access stuff with the ID they give. **Don't forget to lock them.**
+Aoki **heavily relies** on APIs and external projects. This is why the project is very small in disk space size and codebase size. After compilation, the entire codebase and libraries weigh a stunning **3.455MB**.
+
+Aoki supports Node.js v18+, and Bun v1.2+. It is recommended to use Node.js v22+ or Bun for the time being, so loading `.env` file won't be an issue. If something happen to not support that, use `npm:dotenv`.
+
+Check the [roadmap](https://github.com/AokiOfficial/Aoki/issues/6) for future planned implementations.
 
 ---
-## Common questions
+## Code License & Contribution
+[GPL-3.0](/LICENSE).
 
-**Q:** 3 packages?
+This is a learning project pushed to production, use any code that makes sense to you, but don't fully copy the entire thing.
 
-- I hate flooding my stuff with packages I won't need 90% of each.
-
-**Q:** 6 commands?
-
-- I prefer making sub-commands.
-- This is not a finished project, I'm still working on new stuff. Make an issue if you have an idea, I might get that in my bucket list.
-
-**Q:** Why so terrible code quality?
-
-- I lean towards readable code.
-- I write code before going to bed. And I go to bed at around 1AM.
-
-**Q:** I wanna ask questions!
-
-- Maybe file an issue.
-
-**Q:** I wanna contribute!
-
-- Great, there's a template ready for you to write a proper PR when you get on the tab.
+To contribute, simply make a fork of this repository, make your changes, then make a pull request. There is a template ready for a standard PR.
