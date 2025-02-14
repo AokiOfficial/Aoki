@@ -353,34 +353,7 @@ const osugame = new SlashCommandBuilder()
         { name: "mania", value: "mania" }
       ])
     )
-    .addStringOption(option => option
-      .setName("type")
-      .setDescription("the output type. Defaults to info")
-      .addChoices(...[
-        { name: "info", value: "info" },
-        { name: "card", value: "card" }
-      ])
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("customize")
-    .setDescription("customize your osu! card")
-    .addStringOption(option => option
-      .setName("color")
-      .setDescription("the color of the info field. Can be in hex or rgb")
-    )
-    .addStringOption(option => option
-      .setName("background")
-      .setDescription("the color of the background field. Can be in hex or rgb")
-    )
-    .addStringOption(option => option
-      .setName("description")
-      .setDescription("the field below your username. Limits to 75 characters")
-      .setMaxLength(75)
-      .setMinLength(1)
-    )
-  )
-  .addSubcommand(cmd => cmd
+  ).addSubcommand(cmd => cmd
     .setName("set_timestamp_channel")
     .setDescription("a channel where any osu! editor timestamp gets edited into clickable ones.")
     .addChannelOption(option => option

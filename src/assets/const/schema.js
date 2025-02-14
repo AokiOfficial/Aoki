@@ -1,19 +1,11 @@
-// back to mongodb supremacy
+// this is the schema file
+// it is compatible with both mongodb and mongoose libraries, because our logic handling is in the other structure files
+// you can use either and stop caring about this file
 export default {
   users: {
     inGameName: null,
     defaultMode: 0,
-    background: null,
-    pattern: null,
-    color: null,
-    description: "wow so magical",
-    ticket: 0,
-    inventory: [],
     processMessagePermission: true
-  },
-  members: {
-    infraction: 0,
-    infractionData: []
   },
   schedules: {
     anilistId: null,

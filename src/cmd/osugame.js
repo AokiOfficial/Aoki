@@ -74,14 +74,15 @@ export default new class OsuGame extends Command {
   // profile command
   async profile(i, _, util) {
     const settings = i.user.settings;
-    const type = i.options.getString("type") || "info";
     const user = i.options.getString("username") || settings?.inGameName;
     const mode = i.options.getString("mode") || settings?.defaultMode;
+
     // handle exceptions
     if (!user || !mode) return this.throw("You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
     let profile = await this.getProfile(user, mode);
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
+
     // utilities
     profile = {
       userId: profile.user_id,
@@ -102,115 +103,52 @@ export default new class OsuGame extends Command {
       s: profile.count_rank_s,
       a: profile.count_rank_a,
     };
-    // handle types
-    if (type == "info") {
-      // utilities
-      const url = [
-        `https://lemmmy.pw/osusig/sig.php?`,
-        `colour=pink&`,
-        `uname=${profile.username}&`,
-        `mode=${util.osuNumberModeFormat(mode)}&`,
-        `pp=0`
-      ].join("")
-      profile.image = new AttachmentBuilder(url, { name: 'profile.png' });
-      const grades = [];
-      const { XH, X, SH, S, A } = util.rankEmotes;
-      grades.push(`${XH}\`${Number(profile.ssh)}\``);
-      grades.push(`${X}\`${Number(profile.ss)}\``);
-      grades.push(`${SH}\`${Number(profile.sh)}\``);
-      grades.push(`${S}\`${Number(profile.s)}\``);
-      grades.push(`${A}\`${Number(profile.a)}\``);
-      const combinedGrades = grades.join('');
-      const playTime = `${profile.playTime} hrs`;
-      const level = `${profile.level[1]}% of level ${profile.level[0]}`;
-      // construct embed
-      const author = {
-        name: `osu!${profile.properMode} profile for ${profile.username}`,
-        iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
-        url: `${this.baseUrl}/u/${profile.userId}`
-      };
-      const description = [
-        `**▸ Bancho Rank:** #${profile.rank} (${profile.country}#${profile.countryRank})`,
-        `**▸ Level:** ${level}`,
-        `**▸ PP:** ${profile.pp} **▸ Acc:** ${profile.accuracy}%`,
-        `**▸ Playcount:** ${profile.playCount} (${playTime})`,
-        `**▸ Ranks:** ${combinedGrades}`,
-        `**▸ Profile image:** (from [lemmmy.pw](https://lemmmy.pw))`
-      ].join("\n");
-      const embed = this.embed
-        .setAuthor(author)
-        .setDescription(description)
-        .setImage("attachment://profile.png")
-      await i.editReply({ embeds: [embed], files: [profile.image] });
-    } else if (type == "card") {
-      // forward info to web
-      const url = [
-        `https://osu-skill.vercel.app/render?`,
-        `id=${profile.userId}&`,
-        `mode=${mode}&`,
-        `${settings.pattern ? `image=${settings.pattern}&` : ""}`,
-        `${settings.color ? `color=${settings.color}&` : ""}`,
-        `${settings.background ? `bgColor=${settings.background}&` : ""}`,
-        `${settings.description ? `description=${settings.description}&` : ""}`,
-        `key=${process.env.RENDER_KEY}`
-      ].join("");
-      // utilities
-      const image = new AttachmentBuilder(url, { name: 'profile.png' });
-      const embed = this.embed.setImage("attachment://profile.png").setAuthor({
-        name: `osu!${profile.properMode} card for ${profile.username}`,
-        iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
-        url: `${this.baseUrl}/u/${profile.userId}`
-      });
-      await i.editReply({ embeds: [embed], files: [image] });
+
+    // utilities
+    const url = [
+      `https://lemmmy.pw/osusig/sig.php?`,
+      `colour=pink&`,
+      `uname=${profile.username}&`,
+      `mode=${util.osuNumberModeFormat(mode)}&`,
+      `pp=0`
+    ].join("")
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(new Uint8Array(buffer));
+    profile.image = new AttachmentBuilder().setFile(imageBuffer).setName("profile.png");
+
+    const grades = [];
+    const { XH, X, SH, S, A } = util.rankEmotes;
+    grades.push(`${XH}\`${Number(profile.ssh)}\``);
+    grades.push(`${X}\`${Number(profile.ss)}\``);
+    grades.push(`${SH}\`${Number(profile.sh)}\``);
+    grades.push(`${S}\`${Number(profile.s)}\``);
+    grades.push(`${A}\`${Number(profile.a)}\``);
+    const combinedGrades = grades.join('');
+    const playTime = `${profile.playTime} hrs`;
+    const level = `${profile.level[1]}% of level ${profile.level[0]}`;
+
+    // construct embed
+    const author = {
+      name: `osu!${profile.properMode} profile for ${profile.username}`,
+      iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
+      url: `${this.baseUrl}/u/${profile.userId}`
     };
-  };
-  // customize command
-  async customize(i) {
-    const settings = i.user.settings;
-    const color = i.options.getString("color");
-    const bgColor = i.options.getString("background");
-    const description = i.options.getString("description");
-    // handle exceptions
-    if (!color && !bgColor && !description) return this.throw("What am I supposed to change then, baka.");
-    const rgbRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g;
-    const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
-    function hexToRgb(hex) {
-      const result = hexRegex.exec(hex);
-      return result ? `rgb(${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)})` : null;
-    };
-    if (
-      (color && !color.match(rgbRegex) && !color.match(hexRegex)) || /* color */
-      (bgColor && !bgColor.match(rgbRegex) && !bgColor.match(hexRegex)) /* bgColor */
-    ) {
-      return this.throw("That's an invalid color code, you baka. Either `#xxxxxx` or `rgb(xxx,xxx,xxx)` works.");
-    };
-    if (description?.length > 75) return this.throw("That description is a little bit too long. Only 75 characters max, please.");
-    // handle user input
-    let revisedColor, revisedBgColor;
-    if (color?.match(hexRegex)) revisedColor = hexToRgb(color); else revisedColor = color;
-    if (bgColor?.match(hexRegex)) revisedBgColor = hexToRgb(bgColor); else revisedBgColor = bgColor;
-    if (
-      (color && revisedColor == null) ||
-      (bgColor && revisedBgColor == null)
-    ) return this.throw("That's an invalid color code, you baka. Check your input.");
-    // save to database
-    await i.user.update({
-      color: revisedColor || settings.color || "",
-      background: revisedBgColor || settings.background || "",
-      description: description || settings.description || ""
-    });
-    // handle response
-    const parts = [
-      color && `color is \`${color}\``,
-      bgColor && `background color is \`${bgColor}\``,
-      description && `description is \`${description}\``
-    ].filter(Boolean);
-    const content = [
-      `Received your ticket.\n\nYour current `,
-      `${parts.slice(0, -1).join(', ')}`,
-      `${parts.length > 1 ? ` and ${parts.slice(-1)}` : parts.join('')}.`
-    ].join("");
-    return await i.editReply({ content });
+    const description = [
+      `**▸ Bancho Rank:** #${profile.rank} (${profile.country}#${profile.countryRank})`,
+      `**▸ Level:** ${level}`,
+      `**▸ PP:** ${profile.pp} **▸ Acc:** ${profile.accuracy}%`,
+      `**▸ Playcount:** ${profile.playCount} (${playTime})`,
+      `**▸ Ranks:** ${combinedGrades}`,
+      `**▸ Profile image:** (from [lemmmy.pw](https://lemmmy.pw))`
+    ].join("\n");
+    
+    const embed = this.embed
+      .setAuthor(author)
+      .setDescription(description)
+      .setImage("attachment://profile.png")
+
+    await i.editReply({ embeds: [embed], files: [profile.image] });
   };
   // set_timestamp_channel command
   async set_timestamp_channel(i) {
@@ -389,8 +327,8 @@ export default new class OsuGame extends Command {
       }
 
       // Send paginated message
-      const content = 
-        "**Notes:** \n- This feature is experimental and may not work as expected.\n- Due to the limitation of this implementation, scores from inactive players will not be shown.\n- Due to osu!API constraints, only players in the top 100 of that country are fetched.";
+      const content =
+        "**Notes:** \n- Scores from inactive players will not be shown.\n- Only players in the top 100 of that country are fetched.";
       const msg = await i.editReply({ content, embeds: [pages.currentPage] });
 
       if (pages.size == 1) return;

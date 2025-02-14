@@ -22,5 +22,6 @@ build({
   format: "esm",
   platform: 'node',
   target: 'node18',
-  outfile: 'dist/main.js'
+  outfile: 'dist/main.js',
+  external: ['bun'],
 }).catch(() => process.exit(1));

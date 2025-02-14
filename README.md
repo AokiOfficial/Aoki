@@ -16,7 +16,9 @@
 
 You want to know more right now? Head to the [info file](/INFO.md), or [invite her now](https://discord.com/oauth2/authorize?client_id=704992714109878312).
 
-***For developers***, Aoki is a Discord application, available as both a gateway-based app (the current release) and a serverless app (before v4). The serverless app is for Cloudflare Workers. Tagged versions after v3 can be hosted anywhere with Node.js (or Bun) and process persistence.
+***For developers***, Aoki is a Discord application, available as both a gateway-based app (the current release) and a serverless app (before v4). The serverless app is for Cloudflare Workers. Tagged versions after v3 can be hosted anywhere with Bun and process persistence.
+
+To host the project with traditional Node.js, read below.
 
 ---
 ## Tech stacks
@@ -24,11 +26,15 @@ Aoki is written in **JavaScript**. There are no plans to rewrite it into another
 
 **CommonJS** is not supported. This project uses ESM.
 
-Aoki uses **MongoDB**. She uses the mongodb library, but this branch has experimental support for mongoose. Both logics are interchargable, please check the [Settings.js](/src/struct/Settings.js) file and the [Client.js](/src/struct/Client.js) file for more info.
+Aoki uses **MongoDB**. She uses the `mongodb` library, but this branch has experimental support for `mongoose`. Both logics are interchargable, please check the [Client.js](/src/struct/Client.js) file for more info.
 
-Aoki **heavily relies** on APIs and external projects. This is why the project is very small in disk space size and codebase size. After compilation, the entire codebase and libraries weigh a stunning **3.455MB**.
+Aoki **heavily relies** on APIs and external projects, and most redundant libraries are implemented as a single function in [Utilities.js](/src/struct/Utilities.js). This is why the project is very small in disk space size and codebase size. After building, the entire codebase and libraries weigh a stunning **2.901MB**.
 
-Aoki supports Node.js v18+, and Bun v1.2+. It is recommended to use Node.js v22+ or Bun for the time being, so loading `.env` file won't be an issue. If something happen to not support that, use `npm:dotenv`.
+Aoki officially supports Bun v1.2+. It is recommended to use Bun for the time being, because loading `.env` file won't be an issue and Bun has a built-in `serve()`, which is really fast, for web stuff.
+
+Aoki *technically* supports Node.js v22+ if you rewrite the [WebAPI.js](/src/web/WebAPI.js) file to use a different web library (such as `fastify`).
+
+If for some reason you cannot use Node.js v22+ and Bun but a lower version of Node.js, do the above and install `dotenv` to load your `.env` file before doing anything.
 
 Check the [roadmap](https://github.com/AokiOfficial/Aoki/issues/6) for future planned implementations.
 

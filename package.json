@@ -29,6 +29,6 @@
     "esbuild": "^0.24.0",
     "fastify": "^5.1.0",
     "mongoose": "^8.10.0",
-    "osu-api": "npm:osu-api-extended@^3.0.0"
+    "osu-api": "npm:osu-api-extended@^3.0.12"
   }
 }
