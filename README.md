@@ -92,5 +92,5 @@ To contribute, simply make a fork of this repository, make your changes, then ma
 To work with the codebase, make sure:
 - You adhere to ESM conventions, as Aoki does not support CommonJS.
 - You document the code wherever relevant; i.e. stuff that will be hard to look at without it, if you're making a PR.
-- Keep the overall structure intact and consistent. Sync with other files if there is already one (or some) of the same format.
+- You keep the overall structure intact and consistent. Sync with other files if there is already one (or some) of the same format.
 - You stay sane and happy.
