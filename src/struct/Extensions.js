@@ -8,7 +8,7 @@ const userExtensions = {
   settings() {
     return this.client.settings.users.getDefaults(this.id);
   },
-  get isOwner() {
+  isOwner() {
     return this.id === this.client.config.owners;
   },
   async checkIfVoted() {
@@ -32,7 +32,7 @@ const userExtensions = {
 };
 
 const guildExtensions = {
-  get settings() {
+  settings() {
     return this.client.settings.guilds.getDefaults(this.id);
   },
   update(obj) {
@@ -41,8 +41,8 @@ const guildExtensions = {
 };
 
 _defProp(User.prototype, {
-  settings: { get: function () { return userExtensions.settings.call(this); } },
-  isOwner: { get: function () { return userExtensions.isOwner; } },
+  settings: { get: userExtensions.settings },
+  isOwner: { get: userExtensions.isOwner },
   checkIfVoted: { value: userExtensions.checkIfVoted },
   getSchedule: { value: userExtensions.getSchedule },
   setSchedule: { value: userExtensions.setSchedule },
@@ -50,6 +50,6 @@ _defProp(User.prototype, {
 });
 
 _defProp(Guild.prototype, {
-  settings: { get: function () { return guildExtensions.settings.call(this); } },
+  settings: { get: guildExtensions.settings },
   update: { value: guildExtensions.update }
 });

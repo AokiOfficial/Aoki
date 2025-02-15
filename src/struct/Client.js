@@ -58,6 +58,7 @@ class AokiClient extends Client {
     this.util = new Utilities(this);
     this.poster = new DBL(this);
     this.schedule = new Schedule(this);
+    this.statsCache = new WeakMap();
     this.dev = dev;
     this.lastStats = null;
     this.db = null;
@@ -78,8 +79,9 @@ class AokiClient extends Client {
   async loadCommands() {
     const commands = [];
 
-    // static import in order to make esbuild work
-    const commandModules = await Promise.all([
+    // lazy load command modules only when loadCommands is invoked
+    // for esbuild to include these in the bundle, the import paths must be static
+    const loadCommandModules = async () => Promise.all([
       import('../cmd/anime.js'),
       import('../cmd/fun.js'),
       import('../cmd/my.js'),
@@ -87,6 +89,8 @@ class AokiClient extends Client {
       import('../cmd/utility.js'),
       import('../cmd/verify.js'),
     ]);
+    
+    const commandModules = await loadCommandModules();
 
     for (const commandModule of commandModules) {
       const command = commandModule.default;
@@ -110,11 +114,12 @@ class AokiClient extends Client {
    * @returns {Promise<void>}
    */
   async loadEvents() {
-    const eventModules = await Promise.all([
+    const loadEventModules = async () => Promise.all([
       import('../events/interactionCreate.js'),
       import('../events/messageCreate.js'),
       import('../events/ready.js'),
     ]);
+    const eventModules = await loadEventModules();
 
     for (const eventModule of eventModules) {
       const event = eventModule.default;

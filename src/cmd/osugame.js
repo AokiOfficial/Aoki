@@ -167,157 +167,102 @@ export default new class OsuGame extends Command {
     return i.editReply({ content: `Updated the timestamp channel to <#${channel.id}>.` });
   };
   // country-leaderboard
+  // this command is complex, some parts might be hard to debug
   async country_leaderboard(i, _, util) {
     const beatmapId = i.options.getInteger('beatmap_id');
     const countryCode = i.options.getString('country_code').toUpperCase();
     const mode = i.options.getString('mode');
     const sort_mode = i.options.getString("sort") || "lazer_score";
 
-    let sorting;
-    switch (sort_mode) {
-      case "performance": sorting = 0; break;
-      case "lazer_score": sorting = 1; break;
-      case "stable_score": sorting = 2; break;
-      case "combo": sorting = 3; break;
-      case "accuracy": sorting = 4; break;
-      default: sorting = 0;
+    const sortingMap = {
+      performance: 0,
+      lazer_score: 1,
+      stable_score: 2,
+      combo: 3,
+      accuracy: 4,
     };
+    const sorting = sortingMap[sort_mode] ?? 0;
 
-    // Validate inputs\
     if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
-    if (!countryCode || countryCode.length !== 2) {
-      return this.throw('Please provide a valid 2-letter country code.');
-    }
+    if (!countryCode || countryCode.length !== 2) return this.throw('Please provide a valid 2-letter country code.');
 
     try {
-      // Fetch the country rankings to get user IDs
-      const countryRankingsPage1 = await v2.ranking.list({
-        type: "performance",
-        country_code: countryCode,
-        mode: mode
-      });
-      const countryRankingsPage2 = await v2.ranking.list({
-        type: "performance",
-        country_code: countryCode,
-        mode: mode,
-        page: 2
-      });
-      const countryRankings = {
-        ranking: [...countryRankingsPage1.ranking, ...countryRankingsPage2.ranking]
-      };
+      // concurrently fetch the first 2 pages of country leaderboard
+      const [page1, page2] = await Promise.all([
+        v2.ranking.list({ type: "performance", country_code: countryCode, mode }),
+        v2.ranking.list({ type: "performance", country_code: countryCode, mode, page: 2 }),
+      ]);
+      const rankings = [...page1.ranking, ...page2.ranking];
+      if (!rankings.length) return this.throw(`No players found for country code ${countryCode}.`);
 
-      if (!countryRankings || !countryRankings.ranking || countryRankings.ranking.length === 0) {
-        return this.throw(`No players found for country code ${countryCode}.`);
-      }
-
-      // Get list of user IDs
-      const userIds = countryRankings.ranking.map(player => player.user.id);
-
-      // For each user, fetch their score on the specified beatmap
-      const userScoresPromises = userIds.map(userId =>
-        v2.scores.list({
-          type: "user_beatmap_all",
-          user_id: userId,
-          beatmap_id: beatmapId,
-          mode: mode,
-          include_fails: 0,
-          limit: 1,
-        }).catch(() => null)
-      );
-
-      // Wait for all promises to settle
-      const userScoresResults = await Promise.allSettled(userScoresPromises);
-
-      // Collect scores where users have played the beatmap
+      const userIds = rankings.map(player => player.user.id);
       const countryScores = [];
-      for (let i = 0; i < userScoresResults.length; i++) {
-        const result = userScoresResults[i];
-        if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
-          const score = result.value[0];
-          countryScores.push(score);
+      const chunkSize = 20;
+      // use chunks to process these data
+      for (let j = 0; j < userIds.length; j += chunkSize) {
+        const chunk = userIds.slice(j, j + chunkSize);
+        const results = await Promise.allSettled(chunk.map(userId =>
+          v2.scores.list({
+            type: "user_beatmap_all",
+            user_id: userId,
+            beatmap_id: beatmapId,
+            mode,
+            include_fails: 0,
+            limit: 1,
+          })
+        ));
+        for (const res of results) {
+          if (res.status === 'fulfilled' && res.value && res.value.length)
+            countryScores.push(res.value[0]);
         }
       }
+      
+      if (!countryScores.length) return this.throw(`No scores found for ${countryCode} on this beatmap.`);
 
-      if (countryScores.length === 0) {
-        return this.throw(`No scores found for ${countryCode} on this beatmap.`);
-      }
-
-      // Sort the scores
+      // sort by metric chosen by user
       countryScores.sort((a, b) => {
-        switch (sorting) {
-          case 0: return b.pp - a.pp;
-          case 1: return b.total_score - a.total_score;
-          case 2: return b.legacy_total_score - a.legacy_total_score;
-          case 3: return b.max_combo - a.max_combo;
-          case 4: return b.accuracy - a.accuracy;
-        }
+        const comparators = [
+          () => b.pp - a.pp,
+          () => b.total_score - a.total_score,
+          () => b.legacy_total_score - a.legacy_total_score,
+          () => b.max_combo - a.max_combo,
+          () => b.accuracy - a.accuracy,
+        ];
+        return comparators[sorting]();
       });
 
-      // Prepare pagination
       const scoresPerPage = 5;
       const totalPages = Math.ceil(countryScores.length / scoresPerPage);
-
-      // beatmap title
-      const beatmapDetails = await v2.beatmaps.details({
-        type: "difficulty",
-        id: beatmapId
-      });
+      const beatmapDetails = await v2.beatmaps.details({ type: "difficulty", id: beatmapId });
       const beatmapTitle = `${beatmapDetails.beatmapset.artist} - ${beatmapDetails.beatmapset.title} [${beatmapDetails.version}]`;
-
-      // make pagination
       const pages = new Pagination();
 
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        const start = pageIndex * scoresPerPage;
-        const end = start + scoresPerPage;
-        const pageScores = countryScores.slice(start, end);
-
-        const description = (await Promise.all(pageScores.map(async (score, index) => {
+        const pageScores = countryScores.slice(pageIndex * scoresPerPage, (pageIndex + 1) * scoresPerPage);
+        const scoreLines = await Promise.all(pageScores.map(async (score, idx) => {
           const user = await v1.user.details(score.user_id, { type: "id" });
           const rankEmote = util.rankEmotes[score.rank] || score.rank;
-          const statistics = score.statistics;
+          const stats = score.statistics;
           let statsString = '';
-
-          switch (mode) {
-            case 'osu':
-              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'taiko':
-              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'fruits':
-              statsString = `${statistics.great || "0"}/${statistics.large_tick_hit || "0"}/${statistics.small_tick_hit || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'mania':
-              statsString = `${statistics.perfect || "0"}/${statistics.great || "0"}/${statistics.good || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
-              break;
-          }
-
-          const displayed_score = sorting == 2 ? score.legacy_total_score : score.total_score;
-
+          if (mode === 'osu') statsString = `${stats.great || "0"}/${stats.ok || "0"}/${stats.meh || "0"}/${stats.miss || "0"}`;
+          if (mode === 'taiko') statsString = `${stats.great || "0"}/${stats.ok || "0"}/${stats.miss || "0"}`;
+          if (mode === 'fruits') statsString = `${stats.great || "0"}/${stats.large_tick_hit || "0"}/${stats.small_tick_hit || "0"}/${stats.miss || "0"}`;
+          if (mode === 'mania') statsString = `${stats.perfect || "0"}/${stats.great || "0"}/${stats.good || "0"}/${stats.ok || "0"}/${stats.meh || "0"}/${stats.miss || "0"}`;
+          const displayedScore = sorting === 2 ? score.legacy_total_score : score.total_score;
           return [
-            `**${start + index + 1}) ${user.name}**`,
+            `**${pageIndex * scoresPerPage + idx + 1}) ${user.name}**`,
             `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
-            `▸ ${displayed_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
-            `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
+            `▸ ${displayedScore.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
+            `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${util.formatDistance(new Date(score.ended_at), new Date())}||`
           ].join('\n');
-        }))).join('\n\n');
+        }));
 
-        const sortString = (() => {
-          switch (sorting) {
-            case 0: return "Performance";
-            case 1: return "ScoreV3 (lazer)";
-            case 2: return "ScoreV1 (stable)";
-            case 3: return "Combo";
-            case 4: return "Accuracy";
-          }
-        })();
-
+        const sortString = ["Performance", "ScoreV3 (lazer)", "ScoreV1 (stable)", "Combo", "Accuracy"][sorting];
         const embed = new EmbedBuilder()
-          .setTitle(`${beatmapTitle}`)
+          .setTitle(beatmapTitle)
           .setURL(`https://osu.ppy.sh/b/${beatmapId}`)
-          .setAuthor({ name: `Country leaderboard`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
-          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + description)
+          .setAuthor({ name: "Country leaderboard", iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
+          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + scoreLines.join('\n\n'))
           .setFooter({ text: `Sorted by ${sortString} | Page ${pageIndex + 1} of ${totalPages}` })
           .setTimestamp()
           .setImage(`https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/cover.jpg`)
@@ -326,33 +271,25 @@ export default new class OsuGame extends Command {
         pages.add(embed);
       }
 
-      // Send paginated message
       const content =
         "**Notes:** \n- Scores from inactive players will not be shown.\n- Only players in the top 100 of that country are fetched.";
       const msg = await i.editReply({ content, embeds: [pages.currentPage] });
+      if (pages.size === 1) return;
 
-      if (pages.size == 1) return;
-      // collector
-      const filter = (_, user) => user.id == i.member.user.id;
-      const collector = msg.createReactionCollector(filter);
-      let timeout = setTimeout(() => collector.stop(), 90000);
-
+      // Reaction-based pagination using a collector with navigator emojis
       const navigators = ['◀', '▶', '❌'];
-
-      for (let i = 0; i < navigators.length; i++) {
-        await msg.react(navigators[i]);
-      };
+      const filter = (_, user) => user.id === i.member.user.id;
+      const collector = msg.createReactionCollector(filter, { time: 90000 });
+      for (const nav of navigators) await msg.react(nav);
 
       collector.on('collect', async r => {
         switch (r.emoji.name) {
-          case navigators[0]: msg.edit({ content, embeds: [pages.previous()] }); break
-          case navigators[1]: msg.edit({ content, embeds: [pages.next()] }); break
-          case navigators[2]: collector.stop(); break
-        };
+          case '◀': msg.edit({ content, embeds: [pages.previous()] }); break;
+          case '▶': msg.edit({ content, embeds: [pages.next()] }); break;
+          case '❌': collector.stop(); break;
+        }
         await r.users.remove(i.member.user.id);
-        timeout.refresh();
       });
-
       collector.on('end', async () => await msg.reactions.removeAll());
     } catch (error) {
       console.error('Error fetching country leaderboard:', error);

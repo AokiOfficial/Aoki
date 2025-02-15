@@ -5,4 +5,3 @@ client.json
 package-lock.json
 dist/
 src/build.js
-assets/osu-token.json

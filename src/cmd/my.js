@@ -183,7 +183,14 @@ export default new class My extends Command {
       await i.editReply({ content: `Baka, you messed up.\n\`\`\`fix\n${error}\n\`\`\`` });
     }
   };
+  // we use weakmap here to cache the stats so we don't have to always recompute them
   async stats(i, _, util) {
+    const cacheEntry = i.client.statsCache.get(i.user);
+    const cacheTTL = 10 * 60 * 1000;
+    if (cacheEntry && (Date.now() - cacheEntry.timestamp < cacheTTL)) {
+      return await i.editReply({ embeds: [cacheEntry.embed] });
+    }
+
     const totalMem = os.totalmem();
     const freeMem = os.freemem();
     const usedMem = totalMem - freeMem;
@@ -220,7 +227,9 @@ export default new class My extends Command {
       .addFields([
         { name: 'System', value: techField, inline: true },
         { name: 'Client', value: botField, inline: true }
-      ])
+      ]);
+
+    i.client.statsCache.set(i.user, { embed, timestamp: Date.now() });
     await i.editReply({ embeds: [embed] });
   };
   // internal utilities
