@@ -63,11 +63,22 @@ const fun = new SlashCommandBuilder()
         { name: "Distracted Boyfriend", value: '112126428' },
         { name: "One Does Not Simply", value: '61579' },
         { name: "Ancient Aliens", value: '101470' },
-        { name: "Tuxedo Winnie The Pooh", value: '178591752' },
-        { name: "Leonardo Dicaprio Cheers", value: '5496396' },
-        { name: "Always Has Been", value: '252600902' },
+        { name: "Tuxedo Winnie The Pooh", value: '222403160' },
+        { name: "Leonardo Dicaprio Cheers", value: '217743513' },
+        { name: "Always Has Been", value: '155121' },
         { name: "Doge", value: '8072285' },
-        { name: "Third World Skeptical Kid", value: '101288' }
+        { name: "Third World Skeptical Kid", value: '101288' },
+        { name: "Y U NO", value: '61585' },
+        { name: "Success Kid", value: '61544' },
+        { name: "Grumpy Cat", value: '405658' },
+        { name: "Expanding Brain", value: '93895088' },
+        { name: "Is This a Pigeon?", value: '100947' },
+        { name: "Roll Safe", value: '89370399' },
+        { name: "Surprised Pikachu", value: '155067736' },
+        { name: "Mocking SpongeBob", value: '102156234' },
+        { name: "Batman Slapping Robin", value: '438680' },
+        { name: "Bernie I Am Once Again Asking", value: '91545188' },
+        { name: "Facepalm", value: '61527' }
       ])
       .setRequired(true)
     )

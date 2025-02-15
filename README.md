@@ -20,7 +20,6 @@ You want to know more right now? Head to the [info file](/INFO.md), or [invite h
 
 To host the project with traditional Node.js, read below.
 
----
 ## Tech stacks
 Aoki is written in **JavaScript**. There are no plans to rewrite it into another language. Community rewrites are welcome, but they are **not official**.
 
@@ -38,10 +37,60 @@ If for some reason you cannot use Node.js v22+ and Bun but a lower version of No
 
 Check the [roadmap](https://github.com/AokiOfficial/Aoki/issues/6) for future planned implementations.
 
----
+## Local development setup
+Make sure you have Bun v1.2+ on your local machine. [Install it here](https://bun.sh).
+
+Place all the necessary keys required by first renaming the `.env.example` file to `.env`, and then fill it. **It is recommended that you use only the DEV variant of the keys.**
+
+Install all dependencies by doing
+```bash
+bun i
+```
+If everything goes well, start the application by doing
+```bash
+npm run dev
+```
+For Node.js users, or if you prefer to have this running on Node.js, first make sure you [install it here](https://nodejs.org/en). Select Node 20+ to skip `dotenv` installation.
+
+Install all dependencies by doing
+```bash
+npm i
+```
+Start the application by doing
+```bash
+node src/main
+```
+
+## Project structure
+The file tree is fairly simple in construction.
+```bash
+aoki
+├── ...
+├── README.md
+├── LICENSE
+├── package.json
+├── .env.example   # example secret keys file
+├── src            # project source code
+│   ├── ...
+│   ├── assets     # static JS files
+│   │   ├── const       # files rarely update
+│   │   └── util        # utilities & direct library port
+│   ├── struct     # code structure files
+│   │   └── handlers    # extenders for Discord.js
+│   ├── events     # Discord.js events
+│   └── cmd        # main commands files
+└── 
+```
+
 ## Code License & Contribution
 [GPL-3.0](/LICENSE).
 
 This is a learning project pushed to production, use any code that makes sense to you, but don't fully copy the entire thing.
 
 To contribute, simply make a fork of this repository, make your changes, then make a pull request. There is a template ready for a standard PR.
+
+To work with the codebase, make sure:
+- You adhere to ESM conventions, as Aoki does not support CommonJS.
+- You document the code wherever relevant; i.e. stuff that will be hard to look at without it, if you're making a PR.
+- Keep the overall structure intact and consistent. Sync with other files if there is already one (or some) of the same format.
+- You stay sane and happy.
