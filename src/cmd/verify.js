@@ -37,7 +37,7 @@ export default new class VerifyCommand extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
@@ -282,10 +282,5 @@ export default new class VerifyCommand extends Command {
     });
 
     await i.reply({ content: 'Verification message saved and posted in the selected channel.\n\nPlease **DO NOT** delete the verification message. You\'ll have to set it up again.', ephemeral: true });
-  }
-  // internal utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
   };
 }

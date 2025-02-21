@@ -42,7 +42,7 @@ export default new class OsuGame extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
@@ -53,9 +53,9 @@ export default new class OsuGame extends Command {
     // handle exceptions
     const settings = i.user.settings;
     if (!settings) await i.user.update({ inGameName: "", defaultMode: "osu" });
-    if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
+    if (!this.usernameRegex.test(user)) return this.throw(i, "Baka, the username is invalid.");
     const profile = await this.findUserByUsername(user, mode);
-    if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
+    if (!profile?.username) return this.throw(i, "Baka, that user doesn't exist.");
     // utilities
     const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
     const reply = `${util.random(replies)} Your current username is \`${profile.username}\`, and your current mode is \`${mode}\`.`;
@@ -65,7 +65,7 @@ export default new class OsuGame extends Command {
       settings?.inGameName == profile.username && /* ign is the same */
       settings?.defaultMode == mode /* mode is the same */
     ) {
-      return this.throw(`${reply}\n\nThat's the same thing you did before, though.`);
+      return this.throw(i, `${reply}\n\nThat's the same thing you did before, though.`);
     };
     // save to database
     await i.user.update({ inGameName: profile.username, defaultMode: mode });
@@ -78,10 +78,10 @@ export default new class OsuGame extends Command {
     const mode = i.options.getString("mode") || settings?.defaultMode;
 
     // handle exceptions
-    if (!user || !mode) return this.throw("You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
-    if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
+    if (!user || !mode) return this.throw(i, "You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
+    if (!this.usernameRegex.test(user)) return this.throw(i, "Baka, the username is invalid.");
     let profile = await this.findUserByUsername(user, mode);
-    if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
+    if (!profile?.username) return this.throw(i, "Baka, that user doesn't exist.");
 
     // utilities
     profile = {
@@ -154,14 +154,14 @@ export default new class OsuGame extends Command {
   async set_timestamp_channel(i) {
     const channel = i.options.getChannel("channel");
     // check if channel is of text type
-    if (channel.type != 0) return this.throw("Baka, this feature can only be toggled in text channels.");
+    if (channel.type != 0) return this.throw(i, "Baka, this feature can only be toggled in text channels.");
     // TODO: make shorthand function for permissions
     // check if the member who executed this was an admin // mod
-    if (!channel.permissionsFor(i.guild.members.cache.get(i.user.id)).has(PermissionsBitField.Flags.ManageChannels)) return this.throw("Baka, you don't have the **Manage Channels** permission. You can't edit this settings.");
+    if (!channel.permissionsFor(i.guild.members.cache.get(i.user.id)).has(PermissionsBitField.Flags.ManageChannels)) return this.throw(i, "Baka, you don't have the **Manage Channels** permission. You can't edit this settings.");
     // check if we have permission to see the channel
-    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.ViewChannel)) return this.throw("Baka, I can't see that channel. Enable **View Channel** in permissions view, please.");
+    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.ViewChannel)) return this.throw(i, "Baka, I can't see that channel. Enable **View Channel** in permissions view, please.");
     // check if we have permissions to send messages in there
-    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.SendMessages)) return this.throw("Baka, I can't send messages in there. Enable **Send Messages** in permissions view, please.");
+    if (!channel.permissionsFor(i.guild.members.me).has(PermissionsBitField.Flags.SendMessages)) return this.throw(i, "Baka, I can't send messages in there. Enable **Send Messages** in permissions view, please.");
     // save the channel
     await i.guild.update({ timestampChannel: channel.id });
     return i.editReply({ content: `Updated the timestamp channel to <#${channel.id}>.` });
@@ -183,8 +183,8 @@ export default new class OsuGame extends Command {
     };
     const sorting = sortingMap[sort_mode] ?? 0;
 
-    if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
-    if (!countryCode || countryCode.length !== 2) return this.throw('Please provide a valid 2-letter country code.');
+    if (!beatmapId) return this.throw(i, 'Please provide a valid beatmap ID.');
+    if (!countryCode || countryCode.length !== 2) return this.throw(i, 'Please provide a valid 2-letter country code.');
 
     try {
       // concurrently fetch the first 2 pages of country leaderboard
@@ -193,7 +193,7 @@ export default new class OsuGame extends Command {
         this.fetchRankingList({ type: "performance", country_code: countryCode, mode, page: 2 }),
       ]);
       const rankings = [...page1.ranking, ...page2.ranking];
-      if (!rankings.length) return this.throw(`No players found for country code ${countryCode}.`);
+      if (!rankings.length) return this.throw(i, `No players found for country code ${countryCode}.`);
 
       const userIds = rankings.map(player => player.user.id);
       const countryScores = [];
@@ -217,7 +217,7 @@ export default new class OsuGame extends Command {
         }
       }
       
-      if (!countryScores.length) return this.throw(`No scores found for ${countryCode} on this beatmap.`);
+      if (!countryScores.length) return this.throw(i, `No scores found for ${countryCode} on this beatmap.`);
 
       // sort by metric chosen by user
       countryScores.sort((a, b) => {
@@ -293,7 +293,7 @@ export default new class OsuGame extends Command {
       collector.on('end', async () => await msg.reactions.removeAll());
     } catch (error) {
       console.error('Error fetching country leaderboard:', error);
-      this.throw('An error occurred while fetching the country leaderboard. Please try again later.');
+      this.throw(i, 'An error occurred while fetching the country leaderboard. Please try again later.');
     }
   }
   // beatmap search utility
@@ -325,7 +325,7 @@ export default new class OsuGame extends Command {
       });
 
       if (beatmapsets.length === 0) {
-        return this.throw("No beatmaps found matching your criteria.");
+        return this.throw(i, "No beatmaps found matching your criteria.");
       }
       // nsfw stuff
       const beatmapsFiltered = beatmapsets.filter(beatmap => {
@@ -406,14 +406,10 @@ export default new class OsuGame extends Command {
 
     } catch (error) {
       console.error("Error fetching beatmap:", error);
-      return this.throw("An error occurred while searching for beatmaps. Please try again later.");
+      return this.throw(i, "An error occurred while searching for beatmaps. Please try again later.");
     }
   };
   // utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
-  };
   async findUserByUsername(username, mode) {
     return (await fetch([
       `${this.api_v1}/get_user?`,

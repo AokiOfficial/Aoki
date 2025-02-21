@@ -29,7 +29,7 @@ export default new class Utility extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
@@ -61,7 +61,7 @@ export default new class Utility extends Command {
     const user = i.options.getUser("user") || i.user;
     // force fetch user
     const { banner } = await user.fetch();
-    if (!banner) return this.throw("Baka, this user has no banner.");
+    if (!banner) return this.throw(i, "Baka, this user has no banner.");
     // handle different sizes
     const bannerURL = (s) => user.bannerURL({
       extension: "png",
@@ -163,7 +163,7 @@ export default new class Utility extends Command {
     const user = i.options.getString("user");
     const repo = i.options.getString("repo");
     const res = await fetch(`https://api.github.com/repos/${user}/${repo}`, { headers: this.headers }).then(res => res.json());
-    if (!res?.id) return this.throw("Baka, that repo doesn't exist.");
+    if (!res?.id) return this.throw(i, "Baka, that repo doesn't exist.");
     // utilities
     const formatBytes = (bytes) => {
       if (bytes == 0) return '0B';
@@ -200,7 +200,7 @@ export default new class Utility extends Command {
   async npm(i, query, util) {
     const raw = await fetch(`https://registry.npmjs.org/-/v1/search?text=${query}&size=1`, { headers: this.headers }).then(res => res.json());
     const res = raw.objects?.[0]?.package;
-    if (!res) return this.throw("Baka, that's an invalid repository. Or did you make a typo?");
+    if (!res) return this.throw(i, "Baka, that's an invalid repository. Or did you make a typo?");
     // utilities
     const score = raw.objects[0].score;
     const maintainers = res.maintainers.map(maintainer => `\`${maintainer.username}\``).join(', ');
@@ -228,9 +228,9 @@ export default new class Utility extends Command {
   // urban command
   async urban(i, query, util) {
     // handle user query
-    if (util.isProfane(query) && !i.channel.nsfw) return this.throw("Your query has some profanity in there.\n\nEither get into a NSFW channel, or change your query.");
+    if (await util.isProfane(query) && !i.channel.nsfw) return this.throw(i, "Your query has some profanity in there.\n\nEither get into a NSFW channel, or change your query.");
     const res = await fetch(`https://api.urbandictionary.com/v0/define?term=${query}`, { headers: this.headers }).then(res => res.json());
-    if (!res?.list?.length) return this.throw("Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means.")
+    if (!res?.list?.length) return this.throw(i, "Hmph, seems like there's no definition for that. Even on Urban Dictionary.\n\nYou know what that means.")
     const definition = res.list[0];
     // utilities
     const nsfw = i.channel.nsfw;
@@ -256,9 +256,9 @@ export default new class Utility extends Command {
   async screenshot(i, query, util) {
     // handle user query
     const url = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/g;
-    if (!query.match(url)) return this.throw("Baka, that's not a valid URL.\n\nMake sure it starts with either `https://` or `http://`.");
+    if (!query.match(url)) return this.throw(i, "Baka, that's not a valid URL.\n\nMake sure it starts with either `https://` or `http://`.");
     const nsfwPages = await util.getStatic("nsfw");
-    if (nsfwPages.domains.includes(query) && !i.channel.nsfw) return this.throw("That's a NSFW page, you moron!");
+    if (nsfwPages.domains.includes(query) && !i.channel.nsfw) return this.throw(i, "That's a NSFW page, you moron!");
     // take screenshot
     try {
       const url = [
@@ -278,15 +278,15 @@ export default new class Utility extends Command {
       const embed = this.embed.setImage("attachment://image.png");
       await i.editReply({ embeds: [embed], files: [image] });
     } catch {
-      return this.throw("Something's wrong with that URL.\n\nCheck if you made a typo.");
+      return this.throw(i, "Something's wrong with that URL.\n\nCheck if you made a typo.");
     };
   };
   // wiki command
   async wiki(i, query, util) {
     // handle exceptions
-    if (util.isProfane(query) && !i.channel.nsfw) return this.throw("Your query has something to do with profanity, baka.\n\nEither move to a NSFW channel, or change the query.");
+    if (await util.isProfane(query) && !i.channel.nsfw) return this.throw(i, "Your query has something to do with profanity, baka.\n\nEither move to a NSFW channel, or change the query.");
     const res = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${query}`).then(async res => await res.json());
-    if (!res?.title) return this.throw("Can't find that. Check your query.");
+    if (!res?.title) return this.throw(i, "Can't find that. Check your query.");
     // utilities
     const timestamp = new Date(res.timestamp);
     const thumbnail = "https://upload.wikimedia.org/wikipedia/en/thumb/8/80/Wikipedia-logo-v2.svg/1122px-Wikipedia-logo-v2.svg.png";
@@ -304,10 +304,6 @@ export default new class Utility extends Command {
     await i.editReply({ embeds: [embed] });
   };
   // internal utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
-  };
   get embed() {
     return new EmbedBuilder()
       .setColor(10800862)

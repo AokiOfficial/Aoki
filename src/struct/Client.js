@@ -72,79 +72,73 @@ class AokiClient extends Client {
     this.once("ready", this.onReady.bind(this));
     this.util.warn("Logging in...", "[Warn]");
   };
+  // generic loader
+  async loadModules(paths) {
+    return Promise.all(paths.map(path => import(path)));
+  };
   /**
    * Load commands
    * @returns {Promise<void>}
    */
   async loadCommands() {
+    const commandPaths = [
+      '../cmd/anime.js',
+      '../cmd/fun.js',
+      '../cmd/my.js',
+      '../cmd/osugame.js',
+      '../cmd/utility.js',
+      '../cmd/verify.js'
+    ];
+    const modules = await this.loadModules(commandPaths);
     const commands = [];
 
-    // lazy load command modules only when loadCommands is invoked
-    // for esbuild to include these in the bundle, the import paths must be static
-    const loadCommandModules = async () => Promise.all([
-      import('../cmd/anime.js'),
-      import('../cmd/fun.js'),
-      import('../cmd/my.js'),
-      import('../cmd/osugame.js'),
-      import('../cmd/utility.js'),
-      import('../cmd/verify.js'),
-    ]);
-    
-    const commandModules = await loadCommandModules();
-
-    for (const commandModule of commandModules) {
-      const command = commandModule.default;
+    modules.forEach(module => {
+      const command = module.default;
       this.commands.set(command.data.name, command);
       commands.push(command.data.toJSON());
-    }
+    });
 
     const rest = new REST({ version: '10' }).setToken(this.dev ? process.env.TOKEN_DEV : process.env.TOKEN);
-
-    if (this.dev) {
-      rest.put(Routes.applicationGuildCommands(process.env.APPID_DEV, process.env.GUILD), { body: commands })
-        .catch(console.error);
-    } else {
-      rest.put(Routes.applicationCommands(process.env.APPID), { body: commands })
-        .catch(console.error);
-    }
-  }
-
+    const route = this.dev
+      ? Routes.applicationGuildCommands(process.env.APPID_DEV, process.env.GUILD)
+      : Routes.applicationCommands(process.env.APPID);
+      
+    rest.put(route, { body: commands }).catch(console.error);
+  };
   /**
    * Load events
    * @returns {Promise<void>}
    */
   async loadEvents() {
-    const loadEventModules = async () => Promise.all([
-      import('../events/interactionCreate.js'),
-      import('../events/messageCreate.js'),
-      import('../events/ready.js'),
-    ]);
-    const eventModules = await loadEventModules();
+    const eventPaths = [
+      '../events/interactionCreate.js',
+      '../events/messageCreate.js',
+      '../events/ready.js'
+    ];
+    const modules = await this.loadModules(eventPaths);
 
-    for (const eventModule of eventModules) {
-      const event = eventModule.default;
+    modules.forEach(mod => {
+      const event = mod.default;
       this.events.set(event.name, event);
-
       if (event.once) {
         this.once(event.name, (...args) => event.execute(this, ...args));
       } else {
         this.on(event.name, (...args) => event.execute(this, ...args));
       }
-    }
-  }
+    });
+  };
   /**
    * Listen to internal exception throws
    * @param {Array} events Exception names
    * @param {Object} config To ignore exceptions or not
    */
   listenToProcess(events = [], config = {}) {
-    for (const event of events) {
+    events.forEach(event =>
       process.on(event, (...args) => {
-        if (config.ignore && typeof config.ignore === "boolean") return;
-        else return processEvents(event, args, this);
-      });
-    }
-  };
+        if (!config.ignore) processEvents(event, args, this);
+      })
+    );
+  }
   /**
    * Set ready status after emitting event
    * @returns {Promise<void>}
@@ -160,7 +154,7 @@ class AokiClient extends Client {
   async init() {
     this.listenToProcess(['unhandledRejection', 'uncaughtException'], { ignore: false });
     await this.loadCommands();
-    this.loadEvents();
+    await this.loadEvents();
 
     const url = process.env.MONGO_KEY;
     this.dbClient = await MongoClient.connect(url, {

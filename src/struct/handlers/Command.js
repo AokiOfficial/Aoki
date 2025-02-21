@@ -1,4 +1,4 @@
-import { EmbedBuilder, PermissionFlagsBits } from 'discord.js';
+import { PermissionFlagsBits } from 'discord.js';
 
 class Command {
   constructor(options) {
@@ -54,10 +54,15 @@ class Command {
   async execute(i) {
     throw new Error('Execute method not implemented');
   }
-  // Preset embed
-  get embed() {
-    return new EmbedBuilder().setColor(10800862).setTimestamp();
-  }
+  /**
+   * Throw an error message to the user
+   * @param {String} content The content to send
+   * @returns `Promise` The rejected promise
+   */
+  async throw(i, content) {
+    await i.editReply({ content, ephemeral: true });
+    return Promise.reject();
+  };
 }
 
 export default Command;

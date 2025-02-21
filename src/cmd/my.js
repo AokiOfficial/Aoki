@@ -26,7 +26,7 @@ export default new class My extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
@@ -46,12 +46,12 @@ export default new class My extends Command {
   async rights(i) {
     const query = i.options.getString("to");
     const value = i.options.getBoolean("should_be");
-    if (i.user.settings[query] == value) return this.throw(`Baka, that's your current settings.`);
+    if (i.user.settings[query] == value) return this.throw(i, `Baka, that's your current settings.`);
     const res = await i.user.update({ [query]: value });
     if (res[query] == value) {
       await i.editReply({ content: `Updated your **${query}** settings to **${value}**.` });
     } else {
-      return this.throw("The database might be having problems. Try executing this again.");
+      return this.throw(i, "The database might be having problems. Try executing this again.");
     };
   };
   // vote command
@@ -94,7 +94,7 @@ export default new class My extends Command {
   async fault(i, query, util) {
     const attachment = i.options.getAttachment("attachment");
     // handle exceptions
-    if (!query && !attachment) return this.throw("Baka, I can't send nothing. At least give me an error message, an image, or something!");
+    if (!query && !attachment) return this.throw(i, "Baka, I can't send nothing. At least give me an error message, an image, or something!");
     // preset embed
     const preset = this.embed
       .setTitle(`New issue!`)
@@ -145,7 +145,7 @@ export default new class My extends Command {
       };
     } else if (attachment) {
       if (!isImageAttachment(attachment)) {
-        return await this.throw("Appreciate your attachment, but for now we only support images.");
+        return await this.throw(i, "Appreciate your attachment, but for now we only support images.");
       };
       preset.setImage(attachment.url);
       await sendFeedback(i, preset);
@@ -154,7 +154,7 @@ export default new class My extends Command {
   // eval
   async eval(i, query, util) {
     if (!util.owners.includes(i.user.id)) {
-      return await this.throw('Baka, you can\'t do that. This command is for my sensei.');
+      return await this.throw(i, 'Baka, you can\'t do that. This command is for my sensei.');
     };
     try {
       const evaled = (0, eval)(query);
@@ -231,10 +231,5 @@ export default new class My extends Command {
 
     i.client.statsCache.set(i.user, { embed, timestamp: Date.now() });
     await i.editReply({ embeds: [embed] });
-  };
-  // internal utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
   };
 };

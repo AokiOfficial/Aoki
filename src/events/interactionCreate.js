@@ -41,10 +41,6 @@ class InteractionCreateEvent extends Event {
       if (command.cooldown) command.setCooldown(i.user.id);
     } catch (error) {
       console.error(error);
-      await i.reply({ 
-        content: `Oh, something happened. Give my sensei a yell by doing \`/my fault\`:\n\n\`\`\`fix\n${error}\n\`\`\``, 
-        ephemeral: true 
-      }).catch(() => {});
     }
   }
 }

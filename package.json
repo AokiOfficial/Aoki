@@ -1,6 +1,6 @@
 {
   "name": "aoki-next",
-  "version": "4.1.0",
+  "version": "4.2.0",
   "description": "aoki, but working with discord gateway",
   "main": "src/main.js",
   "scripts": {

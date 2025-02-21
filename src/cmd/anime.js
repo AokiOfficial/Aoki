@@ -35,7 +35,7 @@ export default new class Anime extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
@@ -56,7 +56,7 @@ export default new class Anime extends Command {
     // processing api response
     const type = i.options.getString("type");
     const res = (await this.fetch(`${this.jikan_v4}/random/${type}`)).data;
-    if (!res) return this.throw(this.ErrorMessages.default);
+    if (!res) return this.throw(i, this.ErrorMessages.default);
     const stats = {
       "Main Genre": res.genres?.[0]?.name || "No data",
       ...(type === "anime") ? 
@@ -106,21 +106,21 @@ export default new class Anime extends Command {
   async profile(i, query, util) {
     // processing user query
     const platform = i.options.getString("platform");
-    if (util.isProfane(query)) this.throw("Stop sneaking in bad content please, you baka.");
+    if (await util.isProfane(query)) this.throw(i, "Stop sneaking in bad content please, you baka.");
     const fetchData = {
       al: async () => await util.anilist(User, { search: query }),
       mal: async () => (await this.fetch(`${this.jikan_v4}/users/${query}/full`)).data
     };
     const res = await fetchData[platform]();
     // handling errors
-    if (!res) return this.throw(this.ErrorMessages[400]);
+    if (!res) return this.throw(i, this.ErrorMessages[400]);
     else if (res?.errors) {
       const errorCodes = res.errors;
       if (errorCodes.some(code => code.status >= 500)) {
-        return this.throw(this.ErrorMessages[500]);
+        return this.throw(i, this.ErrorMessages[500]);
       } else if (errorCodes.some(code => code.status >= 400)) {
-        return this.throw(this.ErrorMessages[400]);
-      } else return this.throw(this.ErrorMessages.default);
+        return this.throw(i, this.ErrorMessages[400]);
+      } else return this.throw(i, this.ErrorMessages.default);
     };
     // generate a preset embed
     const presetEmbed = this.embed.setFooter({ text: `Requested by ${i.user.username}`, iconURL: i.user.displayAvatarURL() });
@@ -192,14 +192,14 @@ export default new class Anime extends Command {
   async airing(i, query, util) {
     const res = await fetch(`https://api.jikan.moe/v4/schedules?filter=${query}${i.channel.nsfw ? "" : "&sfw=true"}`).then(async res => await res.json());
     // handle error
-    if (!res) return this.throw(this.ErrorMessages[400]);
+    if (!res) return this.throw(i, this.ErrorMessages[400]);
     else if (res?.status) {
       const errorCodes = res.status;
       if (errorCodes.some(code => code.status >= 500)) {
-        return this.throw(this.ErrorMessages[500]);
+        return this.throw(i, this.ErrorMessages[500]);
       } else if (errorCodes.some(code => code.status >= 400)) {
-        return this.throw(this.ErrorMessages[400]);
-      } else return this.throw(this.ErrorMessages.default);
+        return this.throw(i, this.ErrorMessages[400]);
+      } else return this.throw(i, this.ErrorMessages.default);
     };
     // helpers
     const elapsed = Date.now() - i.createdTimestamp;
@@ -265,7 +265,7 @@ export default new class Anime extends Command {
   async search(i, query, util) {
     // processing user query
     const type = i.options.getString("type");
-    if (util.isProfane(query)) return this.throw("Stop sneaking in bad content please, you baka.");
+    if (await util.isProfane(query)) return this.throw(i, "Stop sneaking in bad content please, you baka.");
     const kitsuURL = function(type) {
       return `https://kitsu.io/api/edge/${type}?filter[text]=${query}&page[offset]=0&page[limit]=1`;
     };
@@ -281,7 +281,7 @@ export default new class Anime extends Command {
       !res || /* universal */
       ((type == "anime" || type == "manga") && !res.data?.[0]) /* kitsu.io response */
     ) {
-      return this.throw(this.ErrorMessages[400]);
+      return this.throw(i, this.ErrorMessages[400]);
     };
     // processing api response
     const processData = {
@@ -297,7 +297,7 @@ export default new class Anime extends Command {
       (data.ageRatingGuide.includes("Nudity") && data.ageRatingGuide.includes("Mature")) && /* ageRatingGuide has NSFW */
       !i.channel.nsfw /* channel is not NSFW */
     ) {
-      return this.throw("The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Get in a NSFW channel, please.");
+      return this.throw(i, "The content given to me by Kitsu.io has something to do with NSFW, and I can't show that in this channel, sorry. Get in a NSFW channel, please.");
     };
     // handling by type
     if (type == "anime" || type == "manga") {
@@ -383,21 +383,21 @@ export default new class Anime extends Command {
     // get user sschedules
     const schedule = await i.user.getSchedule();
     // handle exceptions
-    if (!schedule) return this.throw("Baka, you have no anime subscription.");
+    if (!schedule) return this.throw(i, "Baka, you have no anime subscription.");
     // get watching data
     const res = (await util.anilist(Watching, { 
       watched: [schedule.anilistId], 
       page: 0 
     })).data.Page.media[0];
     // handle errors
-    if (!res) return this.throw(this.ErrorMessages[400]);
+    if (!res) return this.throw(i, this.ErrorMessages[400]);
     else if (res?.errors) {
       const errorCodes = res.errors;
       if (errorCodes.some(code => code.status >= 500)) {
-        return this.throw(this.ErrorMessages[500]);
+        return this.throw(i, this.ErrorMessages[500]);
       } else if (errorCodes.some(code => code.status >= 400)) {
-        return this.throw(this.ErrorMessages[400]);
-      } else return this.throw(this.ErrorMessages.default);
+        return this.throw(i, this.ErrorMessages[400]);
+      } else return this.throw(i, this.ErrorMessages.default);
     };
     // handle api response
     const title = `[${res.title.romaji}](${res.siteUrl})`;
@@ -411,25 +411,25 @@ export default new class Anime extends Command {
     // get user schedule
     const schedule = await i.user.getSchedule();
     // handle exceptions
-    if (schedule?.anilistId) return this.throw("Baka, you can only have **one schedule** running at a time.");
+    if (schedule?.anilistId) return this.throw(i, "Baka, you can only have **one schedule** running at a time.");
     // handle user query
     const anilistId = await util.getMediaId(query);
-    if (!anilistId) return this.throw(this.ErrorMessages[400]);
+    if (!anilistId) return this.throw(i, this.ErrorMessages[400]);
     const media = (await util.anilist(Watching, { 
       watched: [anilistId],
       page: 0
     })).data.Page.media[0];
     // handle errors
-    if (!media) return this.throw(this.ErrorMessages[400]);
+    if (!media) return this.throw(i, this.ErrorMessages[400]);
     else if (media?.errors) {
       const errorCodes = media.errors;
       if (errorCodes.some(code => code.status >= 500)) {
-        return this.throw(this.ErrorMessages[500]);
+        return this.throw(i, this.ErrorMessages[500]);
       } else if (errorCodes.some(code => code.status >= 400)) {
-        return this.throw(this.ErrorMessages[400]);
-      } else return this.throw(this.ErrorMessages.default);
+        return this.throw(i, this.ErrorMessages[400]);
+      } else return this.throw(i, this.ErrorMessages.default);
     };
-    if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return this.throw("Baka, that's not airing. It's not an upcoming one, too. Maybe even finished.");
+    if (!["NOT_YET_RELEASED", "RELEASING"].includes(media.status)) return this.throw(i, "Baka, that's not airing. It's not an upcoming one, too. Maybe even finished.");
     // update database
     await i.user.setSchedule({ anilistId: media.id, nextEp: media.nextAiringEpisode.episode });
     // send result
@@ -442,21 +442,21 @@ export default new class Anime extends Command {
     // get user schedule
     const schedule = await i.user.getSchedule();
     // handle exceptions
-    if (!schedule?.anilistId) return this.throw("Baka, you have no anime subscription.");
+    if (!schedule?.anilistId) return this.throw(i, "Baka, you have no anime subscription.");
     // handle user query
     const res = (await util.anilist(Watching, { 
       watched: [schedule.anilistId],
       page: 0
     })).data.Page.media[0];
     // handle errors
-    if (!res) return this.throw(this.ErrorMessages[400]);
+    if (!res) return this.throw(i, this.ErrorMessages[400]);
     else if (res?.errors) {
       const errorCodes = res.errors;
       if (errorCodes.some(code => code.status >= 500)) {
-        return this.throw(this.ErrorMessages[500]);
+        return this.throw(i, this.ErrorMessages[500]);
       } else if (errorCodes.some(code => code.status >= 400)) {
-        return this.throw(this.ErrorMessages[400]);
-      } else return this.throw(this.ErrorMessages.default);
+        return this.throw(i, this.ErrorMessages[400]);
+      } else return this.throw(i, this.ErrorMessages.default);
     };
     // update database
     await i.user.setSchedule({ anilistId: 0, nextEp: 0 });
@@ -464,10 +464,6 @@ export default new class Anime extends Command {
     return await i.editReply({ content: `Stopped tracking airing episodes for **${res.title.romaji}**.` });
   };
   // internal utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
-  };
   async fetch(url) {
     return await fetch(url).then(async res => await res.json());
   };

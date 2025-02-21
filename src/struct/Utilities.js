@@ -170,20 +170,11 @@ export default class Utilities {
    * @param {String} connector Value connector like that of `array.join()`
    * @returns {String}
    */
+  // this might be hard to read, but all in all it's just a reduce function
   joinArrayAndLimit(array = [], limit = 1000, connector = '\n') {
-    // Initialize a reusable buffer and counter.
-    let text = '';
-    let excess = 0;
-    for (let i = 0; i < array.length; i++) {
-      const str = String(array[i]);
-      // Check if adding this string would exceed the limit
-      if ((text.length + (i > 0 ? connector.length : 0) + str.length) > limit) {
-        excess++;
-      } else {
-        text += (i > 0 && text.length > 0 ? connector : '') + str;
-      }
-    }
-    return { text, excess };
+    return array.reduce((a, c) => a.text.length + (a.text.length ? connector : '') + String(c).length > limit 
+      ? { text: a.text, excess: a.excess + 1 } 
+      : { text: a.text + (a.text.length ? connector : '') + String(c), excess: a.excess }, { text: '', excess: 0 });
   };
   /**
    * Returns the ordinalized format of a number, e.g. `1st`, `2nd`, etc.
@@ -289,6 +280,8 @@ export default class Utilities {
    * @param {Number} cwidth The width between key and value
    * @returns {String}
    */
+  // this might be hard to read
+  // to understand what this is doing, use it
   keyValueField(obj, cwidth = 24) {
     return '```fix\n' + Object.entries(obj).map(([key, value]) => {
       const name = key.split('_').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');

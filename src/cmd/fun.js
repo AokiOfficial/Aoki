@@ -24,13 +24,13 @@ export default new class Fun extends Command {
       if (err instanceof Error) {
         console.log(err);
         const error = `\`\`\`fix\nCommand "${sub}" returned "${err}"\n\`\`\``; /* discord code block formatting */
-        return this.throw(`Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
+        return this.throw(i, `Oh no, something happened internally. Please report this using \`/my fault\`, including the following:\n\n${error}`);
       }
     };
   };
   // 8ball command
   async "8ball"(i, query, util) {
-    if (util.isProfane(query)) return this.throw("Fix your query, please. At least give me some respect!");
+    if (await util.isProfane(query)) return this.throw(i, "Fix your query, please. At least give me some respect!");
     const eightball = await util.getStatic("8ball");
     return await i.editReply({ content: util.random(eightball) });
   };
@@ -63,8 +63,8 @@ export default new class Fun extends Command {
     const first = i.options.getUser("first");
     const second = i.options.getUser("second");
     // handle exceptions
-    if (first.id == util.id || second.id == util.id) return this.throw("Ew, I'm not a fan of shipping. Choose someone else!");
-    if (first.id == second.id) return this.throw("Pfft. No one does that, baka.");
+    if (first.id == util.id || second.id == util.id) return this.throw(i, "Ew, I'm not a fan of shipping. Choose someone else!");
+    if (first.id == second.id) return this.throw(i, "Pfft. No one does that, baka.");
     // utilities
     const luckyWheelRate = util.probability(5);
     const rollProbability = util.probability(40);
@@ -134,10 +134,6 @@ export default new class Fun extends Command {
     await i.editReply({ content: res.owo });
   };
   // internal utilities
-  async throw(content) {
-    await this.i.editReply({ content });
-    return Promise.reject();
-  };
   /**
    * Fetches an API, then sends a reply from the API data
    * @param {Object} i The command context
