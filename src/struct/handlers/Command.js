@@ -63,6 +63,10 @@ class Command {
     await i.editReply({ content, ephemeral: true });
     return Promise.reject();
   };
+  // Preset embed
+  get embed() {
+    return new EmbedBuilder().setColor(10800862).setTimestamp();
+  }
 }
 
 export default Command;
