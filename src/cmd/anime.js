@@ -4,7 +4,6 @@ import { EmbedBuilder } from 'discord.js';
 import { convert as toMarkdown } from "../assets/util/html2md.js";
 import { Watching, User, Seiyuu, Character } from "../assets/const/graphql.js";
 import { anime } from "../assets/const/import.js";
-import he from "../assets/util/he.js";
 
 export default new class Anime extends Command {
   constructor() {
@@ -178,7 +177,7 @@ export default new class Anime extends Command {
         }).join('|') || 'None Listed';
         return `\n**Top 1 ${query}:** ` + firstTarget.split("|")[0];
       });
-      const description = res.data.User.about ? util.textTruncate(he.decode(res.data.User.about?.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided";
+      const description = res.data.User.about ? util.textTruncate(util.heDecode(res.data.User.about?.replace(/(<([^>]+)>)/g, '') || ''), 250) : "No description provided";
       // extending preset embed
       const embed = presetEmbed
         .setImage(res.data.User.bannerImage)
@@ -348,7 +347,7 @@ export default new class Anime extends Command {
       const staffName = [res.Staff.name.full, res.Staff.name.native].filter(Boolean).join(" | ");
       const description = [
         util.langflags.find(f => f.lang.toLowerCase() == res.Staff.language?.toLowerCase())?.flag,
-        util.textTruncate(toMarkdown(he.decode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
+        util.textTruncate(toMarkdown(util.heDecode(res.Staff.description || '\u200b')), 1000, `... *(read more [here](${res.Staff.siteUrl}))*`)
       ].join('\n');
       // extending preset embed
       const embed = this.embed

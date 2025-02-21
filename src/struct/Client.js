@@ -1,8 +1,8 @@
 import { Client, GatewayIntentBits, Partials, Options, Collection, REST, Routes } from 'discord.js';
-// In order to use mongodb library, work with the logics from this branch and the v4.1 release code.
-// The Settings.js file also in this directory can be straight up replaced with the v4.1 release code, and it will work.
-// However, also make sure to replace the Schedule.js file also in this directory with it, because it uses bare mongoose methods.
-import * as mongoose from "mongoose";
+// In order to use mongoose library, work with the logics from this branch and the v4.2 release code.
+// The Settings.js file also in this directory can be straight up replaced with the v4.2 release code, and it will work.
+// Make sure to check Schedule.js, one line uses bare mongodb method.
+import { MongoClient, ServerApiVersion } from "mongodb";
 import Settings from './Settings.js';
 import Utilities from './Utilities.js';
 import Schedule from './Schedule.js';
@@ -61,6 +61,7 @@ class AokiClient extends Client {
     this.dev = dev;
     this.lastStats = null;
     this.db = null;
+    this.dbClient = null;
     this.settings = {
       users: new Settings(this, "users", schema.users),
       members: new Settings(this, "members", schema.members),
@@ -162,12 +163,18 @@ class AokiClient extends Client {
     this.loadEvents();
 
     const url = process.env.MONGO_KEY;
-    await mongoose.connect(url);
+    this.dbClient = await MongoClient.connect(url, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
     this.util.success("Connected to database", "[Database]");
-    this.db = mongoose.connection;
+    this.db = this.dbClient.db();
     
-    for (const settings of Object.values(this.settings)) { await settings.init() };
-
+    await Promise.all(Object.values(this.settings).map(setting => setting.init()));
+    
     new AokiWebAPI(this).serve();
 
     this.util.success("Loaded commands, settings and web server", "[General]");

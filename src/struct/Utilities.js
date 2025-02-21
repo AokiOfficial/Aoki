@@ -42,7 +42,11 @@ export default class Utilities {
     this.timeMultipliers = { d: 86400000, h: 3600000, m: 60000, s: 1000 };
     this.alIdRegex = /anilist\.co\/anime\/(.\d*)/;
     this.malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
-    
+    this.encodeMap = { '&': 'amp', '<': 'lt', '>': 'gt', '"': 'quot', "'": '#x27', '`': '#x60' };
+    this.decodeMap = { amp: '&', lt: '<', gt: '>', quot: '"', '#x27': "'", '#x60': '`' };
+    this.namedEntityRegex = /[&<>"'`]/g;
+    this.decodeRegex = /&([^;\s]+);/g;
+
     this.fetchBadWordsRegex();
   }
   /**
@@ -267,7 +271,7 @@ export default class Utilities {
     const m = Math.floor((ms / (1000 * 60)) % 60);
     const h = Math.floor((ms / (1000 * 60 * 60)) % 24);
     const d = Math.floor(ms / (1000 * 60 * 60 * 24));
-  
+
     return `${d ? d + "d" : ""}${d ? " " : ""}${h ? h + "h" : ""}${h ? " " : ""}${m ? m + "m" : ""}${m ? " " : ""}${s ? s + "s" : ""}`;
   };
   /**
@@ -370,5 +374,37 @@ export default class Utilities {
       body: form
     }).then(async res => await res.json());
     return res.data?.url || null;
+  };
+  /**
+   * Encodes a string to its corresponding HTML entities
+   * @param {string} string - The string to be HTML encoded
+   * @returns {string} The HTML encoded string
+   */
+  heEncode(string) {
+    return string.replace(this.namedEntityRegex, char => {
+      return `&${this.encodeMap[char]};`;
+    });
+  };
+  /**
+   * Decodes an HTML string by converting HTML entities back to their original characters
+   * @param {string} html - The HTML encoded string to decode
+   * @returns {string} The decoded string with HTML entities converted back
+   */
+  heDecode(html) {
+    return html.replace(this.decodeRegex, (_, entity) => {
+      return this.decodeMap[entity] || _;
+    });
+  };
+  /**
+   * Escape a string by converting special characters to their HTML entities
+   *
+   * This is a convenience alias for the `heEncode` function. It ensures that a string is safe
+   * for use in HTML contexts by converting specific characters into their HTML entity forms
+   *
+   * @param {string} string - The string to escape
+   * @returns {string} The escaped string
+   */
+  heEscape(string) {
+    return this.heEncode(string);
   };
 }

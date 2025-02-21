@@ -21,7 +21,8 @@ export default class AniSchedule {
   async init() {
     let schedules;
     try {
-      schedules = await this.client.settings.schedules.find({}).lean().exec();
+      // for mongoose, this would be await this.client.settings.schedules.find({}).lean().exec();
+      schedules = await this.client.db.collection("schedules").find({}).toArray().catch(() => []);
     } catch {
       schedules = [];
     }
