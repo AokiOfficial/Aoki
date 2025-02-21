@@ -1,4 +1,4 @@
-import { EmbedBuilder, PermissionFlagsBits } from "discord.js";
+import { EmbedBuilder, PermissionFlagsBits } from 'discord.js';
 
 class Command {
   constructor(options) {

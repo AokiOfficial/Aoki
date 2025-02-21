@@ -2,7 +2,7 @@
 // constructed in only one file for maintenance
 // so when I have to check on a command I won't have to scroll 100 lines of code
 import { SlashCommandBuilder } from "@discordjs/builders";
-import { PermissionFlagsBits } from "discord.js";
+import { PermissionFlagsBits } from 'discord.js';
 
 const fun = new SlashCommandBuilder()
   .setName("fun")
@@ -29,11 +29,6 @@ const fun = new SlashCommandBuilder()
   .addSubcommand(cmd => cmd
     .setName('today')
     .setDescription("gives you a random fact of today, in the past.")
-  )
-  .addSubcommand(cmd => cmd
-    .setName('meme')
-    .setDescription("gives you a random meme, with 10% chance cancelling you.")
-    .addStringOption(option => option.setName("query").setDescription("the subreddit name. If you just want to see average memes, skip."))
   )
   .addSubcommand(cmd => cmd
     .setName('ship')
@@ -68,11 +63,22 @@ const fun = new SlashCommandBuilder()
         { name: "Distracted Boyfriend", value: '112126428' },
         { name: "One Does Not Simply", value: '61579' },
         { name: "Ancient Aliens", value: '101470' },
-        { name: "Tuxedo Winnie The Pooh", value: '178591752' },
-        { name: "Leonardo Dicaprio Cheers", value: '5496396' },
-        { name: "Always Has Been", value: '252600902' },
+        { name: "Tuxedo Winnie The Pooh", value: '222403160' },
+        { name: "Leonardo Dicaprio Cheers", value: '217743513' },
+        { name: "Always Has Been", value: '155121' },
         { name: "Doge", value: '8072285' },
-        { name: "Third World Skeptical Kid", value: '101288' }
+        { name: "Third World Skeptical Kid", value: '101288' },
+        { name: "Y U NO", value: '61585' },
+        { name: "Success Kid", value: '61544' },
+        { name: "Grumpy Cat", value: '405658' },
+        { name: "Expanding Brain", value: '93895088' },
+        { name: "Is This a Pigeon?", value: '100947' },
+        { name: "Roll Safe", value: '89370399' },
+        { name: "Surprised Pikachu", value: '155067736' },
+        { name: "Mocking SpongeBob", value: '102156234' },
+        { name: "Batman Slapping Robin", value: '438680' },
+        { name: "Bernie I Am Once Again Asking", value: '91545188' },
+        { name: "Facepalm", value: '61527' }
       ])
       .setRequired(true)
     )
@@ -246,10 +252,6 @@ const anime = new SlashCommandBuilder()
     )
   )
   .addSubcommand(cmd => cmd
-    .setName("meme")
-    .setDescription("peaceful command, it won't cancel you like what /fun meme do")
-  )
-  .addSubcommand(cmd => cmd
     .setName("quote")
     .setDescription("anime quotes, best stuff ever.")
   )
@@ -362,34 +364,7 @@ const osugame = new SlashCommandBuilder()
         { name: "mania", value: "mania" }
       ])
     )
-    .addStringOption(option => option
-      .setName("type")
-      .setDescription("the output type. Defaults to info")
-      .addChoices(...[
-        { name: "info", value: "info" },
-        { name: "card", value: "card" }
-      ])
-    )
-  )
-  .addSubcommand(cmd => cmd
-    .setName("customize")
-    .setDescription("customize your osu! card")
-    .addStringOption(option => option
-      .setName("color")
-      .setDescription("the color of the info field. Can be in hex or rgb")
-    )
-    .addStringOption(option => option
-      .setName("background")
-      .setDescription("the color of the background field. Can be in hex or rgb")
-    )
-    .addStringOption(option => option
-      .setName("description")
-      .setDescription("the field below your username. Limits to 75 characters")
-      .setMaxLength(75)
-      .setMinLength(1)
-    )
-  )
-  .addSubcommand(cmd => cmd
+  ).addSubcommand(cmd => cmd
     .setName("set_timestamp_channel")
     .setDescription("a channel where any osu! editor timestamp gets edited into clickable ones.")
     .addChannelOption(option => option
@@ -490,26 +465,37 @@ const osugame = new SlashCommandBuilder()
   )
   .addSubcommand(cmd => cmd
     .setName('country_leaderboard')
-    .setDescription('View the country leaderboard for a beatmap.')
+    .setDescription('view the country leaderboard for a beatmap.')
     .addIntegerOption(option => option
       .setName('beatmap_id')
-      .setDescription('The ID of the beatmap.')
+      .setDescription('the ID of the beatmap.')
       .setRequired(true)
     )
     .addStringOption(option => option
       .setName('country_code')
-      .setDescription('The 2-letter country code (e.g., US, JP).')
+      .setDescription('the 2-letter country code (e.g., US, JP).')
       .setRequired(true)
     )
     .addStringOption(option => option
       .setName('mode')
-      .setDescription('Game mode for the leaderboard.')
+      .setDescription('game mode for the leaderboard.')
       .setRequired(true)
       .addChoices(
         { name: 'osu', value: 'osu' },
         { name: 'taiko', value: 'taiko' },
         { name: 'catch', value: 'fruits' },
         { name: 'mania', value: 'mania' },
+      )
+    )
+    .addStringOption(option => option
+      .setName('sort')
+      .setDescription('sort the leaderboard by a specific category.')
+      .addChoices(
+        { name: 'Performance', value: "performance" },
+        { name: 'Accuracy', value: "accuracy" },
+        { name: 'Combo', value: "combo" },
+        { name: 'ScoreV3 (lazer)', value: "lazer_score" },
+        { name: 'ScoreV1 (stable)', value: "stable_score" },
       )
     )
   );

@@ -1,6 +1,8 @@
-import { Client, Collection, GatewayIntentBits, Options, Partials, REST, Routes } from 'discord.js';
-import { MongoClient, ServerApiVersion } from "mongodb";
-import { auth } from "osu-api";
+import { Client, GatewayIntentBits, Partials, Options, Collection, REST, Routes } from 'discord.js';
+// In order to use mongodb library, work with the logics from this branch and the v4.1 release code.
+// The Settings.js file also in this directory can be straight up replaced with the v4.1 release code, and it will work.
+// However, also make sure to replace the Schedule.js file also in this directory with it, because it uses bare mongoose methods.
+import * as mongoose from "mongoose";
 import Settings from './Settings.js';
 import Utilities from './Utilities.js';
 import Schedule from './Schedule.js';
@@ -55,9 +57,9 @@ class AokiClient extends Client {
     this.util = new Utilities(this);
     this.poster = new DBL(this);
     this.schedule = new Schedule(this);
+    this.statsCache = new WeakMap();
     this.dev = dev;
     this.lastStats = null;
-    this.dbClient = null;
     this.db = null;
     this.settings = {
       users: new Settings(this, "users", schema.users),
@@ -76,7 +78,9 @@ class AokiClient extends Client {
   async loadCommands() {
     const commands = [];
 
-    const commandModules = await Promise.all([
+    // lazy load command modules only when loadCommands is invoked
+    // for esbuild to include these in the bundle, the import paths must be static
+    const loadCommandModules = async () => Promise.all([
       import('../cmd/anime.js'),
       import('../cmd/fun.js'),
       import('../cmd/my.js'),
@@ -84,6 +88,8 @@ class AokiClient extends Client {
       import('../cmd/utility.js'),
       import('../cmd/verify.js'),
     ]);
+    
+    const commandModules = await loadCommandModules();
 
     for (const commandModule of commandModules) {
       const command = commandModule.default;
@@ -107,11 +113,12 @@ class AokiClient extends Client {
    * @returns {Promise<void>}
    */
   async loadEvents() {
-    const eventModules = await Promise.all([
+    const loadEventModules = async () => Promise.all([
       import('../events/interactionCreate.js'),
       import('../events/messageCreate.js'),
       import('../events/ready.js'),
     ]);
+    const eventModules = await loadEventModules();
 
     for (const eventModule of eventModules) {
       const event = eventModule.default;
@@ -155,29 +162,11 @@ class AokiClient extends Client {
     this.loadEvents();
 
     const url = process.env.MONGO_KEY;
-    this.dbClient = await MongoClient.connect(url, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      }
-    });
+    await mongoose.connect(url);
     this.util.success("Connected to database", "[Database]");
-    this.db = this.dbClient.db();
+    this.db = mongoose.connection;
     
-    for (const [_, settings] of Object.entries(this.settings)) { await settings.init() };
-
-    await auth.login({
-      type: 'v2',
-      client_id: this.dev ? process.env.OSU_DEV_ID : process.env.OSU_ID,
-      client_secret: this.dev ? process.env.OSU_DEV_SECRET : process.env.OSU_SECRET
-    });
-    await auth.login({
-      type: 'v1',
-      api_key: process.env.OSU_KEY
-    });
-
-    this.util.success("osu! API authorized", "[osu!]");
+    for (const settings of Object.values(this.settings)) { await settings.init() };
 
     new AokiWebAPI(this).serve();
 

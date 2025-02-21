@@ -1,3 +1,5 @@
+// the main purpose to implement this is to make things other bots don't have
+// there are bots around doing the things that would otherwise take infinite time to implement here in JS
 import Command from '../struct/handlers/Command.js';
 import {
   AttachmentBuilder,
@@ -7,10 +9,9 @@ import {
   ButtonBuilder,
   ButtonStyle,
   PermissionsBitField
-} from "discord.js";
+} from 'discord.js';
 import { osugame } from "../assets/const/import.js";
 import Pagination from '../struct/Paginator.js';
-import { v1, v2 } from 'osu-api';
 
 export default new class OsuGame extends Command {
   constructor() {
@@ -25,6 +26,7 @@ export default new class OsuGame extends Command {
     this.api_v2 = `${this.baseUrl}/api/v2`;
     this.api_oa = `${this.baseUrl}/oauth/token`;
     this.api_asset = "https://assets.ppy.sh";
+    this.osuV2Token = null;
   };
   async execute(i) {
     this.i = i;
@@ -52,7 +54,7 @@ export default new class OsuGame extends Command {
     const settings = i.user.settings;
     if (!settings) await i.user.update({ inGameName: "", defaultMode: "osu" });
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
-    const profile = await this.getProfile(user, mode);
+    const profile = await this.findUserByUsername(user, mode);
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
     // utilities
     const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
@@ -72,14 +74,15 @@ export default new class OsuGame extends Command {
   // profile command
   async profile(i, _, util) {
     const settings = i.user.settings;
-    const type = i.options.getString("type") || "info";
     const user = i.options.getString("username") || settings?.inGameName;
     const mode = i.options.getString("mode") || settings?.defaultMode;
+
     // handle exceptions
     if (!user || !mode) return this.throw("You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
-    let profile = await this.getProfile(user, mode);
+    let profile = await this.findUserByUsername(user, mode);
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
+
     // utilities
     profile = {
       userId: profile.user_id,
@@ -100,115 +103,52 @@ export default new class OsuGame extends Command {
       s: profile.count_rank_s,
       a: profile.count_rank_a,
     };
-    // handle types
-    if (type == "info") {
-      // utilities
-      const url = [
-        `https://lemmmy.pw/osusig/sig.php?`,
-        `colour=pink&`,
-        `uname=${profile.username}&`,
-        `mode=${util.osuNumberModeFormat(mode)}&`,
-        `pp=0`
-      ].join("")
-      profile.image = new AttachmentBuilder(url, { name: 'profile.png' });
-      const grades = [];
-      const { XH, X, SH, S, A } = util.rankEmotes;
-      grades.push(`${XH}\`${Number(profile.ssh)}\``);
-      grades.push(`${X}\`${Number(profile.ss)}\``);
-      grades.push(`${SH}\`${Number(profile.sh)}\``);
-      grades.push(`${S}\`${Number(profile.s)}\``);
-      grades.push(`${A}\`${Number(profile.a)}\``);
-      const combinedGrades = grades.join('');
-      const playTime = `${profile.playTime} hrs`;
-      const level = `${profile.level[1]}% of level ${profile.level[0]}`;
-      // construct embed
-      const author = {
-        name: `osu!${profile.properMode} profile for ${profile.username}`,
-        iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
-        url: `${this.baseUrl}/u/${profile.userId}`
-      };
-      const description = [
-        `**▸ Bancho Rank:** #${profile.rank} (${profile.country}#${profile.countryRank})`,
-        `**▸ Level:** ${level}`,
-        `**▸ PP:** ${profile.pp} **▸ Acc:** ${profile.accuracy}%`,
-        `**▸ Playcount:** ${profile.playCount} (${playTime})`,
-        `**▸ Ranks:** ${combinedGrades}`,
-        `**▸ Profile image:** (from [lemmmy.pw](https://lemmmy.pw))`
-      ].join("\n");
-      const embed = this.embed
-        .setAuthor(author)
-        .setDescription(description)
-        .setImage("attachment://profile.png")
-      await i.editReply({ embeds: [embed], files: [profile.image] });
-    } else if (type == "card") {
-      // forward info to web
-      const url = [
-        `https://osu-skill.vercel.app/render?`,
-        `id=${profile.userId}&`,
-        `mode=${mode}&`,
-        `${settings.pattern ? `image=${settings.pattern}&` : ""}`,
-        `${settings.color ? `color=${settings.color}&` : ""}`,
-        `${settings.background ? `bgColor=${settings.background}&` : ""}`,
-        `${settings.description ? `description=${settings.description}&` : ""}`,
-        `key=${process.env.RENDER_KEY}`
-      ].join("");
-      // utilities
-      const image = new AttachmentBuilder(url, { name: 'profile.png' });
-      const embed = this.embed.setImage("attachment://profile.png").setAuthor({
-        name: `osu!${profile.properMode} card for ${profile.username}`,
-        iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
-        url: `${this.baseUrl}/u/${profile.userId}`
-      });
-      await i.editReply({ embeds: [embed], files: [image] });
+
+    // utilities
+    const url = [
+      `https://lemmmy.pw/osusig/sig.php?`,
+      `colour=pink&`,
+      `uname=${profile.username}&`,
+      `mode=${util.osuNumberModeFormat(mode)}&`,
+      `pp=0`
+    ].join("")
+    const response = await fetch(url);
+    const buffer = await response.arrayBuffer();
+    const imageBuffer = Buffer.from(new Uint8Array(buffer));
+    profile.image = new AttachmentBuilder().setFile(imageBuffer).setName("profile.png");
+
+    const grades = [];
+    const { XH, X, SH, S, A } = util.rankEmotes;
+    grades.push(`${XH}\`${Number(profile.ssh)}\``);
+    grades.push(`${X}\`${Number(profile.ss)}\``);
+    grades.push(`${SH}\`${Number(profile.sh)}\``);
+    grades.push(`${S}\`${Number(profile.s)}\``);
+    grades.push(`${A}\`${Number(profile.a)}\``);
+    const combinedGrades = grades.join('');
+    const playTime = `${profile.playTime} hrs`;
+    const level = `${profile.level[1]}% of level ${profile.level[0]}`;
+
+    // construct embed
+    const author = {
+      name: `osu!${profile.properMode} profile for ${profile.username}`,
+      iconURL: `https://flagsapi.com/${profile.country}/flat/64.png`,
+      url: `${this.baseUrl}/u/${profile.userId}`
     };
-  };
-  // customize command
-  async customize(i) {
-    const settings = i.user.settings;
-    const color = i.options.getString("color");
-    const bgColor = i.options.getString("background");
-    const description = i.options.getString("description");
-    // handle exceptions
-    if (!color && !bgColor && !description) return this.throw("What am I supposed to change then, baka.");
-    const rgbRegex = /^rgb\((\d+),(\d+),(\d+)\)$/g;
-    const hexRegex = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i;
-    function hexToRgb(hex) {
-      const result = hexRegex.exec(hex);
-      return result ? `rgb(${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)})` : null;
-    };
-    if (
-      (color && !color.match(rgbRegex) && !color.match(hexRegex)) || /* color */
-      (bgColor && !bgColor.match(rgbRegex) && !bgColor.match(hexRegex)) /* bgColor */
-    ) {
-      return this.throw("That's an invalid color code, you baka. Either `#xxxxxx` or `rgb(xxx,xxx,xxx)` works.");
-    };
-    if (description?.length > 75) return this.throw("That description is a little bit too long. Only 75 characters max, please.");
-    // handle user input
-    let revisedColor, revisedBgColor;
-    if (color?.match(hexRegex)) revisedColor = hexToRgb(color); else revisedColor = color;
-    if (bgColor?.match(hexRegex)) revisedBgColor = hexToRgb(bgColor); else revisedBgColor = bgColor;
-    if (
-      (color && revisedColor == null) ||
-      (bgColor && revisedBgColor == null)
-    ) return this.throw("That's an invalid color code, you baka. Check your input.");
-    // save to database
-    await i.user.update({
-      color: revisedColor || settings.color || "",
-      background: revisedBgColor || settings.background || "",
-      description: description || settings.description || ""
-    });
-    // handle response
-    const parts = [
-      color && `color is \`${color}\``,
-      bgColor && `background color is \`${bgColor}\``,
-      description && `description is \`${description}\``
-    ].filter(Boolean);
-    const content = [
-      `Received your ticket.\n\nYour current `,
-      `${parts.slice(0, -1).join(', ')}`,
-      `${parts.length > 1 ? ` and ${parts.slice(-1)}` : parts.join('')}.`
-    ].join("");
-    return await i.editReply({ content });
+    const description = [
+      `**▸ Bancho Rank:** #${profile.rank} (${profile.country}#${profile.countryRank})`,
+      `**▸ Level:** ${level}`,
+      `**▸ PP:** ${profile.pp} **▸ Acc:** ${profile.accuracy}%`,
+      `**▸ Playcount:** ${profile.playCount} (${playTime})`,
+      `**▸ Ranks:** ${combinedGrades}`,
+      `**▸ Profile image:** (from [lemmmy.pw](https://lemmmy.pw))`
+    ].join("\n");
+    
+    const embed = this.embed
+      .setAuthor(author)
+      .setDescription(description)
+      .setImage("attachment://profile.png")
+
+    await i.editReply({ embeds: [embed], files: [profile.image] });
   };
   // set_timestamp_channel command
   async set_timestamp_channel(i) {
@@ -227,127 +167,103 @@ export default new class OsuGame extends Command {
     return i.editReply({ content: `Updated the timestamp channel to <#${channel.id}>.` });
   };
   // country-leaderboard
+  // this command is complex, some parts might be hard to debug
   async country_leaderboard(i, _, util) {
     const beatmapId = i.options.getInteger('beatmap_id');
     const countryCode = i.options.getString('country_code').toUpperCase();
     const mode = i.options.getString('mode');
+    const sort_mode = i.options.getString("sort") || "lazer_score";
 
-    // Validate inputs\
+    const sortingMap = {
+      performance: 0,
+      lazer_score: 1,
+      stable_score: 2,
+      combo: 3,
+      accuracy: 4,
+    };
+    const sorting = sortingMap[sort_mode] ?? 0;
+
     if (!beatmapId) return this.throw('Please provide a valid beatmap ID.');
-    if (!countryCode || countryCode.length !== 2) {
-      return this.throw('Please provide a valid 2-letter country code.');
-    }
+    if (!countryCode || countryCode.length !== 2) return this.throw('Please provide a valid 2-letter country code.');
 
     try {
-      // Fetch the country rankings to get user IDs
-      const countryRankingsPage1 = await v2.ranking.list({
-        type: "performance",
-        country_code: countryCode,
-        mode: mode
-      });
-      const countryRankingsPage2 = await v2.ranking.list({
-        type: "performance",
-        country_code: countryCode,
-        mode: mode,
-        page: 2
-      });
-      const countryRankings = {
-        ranking: [...countryRankingsPage1.ranking, ...countryRankingsPage2.ranking]
-      };
+      // concurrently fetch the first 2 pages of country leaderboard
+      const [page1, page2] = await Promise.all([
+        this.fetchRankingList({ type: "performance", country_code: countryCode, mode }),
+        this.fetchRankingList({ type: "performance", country_code: countryCode, mode, page: 2 }),
+      ]);
+      const rankings = [...page1.ranking, ...page2.ranking];
+      if (!rankings.length) return this.throw(`No players found for country code ${countryCode}.`);
 
-      if (!countryRankings || !countryRankings.ranking || countryRankings.ranking.length === 0) {
-        return this.throw(`No players found for country code ${countryCode}.`);
-      }
-
-      // Get list of user IDs
-      const userIds = countryRankings.ranking.map(player => player.user.id);
-
-      // For each user, fetch their score on the specified beatmap
-      const userScoresPromises = userIds.map(userId =>
-        v2.scores.list({
-          type: "user_beatmap_all",
-          user_id: userId,
-          beatmap_id: beatmapId,
-          mode: mode,
-          include_fails: 0,
-          limit: 1,
-        }).catch(() => null)
-      );
-
-      // Wait for all promises to settle
-      const userScoresResults = await Promise.allSettled(userScoresPromises);
-
-      // Collect scores where users have played the beatmap
+      const userIds = rankings.map(player => player.user.id);
       const countryScores = [];
-      for (let i = 0; i < userScoresResults.length; i++) {
-        const result = userScoresResults[i];
-        if (result.status === 'fulfilled' && result.value && result.value.length > 0) {
-          const score = result.value[0];
-          countryScores.push(score);
+      const chunkSize = 20;
+      // use chunks to process these data
+      for (let j = 0; j < userIds.length; j += chunkSize) {
+        const chunk = userIds.slice(j, j + chunkSize);
+        const results = await Promise.allSettled(chunk.map(userId =>
+          this.listAllUserScores({
+            type: "user_beatmap_all",
+            user_id: userId,
+            beatmap_id: beatmapId,
+            mode,
+            include_fails: 0,
+            limit: 1,
+          })
+        ));
+        for (const res of results) {
+          if (res.status === 'fulfilled' && res.value && res.value.length)
+            countryScores.push(res.value[0]);
         }
       }
+      
+      if (!countryScores.length) return this.throw(`No scores found for ${countryCode} on this beatmap.`);
 
-      if (countryScores.length === 0) {
-        return this.throw(`No scores found for ${countryCode} on this beatmap.`);
-      }
+      // sort by metric chosen by user
+      countryScores.sort((a, b) => {
+        const comparators = [
+          () => b.pp - a.pp,
+          () => b.total_score - a.total_score,
+          () => b.legacy_total_score - a.legacy_total_score,
+          () => b.max_combo - a.max_combo,
+          () => b.accuracy - a.accuracy,
+        ];
+        return comparators[sorting]();
+      });
 
-      // Sort the scores
-      countryScores.sort((a, b) => b.total_score - a.total_score);
-
-      // Prepare pagination
       const scoresPerPage = 5;
       const totalPages = Math.ceil(countryScores.length / scoresPerPage);
-
-      // beatmap title
-      const beatmapDetails = await v2.beatmaps.details({
-        type: "difficulty",
-        id: beatmapId
-      });
+      const beatmapDetails = await this.fetchBeatmapDetails({ type: "difficulty", id: beatmapId });
       const beatmapTitle = `${beatmapDetails.beatmapset.artist} - ${beatmapDetails.beatmapset.title} [${beatmapDetails.version}]`;
-
-      // make pagination
       const pages = new Pagination();
 
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
-        const start = pageIndex * scoresPerPage;
-        const end = start + scoresPerPage;
-        const pageScores = countryScores.slice(start, end);
-
-        const description = (await Promise.all(pageScores.map(async (score, index) => {
-          const user = await v1.user.details(score.user_id, { type: "id" });
+        const pageScores = countryScores.slice(pageIndex * scoresPerPage, (pageIndex + 1) * scoresPerPage);
+        const scoreLines = await Promise.all(pageScores.map(async (score, idx) => {
+          const user = await this.findUserById(score.user_id, { type: "id" });
           const rankEmote = util.rankEmotes[score.rank] || score.rank;
-          const statistics = score.statistics;
+          const stats = score.statistics;
           let statsString = '';
-
-          switch (mode) {
-            case 'osu':
-              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'taiko':
-              statsString = `${statistics.great || "0"}/${statistics.ok || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'fruits':
-              statsString = `${statistics.great || "0"}/${statistics.large_tick_hit || "0"}/${statistics.small_tick_hit || "0"}/${statistics.miss || "0"}`;
-              break;
-            case 'mania':
-              statsString = `${statistics.perfect || "0"}/${statistics.great || "0"}/${statistics.good || "0"}/${statistics.ok || "0"}/${statistics.meh || "0"}/${statistics.miss || "0"}`;
-              break;
-          }
-
+          if (mode === 'osu') statsString = `${stats.great || "0"}/${stats.ok || "0"}/${stats.meh || "0"}/${stats.miss || "0"}`;
+          if (mode === 'taiko') statsString = `${stats.great || "0"}/${stats.ok || "0"}/${stats.miss || "0"}`;
+          if (mode === 'fruits') statsString = `${stats.great || "0"}/${stats.large_tick_hit || "0"}/${stats.small_tick_hit || "0"}/${stats.miss || "0"}`;
+          if (mode === 'mania') statsString = `${stats.perfect || "0"}/${stats.great || "0"}/${stats.good || "0"}/${stats.ok || "0"}/${stats.meh || "0"}/${stats.miss || "0"}`;
+          const displayedScore = sorting === 2 ? score.legacy_total_score : score.total_score;
           return [
-            `**${start + index + 1}) ${user.name}**`,
+            `**${pageIndex * scoresPerPage + idx + 1}) ${user.username}**`,
             `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
-            `▸ ${score.total_score.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
-            `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${i.client.util.formatDistance(new Date(score.ended_at), new Date())}||`
+            `▸ ${displayedScore.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
+            `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${util.formatDistance(new Date(score.ended_at), new Date())}||`
           ].join('\n');
-        }))).join('\n\n');
+        }));
 
+        const sortString = ["Performance", "ScoreV3 (lazer)", "ScoreV1 (stable)", "Combo", "Accuracy"][sorting];
         const embed = new EmbedBuilder()
-          .setTitle(`${beatmapTitle}`)
+          .setTitle(beatmapTitle)
           .setURL(`https://osu.ppy.sh/b/${beatmapId}`)
-          .setAuthor({ name: `Country leaderboard`, iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
-          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + description)
-          .setFooter({ text: `Page ${pageIndex + 1} of ${totalPages}` })
+          .setAuthor({ name: "Country leaderboard", iconURL: `https://osu.ppy.sh/images/flags/${countryCode}.png` })
+          .setDescription(`:notes: [Song preview](https://b.ppy.sh/preview/${beatmapDetails.beatmapset_id}.mp3) | :frame_photo: [Cover/Background](https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/raw.jpg)\n\n` + scoreLines.join('\n\n'))
+          .setFooter({ text: `Sorted by ${sortString} | Page ${pageIndex + 1} of ${totalPages}` })
           .setTimestamp()
           .setImage(`https://assets.ppy.sh/beatmaps/${beatmapDetails.beatmapset_id}/covers/cover.jpg`)
           .setColor(10800862);
@@ -355,33 +271,25 @@ export default new class OsuGame extends Command {
         pages.add(embed);
       }
 
-      // Send paginated message
-      const content = 
-        "**Notes:** \n- This feature is experimental and may not work as expected.\n- Due to the limitation of this implementation, scores from inactive players will not be shown.\n- Due to osu!API constraints, only players in the top 100 of that country are fetched.";
+      const content =
+        "**Notes:** \n- Scores from inactive players will not be shown.\n- Only players in the top 100 of that country are fetched.";
       const msg = await i.editReply({ content, embeds: [pages.currentPage] });
+      if (pages.size === 1) return;
 
-      if (pages.size == 1) return;
-      // collector
-      const filter = (_, user) => user.id == i.member.user.id;
-      const collector = msg.createReactionCollector(filter);
-      let timeout = setTimeout(() => collector.stop(), 90000);
-
+      // Reaction-based pagination using a collector with navigator emojis
       const navigators = ['◀', '▶', '❌'];
-
-      for (let i = 0; i < navigators.length; i++) {
-        await msg.react(navigators[i]);
-      };
+      const filter = (_, user) => user.id === i.member.user.id;
+      const collector = msg.createReactionCollector(filter, { time: 90000 });
+      for (const nav of navigators) await msg.react(nav);
 
       collector.on('collect', async r => {
         switch (r.emoji.name) {
-          case navigators[0]: msg.edit({ content, embeds: [pages.previous()] }); break
-          case navigators[1]: msg.edit({ content, embeds: [pages.next()] }); break
-          case navigators[2]: collector.stop(); break
-        };
+          case '◀': msg.edit({ content, embeds: [pages.previous()] }); break;
+          case '▶': msg.edit({ content, embeds: [pages.next()] }); break;
+          case '❌': collector.stop(); break;
+        }
         await r.users.remove(i.member.user.id);
-        timeout.refresh();
       });
-
       collector.on('end', async () => await msg.reactions.removeAll());
     } catch (error) {
       console.error('Error fetching country leaderboard:', error);
@@ -400,7 +308,7 @@ export default new class OsuGame extends Command {
     try {
       const searchParams = {
         query: query,
-        mode: Number(mode),
+        m: Number(mode),
         status: status,
         genre: genre,
         language: language,
@@ -411,7 +319,7 @@ export default new class OsuGame extends Command {
         searchParams.storyboard = storyboard ? '1' : '0';
       }
 
-      const { beatmapsets } = await v2.search({
+      const { beatmapsets } = await this.searchBeatmap({
         type: "beatmaps",
         ...searchParams
       });
@@ -501,12 +409,12 @@ export default new class OsuGame extends Command {
       return this.throw("An error occurred while searching for beatmaps. Please try again later.");
     }
   };
-  // internal utilities
+  // utilities
   async throw(content) {
     await this.i.editReply({ content });
     return Promise.reject();
   };
-  async getProfile(username, mode) {
+  async findUserByUsername(username, mode) {
     return (await fetch([
       `${this.api_v1}/get_user?`,
       `k=${process.env["OSU_KEY"]}&`,
@@ -523,4 +431,93 @@ export default new class OsuGame extends Command {
         iconURL: this.i.user.displayAvatarURL()
       });
   };
+
+  // osu!api helpers
+  async getOsuV2Token() {
+    // avoid spamming the osu api
+    // if the token is still valid, return it
+    if (this.osuV2Token && this.osuV2Token.expires_at > Date.now()) {
+      return this.osuV2Token.access_token;
+    }
+    // otherwise ask for it using our credentials
+    const params = new URLSearchParams({
+      client_id: this.dev ? process.env.OSU_DEV_ID : process.env.OSU_ID,
+      client_secret: this.dev ? process.env.OSU_DEV_SECRET : process.env.OSU_SECRET,
+      grant_type: 'client_credentials',
+      scope: 'public'
+    });
+    const res = await fetch(this.api_oa, {
+      method: 'POST',
+      body: params,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    const data = await res.json();
+    // then save it for later fetches until the end of the cycle
+    this.osuV2Token = {
+      access_token: data.access_token,
+      expires_at: Date.now() + (data.expires_in - 60) * 1000
+    };
+    return data.access_token;
+  }
+
+  // this function uses user id instead, which for the findUserByUsername function we don't know yet
+  async findUserById(userId, options) {
+    const params = new URLSearchParams({
+      k: process.env["OSU_KEY"],
+      u: userId.toString(),
+      type: options.type
+    });
+    const url = `${this.api_v1}/get_user?${params.toString()}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[0] || null;
+  }
+
+  async fetchRankingList({ type, country_code, mode, page = 1 }) {
+    const token = await this.getOsuV2Token();
+    const url = `${this.api_v2}/rankings/${mode}/${type}?country=${country_code}&cursor[page]=${page}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  }
+
+  async listAllUserScores({ type, user_id, beatmap_id, mode, include_fails, limit }) {
+    const token = await this.getOsuV2Token();
+    const url = [
+      `${this.api_v2}/beatmaps/${beatmap_id}`, // beatmap path
+      `/scores/users/${user_id}/all`, // all user scores on beatmap
+      `?mode=${mode}`, // the gamemode of the play (for converts)
+      `&type=${type}`, // the type of score to fetch
+      `&include_fails=${include_fails}`, // whether to include failed scores
+      `&limit=${limit}` // the number of scores to fetch
+    ].join("");
+    const res = await fetch(url, {
+      headers: { 
+        "Authorization": `Bearer ${token}`, 
+        "x-api-version": "20240130" // api version has to precisely be this in order to have the legacy score fields
+      }
+    });
+    const responses = await res.json();
+    return responses.scores;
+  }
+
+  async fetchBeatmapDetails({ type, id }) {
+    const token = await this.getOsuV2Token();
+    const url = `${this.api_v2}/beatmaps/${id}?type=${type}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, "x-api-version": "20240130" }
+    });
+    return await res.json();
+  }
+
+  async searchBeatmap(params) {
+    const token = await this.getOsuV2Token();
+    const searchParams = new URLSearchParams(params);
+    const url = `${this.api_v2}/beatmapsets/search?${searchParams.toString()}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, "x-api-version": "20240130" }
+    });
+    return await res.json();
+  }
 }

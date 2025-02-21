@@ -1,4 +1,6 @@
 // settings and utils
+// some of the functions in here are unreadable and hence are hard to debug
+// when a refactor is necessary to debug things I'll do that
 export default class Utilities {
   constructor(client) {
     // client properties
@@ -12,29 +14,35 @@ export default class Utilities {
     this.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     this.weeks = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
     this.rankEmotes = {
-      XH: "<:xh:1184870634124226620>",
-      X: "<:x:1184870631372750871>",
-      SH: "<:sh:1184870626394128518>",
-      S: "<:s:1184870621109297162>",
-      A: "<:a:1184870604843778170>",
-      B: "<:b:1184870609470095442>",
-      C: "<:c:1184870613421150258>",
-      D: "<:d:1184870615572824154>",
+      XH: "<:xh:1184870634124226620>", X: "<:x:1184870631372750871>",
+      SH: "<:sh:1184870626394128518>", S: "<:s:1184870621109297162>",
+      A: "<:a:1184870604843778170>", B: "<:b:1184870609470095442>",
+      C: "<:c:1184870613421150258>", D: "<:d:1184870615572824154>",
       F: "<:f_:1184872548337451089>"
     };
     this.langflags = [
-      { lang: "Hungarian", flag: "🇭🇺" },
-      { lang: "Japanese", flag: "🇯🇵" },
-      { lang: "French", flag: "🇫🇷" },
-      { lang: "Russian", flag: "🇷🇺" },
-      { lang: "German", flag: "🇩🇪" },
-      { lang: "English", flag: "🇺🇸" },
-      { lang: "Italian", flag: "🇮🇹" },
-      { lang: "Spanish", flag: "🇪🇸" },
-      { lang: "Korean", flag: "🇰🇷" },
-      { lang: "Chinese", flag: "🇨🇳" },
+      { lang: "Hungarian", flag: "🇭🇺" }, { lang: "Japanese", flag: "🇯🇵" },
+      { lang: "French", flag: "🇫🇷" }, { lang: "Russian", flag: "🇷🇺" },
+      { lang: "German", flag: "🇩🇪" }, { lang: "English", flag: "🇺🇸" },
+      { lang: "Italian", flag: "🇮🇹" }, { lang: "Spanish", flag: "🇪🇸" },
+      { lang: "Korean", flag: "🇰🇷" }, { lang: "Chinese", flag: "🇨🇳" },
       { lang: "Brazilian", flag: "🇧🇷" }
     ];
+
+    // try to pre-allocate commonly used objects for reuse
+    // we avoid having to recreate these objects every time we need them
+    this.formatDistanceIntervals = [
+      { label: 'year', ms: 365 * 24 * 60 * 60 * 1000 },
+      { label: 'month', ms: 30 * 24 * 60 * 60 * 1000 },
+      { label: 'day', ms: 24 * 60 * 60 * 1000 },
+      { label: 'hour', ms: 60 * 60 * 1000 },
+      { label: 'minute', ms: 60 * 1000 },
+      { label: 'second', ms: 1000 }
+    ];
+    this.timeMultipliers = { d: 86400000, h: 3600000, m: 60000, s: 1000 };
+    this.alIdRegex = /anilist\.co\/anime\/(.\d*)/;
+    this.malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
+    
     this.fetchBadWordsRegex();
   }
   /**
@@ -159,10 +167,19 @@ export default class Utilities {
    * @returns {String}
    */
   joinArrayAndLimit(array = [], limit = 1000, connector = '\n') {
-    return array.reduce((a, c, i, x) => a.text.length + String(c).length > limit
-      ? { text: a.text, excess: a.excess + 1 }
-      : { text: a.text + (!!i ? connector : '') + String(c), excess: a.excess }
-      , { text: '', excess: 0 });
+    // Initialize a reusable buffer and counter.
+    let text = '';
+    let excess = 0;
+    for (let i = 0; i < array.length; i++) {
+      const str = String(array[i]);
+      // Check if adding this string would exceed the limit
+      if ((text.length + (i > 0 ? connector.length : 0) + str.length) > limit) {
+        excess++;
+      } else {
+        text += (i > 0 && text.length > 0 ? connector : '') + str;
+      }
+    }
+    return { text, excess };
   };
   /**
    * Returns the ordinalized format of a number, e.g. `1st`, `2nd`, etc.
@@ -224,16 +241,8 @@ export default class Utilities {
    * @returns {String}
    */
   formatDistance(date1, date2) {
-    const intervals = [
-      { label: 'year', ms: 365 * 24 * 60 * 60 * 1000 },
-      { label: 'month', ms: 30 * 24 * 60 * 60 * 1000 },
-      { label: 'day', ms: 24 * 60 * 60 * 1000 },
-      { label: 'hour', ms: 60 * 60 * 1000 },
-      { label: 'minute', ms: 60 * 1000 },
-      { label: 'second', ms: 1000 }
-    ];
     const elapsed = Math.abs(date2 - date1);
-    for (const interval of intervals) {
+    for (const interval of this.formatDistanceIntervals) {
       const count = Math.floor(elapsed / interval.ms);
       if (count >= 1) {
         return `${count} ${interval.label}${count !== 1 ? 's' : ''} ago`;
@@ -245,18 +254,8 @@ export default class Utilities {
    * Takes human-readable time input and outputs time in `ms` (e.g.: `5m 30s` -> `330000` | `3d 5h 2m` -> `277320000`)
    * @param {string} timeStr - Time input (e.g.: `1m 20s`, `1s`, `3h 20m`)
    */
-  timeStringToMS(timeString) {
-    return timeString.match(/\d+\s?\w/g).reduce((acc, cur) => {
-      var multiplier = 1000;
-      switch (cur.slice(-1)) {
-        case 'd': multiplier *= 24;
-        case 'h': multiplier *= 60;
-        case 'm': multiplier *= 60;
-        case 's':
-          return ((parseInt(cur) ? parseInt(cur) : 0) * multiplier) + acc;
-      }
-      return acc;
-    }, 0);
+  timeStringToMS(s) {
+    return s.match(/\d+\s?\w/g).reduce((t, v) => t + parseInt(v) * this.timeMultipliers[v.trim().slice(-1)], 0);
   };
   /**
    * Takes time in `ms` and outputs time in human-readable format
@@ -316,13 +315,10 @@ export default class Utilities {
     const output = parseInt(input);
     if (output) return output;
     // else check url against the regex
-    const alIdRegex = /anilist\.co\/anime\/(.\d*)/;
-    const malIdRegex = /myanimelist\.net\/anime\/(.\d*)/;
-    // parse if match
-    let match = alIdRegex.exec(input);
+    let match = this.alIdRegex.exec(input);
     if (match) return parseInt(match[1]);
     // else try parsing with mal
-    match = malIdRegex.exec(input);
+    match = this.malIdRegex.exec(input);
     // if it still fail that means the provided input is invalid
     if (!match) return null;
     // else fetch anilist equivalent

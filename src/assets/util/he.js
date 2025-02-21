@@ -53,16 +53,8 @@ const object = {};
 const hasOwnProperty = object.hasOwnProperty;
 const has = (object, propertyName) => hasOwnProperty.call(object, propertyName);
 
-const contains = (array, value) => {
-	let index = -1;
-	const length = array.length;
-	while (++index < length) {
-		if (array[index] === value) {
-			return true;
-		}
-	}
-	return false;
-};
+// testing this out
+const contains = (array, value) => array.includes(value);
 
 const merge = (options, defaults) => {
 	if (!options) {

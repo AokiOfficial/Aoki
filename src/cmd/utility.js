@@ -271,7 +271,10 @@ export default new class Utility extends Command {
         `block_trackers=true&`,
         `timeout=10`
       ].join("");
-      const image = new AttachmentBuilder(url, { name: 'image.png' });
+      const response = await fetch(url);
+      const buffer = await response.arrayBuffer();
+      const imageBuffer = Buffer.from(new Uint8Array(buffer));
+      const image = new AttachmentBuilder().setFile(imageBuffer).setName("image.png");
       const embed = this.embed.setImage("attachment://image.png");
       await i.editReply({ embeds: [embed], files: [image] });
     } catch {

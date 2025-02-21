@@ -1,8 +1,4 @@
 import Client from "./struct/Client.js";
-import "./struct/extenders/index.js";
+import "./struct/Extensions.js";
 
-const dev = process.argv.includes("--dev");
-
-const client = new Client(dev);
-
-client.login();
+(new Client(process.argv.includes("--dev"))).login();
