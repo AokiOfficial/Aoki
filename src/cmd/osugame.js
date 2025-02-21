@@ -12,7 +12,6 @@ import {
 } from 'discord.js';
 import { osugame } from "../assets/const/import.js";
 import Pagination from '../struct/Paginator.js';
-import { v1, v2 } from 'osu-api';
 
 export default new class OsuGame extends Command {
   constructor() {
@@ -27,6 +26,7 @@ export default new class OsuGame extends Command {
     this.api_v2 = `${this.baseUrl}/api/v2`;
     this.api_oa = `${this.baseUrl}/oauth/token`;
     this.api_asset = "https://assets.ppy.sh";
+    this.osuV2Token = null;
   };
   async execute(i) {
     this.i = i;
@@ -54,7 +54,7 @@ export default new class OsuGame extends Command {
     const settings = i.user.settings;
     if (!settings) await i.user.update({ inGameName: "", defaultMode: "osu" });
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
-    const profile = await this.getProfile(user, mode);
+    const profile = await this.findUserByUsername(user, mode);
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
     // utilities
     const replies = ["Got that.", "Noted.", "I'll write that in.", "Updated for you.", "One second, writing that in.", "Check if this is right."];
@@ -80,7 +80,7 @@ export default new class OsuGame extends Command {
     // handle exceptions
     if (!user || !mode) return this.throw("You didn't configure your in-game info, baka. I don't know you.\n\nConfigure them with `/osu set` so I can store it.");
     if (!this.usernameRegex.test(user)) return this.throw("Baka, the username is invalid.");
-    let profile = await this.getProfile(user, mode);
+    let profile = await this.findUserByUsername(user, mode);
     if (!profile?.username) return this.throw("Baka, that user doesn't exist.");
 
     // utilities
@@ -189,8 +189,8 @@ export default new class OsuGame extends Command {
     try {
       // concurrently fetch the first 2 pages of country leaderboard
       const [page1, page2] = await Promise.all([
-        v2.ranking.list({ type: "performance", country_code: countryCode, mode }),
-        v2.ranking.list({ type: "performance", country_code: countryCode, mode, page: 2 }),
+        this.fetchRankingList({ type: "performance", country_code: countryCode, mode }),
+        this.fetchRankingList({ type: "performance", country_code: countryCode, mode, page: 2 }),
       ]);
       const rankings = [...page1.ranking, ...page2.ranking];
       if (!rankings.length) return this.throw(`No players found for country code ${countryCode}.`);
@@ -202,7 +202,7 @@ export default new class OsuGame extends Command {
       for (let j = 0; j < userIds.length; j += chunkSize) {
         const chunk = userIds.slice(j, j + chunkSize);
         const results = await Promise.allSettled(chunk.map(userId =>
-          v2.scores.list({
+          this.listAllUserScores({
             type: "user_beatmap_all",
             user_id: userId,
             beatmap_id: beatmapId,
@@ -233,14 +233,14 @@ export default new class OsuGame extends Command {
 
       const scoresPerPage = 5;
       const totalPages = Math.ceil(countryScores.length / scoresPerPage);
-      const beatmapDetails = await v2.beatmaps.details({ type: "difficulty", id: beatmapId });
+      const beatmapDetails = await this.fetchBeatmapDetails({ type: "difficulty", id: beatmapId });
       const beatmapTitle = `${beatmapDetails.beatmapset.artist} - ${beatmapDetails.beatmapset.title} [${beatmapDetails.version}]`;
       const pages = new Pagination();
 
       for (let pageIndex = 0; pageIndex < totalPages; pageIndex++) {
         const pageScores = countryScores.slice(pageIndex * scoresPerPage, (pageIndex + 1) * scoresPerPage);
         const scoreLines = await Promise.all(pageScores.map(async (score, idx) => {
-          const user = await v1.user.details(score.user_id, { type: "id" });
+          const user = await this.findUserById(score.user_id, { type: "id" });
           const rankEmote = util.rankEmotes[score.rank] || score.rank;
           const stats = score.statistics;
           let statsString = '';
@@ -250,7 +250,7 @@ export default new class OsuGame extends Command {
           if (mode === 'mania') statsString = `${stats.perfect || "0"}/${stats.great || "0"}/${stats.good || "0"}/${stats.ok || "0"}/${stats.meh || "0"}/${stats.miss || "0"}`;
           const displayedScore = sorting === 2 ? score.legacy_total_score : score.total_score;
           return [
-            `**${pageIndex * scoresPerPage + idx + 1}) ${user.name}**`,
+            `**${pageIndex * scoresPerPage + idx + 1}) ${user.username}**`,
             `▸ ${rankEmote} ▸ **${Number(score.pp).toFixed(2)}pp** ▸ ${(score.accuracy * 100).toFixed(2)}%`,
             `▸ ${displayedScore.toLocaleString()} ▸ x${score.max_combo}/${beatmapDetails.max_combo} ▸ [${statsString}]`,
             `▸ \`+${score.mods.map(mod => mod.acronym).join("") || 'NM'}\` ▸ Score set ||${util.formatDistance(new Date(score.ended_at), new Date())}||`
@@ -308,7 +308,7 @@ export default new class OsuGame extends Command {
     try {
       const searchParams = {
         query: query,
-        mode: Number(mode),
+        m: Number(mode),
         status: status,
         genre: genre,
         language: language,
@@ -319,7 +319,7 @@ export default new class OsuGame extends Command {
         searchParams.storyboard = storyboard ? '1' : '0';
       }
 
-      const { beatmapsets } = await v2.search({
+      const { beatmapsets } = await this.searchBeatmap({
         type: "beatmaps",
         ...searchParams
       });
@@ -409,12 +409,12 @@ export default new class OsuGame extends Command {
       return this.throw("An error occurred while searching for beatmaps. Please try again later.");
     }
   };
-  // internal utilities
+  // utilities
   async throw(content) {
     await this.i.editReply({ content });
     return Promise.reject();
   };
-  async getProfile(username, mode) {
+  async findUserByUsername(username, mode) {
     return (await fetch([
       `${this.api_v1}/get_user?`,
       `k=${process.env["OSU_KEY"]}&`,
@@ -431,4 +431,93 @@ export default new class OsuGame extends Command {
         iconURL: this.i.user.displayAvatarURL()
       });
   };
+
+  // osu!api helpers
+  async getOsuV2Token() {
+    // avoid spamming the osu api
+    // if the token is still valid, return it
+    if (this.osuV2Token && this.osuV2Token.expires_at > Date.now()) {
+      return this.osuV2Token.access_token;
+    }
+    // otherwise ask for it using our credentials
+    const params = new URLSearchParams({
+      client_id: this.dev ? process.env.OSU_DEV_ID : process.env.OSU_ID,
+      client_secret: this.dev ? process.env.OSU_DEV_SECRET : process.env.OSU_SECRET,
+      grant_type: 'client_credentials',
+      scope: 'public'
+    });
+    const res = await fetch(this.api_oa, {
+      method: 'POST',
+      body: params,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    });
+    const data = await res.json();
+    // then save it for later fetches until the end of the cycle
+    this.osuV2Token = {
+      access_token: data.access_token,
+      expires_at: Date.now() + (data.expires_in - 60) * 1000
+    };
+    return data.access_token;
+  }
+
+  // this function uses user id instead, which for the findUserByUsername function we don't know yet
+  async findUserById(userId, options) {
+    const params = new URLSearchParams({
+      k: process.env["OSU_KEY"],
+      u: userId.toString(),
+      type: options.type
+    });
+    const url = `${this.api_v1}/get_user?${params.toString()}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    return data[0] || null;
+  }
+
+  async fetchRankingList({ type, country_code, mode, page = 1 }) {
+    const token = await this.getOsuV2Token();
+    const url = `${this.api_v2}/rankings/${mode}/${type}?country=${country_code}&cursor[page]=${page}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    return await res.json();
+  }
+
+  async listAllUserScores({ type, user_id, beatmap_id, mode, include_fails, limit }) {
+    const token = await this.getOsuV2Token();
+    const url = [
+      `${this.api_v2}/beatmaps/${beatmap_id}`, // beatmap path
+      `/scores/users/${user_id}/all`, // all user scores on beatmap
+      `?mode=${mode}`, // the gamemode of the play (for converts)
+      `&type=${type}`, // the type of score to fetch
+      `&include_fails=${include_fails}`, // whether to include failed scores
+      `&limit=${limit}` // the number of scores to fetch
+    ].join("");
+    const res = await fetch(url, {
+      headers: { 
+        "Authorization": `Bearer ${token}`, 
+        "x-api-version": "20240130" // api version has to precisely be this in order to have the legacy score fields
+      }
+    });
+    const responses = await res.json();
+    return responses.scores;
+  }
+
+  async fetchBeatmapDetails({ type, id }) {
+    const token = await this.getOsuV2Token();
+    const url = `${this.api_v2}/beatmaps/${id}?type=${type}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, "x-api-version": "20240130" }
+    });
+    return await res.json();
+  }
+
+  async searchBeatmap(params) {
+    const token = await this.getOsuV2Token();
+    const searchParams = new URLSearchParams(params);
+    const url = `${this.api_v2}/beatmapsets/search?${searchParams.toString()}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${token}`, "x-api-version": "20240130" }
+    });
+    return await res.json();
+  }
 }

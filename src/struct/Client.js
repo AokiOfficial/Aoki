@@ -1,5 +1,4 @@
 import { Client, GatewayIntentBits, Partials, Options, Collection, REST, Routes } from 'discord.js';
-import { auth } from "osu-api";
 // In order to use mongodb library, work with the logics from this branch and the v4.1 release code.
 // The Settings.js file also in this directory can be straight up replaced with the v4.1 release code, and it will work.
 // However, also make sure to replace the Schedule.js file also in this directory with it, because it uses bare mongoose methods.
@@ -168,19 +167,6 @@ class AokiClient extends Client {
     this.db = mongoose.connection;
     
     for (const settings of Object.values(this.settings)) { await settings.init() };
-
-    await auth.login({
-      type: 'v2',
-      client_id: this.dev ? process.env.OSU_DEV_ID : process.env.OSU_ID,
-      client_secret: this.dev ? process.env.OSU_DEV_SECRET : process.env.OSU_SECRET,
-      cached_token_path: this.dev ? process.cwd() + `/src/assets/token-${Date.now().toString()}.json` : process.cwd() + `/token-${Date.now().toString()}.json`
-    });
-    await auth.login({
-      type: 'v1',
-      api_key: process.env.OSU_KEY
-    });
-
-    this.util.success("osu! API authorized", "[osu!]");
 
     new AokiWebAPI(this).serve();
 
