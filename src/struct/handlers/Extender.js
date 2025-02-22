@@ -3,7 +3,7 @@
  * 
  * The class is safe against overwrites, i.e. if you try to rewrite an 
  * already existing property, it will throw an error unless you explicitly
- * allow it using a flag.
+ * allow it with the boolean option.
  */
 export default class Extender {
   /**
@@ -23,14 +23,15 @@ export default class Extender {
    * @param {Array} extensions An array of objects. Each object should have:
    * - `name`: The name of the new property.
    * - `definition`: The property descriptor.
+   * @param {Boolean} overwrite Whether to allow overwriting existing properties.
    */
-  prepare(extensions) {
+  prepare(extensions, overwrite = false) {
     if (!Array.isArray(extensions)) throw new Error('Extensions must be an array');
     if (!this.target) throw new Error('Target must be a prototype');
     extensions.forEach(({ name, definition }) => {
       // safety checkers
       if (!name || typeof name !== 'string') throw new Error('Name must be a string');
-      if (name in this.target) throw new Error(`The property "${name}" already exists`);
+      if (name in this.target && !overwrite) throw new Error(`The property "${name}" already exists`);
       if (!definition || typeof definition !== 'object') throw new Error('Definition must be an object');
       // append to the list
       this.prepareArray.push({ name, definition });
