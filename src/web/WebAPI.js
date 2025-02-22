@@ -42,7 +42,7 @@ export default class AokiWebAPI {
   serve() {
     Bun.serve({
       port: this.port,
-      async fetch(request) {
+      fetch: async (request) => {
         return this.routeHandler(request);
       }
     });
