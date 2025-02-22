@@ -50,6 +50,30 @@ export default class Utilities {
     this.fetchBadWordsRegex();
   }
   /**
+   * Process an exception event (unhandledRejection or uncaughtException)
+   * @param {string} event The event name
+   * @param {Array} args Array with the error as the first element
+   * @param {object} client The client, used to get the channel and warn if needed
+   * @returns {Promise}
+   */
+  processException(event, args, client) {
+    const channel = client.channels.cache.get("864096602952433665");
+    const error = args[0];
+  
+    console.log(error);
+    const stack = error.stack
+      ?.split("\n")
+      .slice(0, 5)
+      .join("\n")
+      .split(process.cwd())
+      .join("MAIN_PROCESS") || "";
+  
+    const message = `\\🛠 ${error.name} caught!\n\`\`\`xl\n${stack}\n.....\n\`\`\``;
+  
+    if (channel) return channel.send(message);
+    else return client.util.warn(`Channel not found for event '${event}'`, "[PROCESS]");
+  };
+  /**
    * Logs an errornous action to console.
    * @param {String} message The message to log
    * @param {String} title The title of the error message

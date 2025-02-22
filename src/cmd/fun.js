@@ -80,7 +80,7 @@ export default new class Fun extends Command {
       finalShipResponse = `Fair, I'd say you two need some time. You two scored **${normalRate}%**, not like I like the rate or something.`;
     } else if (normalRate <= 70) {
       finalShipResponse = `Alright, that's fine. You two scored **${normalRate}%**, I think I like that.`;
-    } else if (normalRate <= 90) {
+    } else if (normalRate <= 99) {
       finalShipResponse = `Hey! That's pretty good, I rarely see a couple scoring this nicely. A whopping **${normalRate}%**!`;
     } else if (normalRate == 100) {
       finalShipResponse = "Holy cow. Perfect couple right here duh? **100%** ship rate!";
@@ -130,7 +130,7 @@ export default new class Fun extends Command {
   };
   // owo command
   async owo(i, query) {
-    const res = await fetch(`https://nekos.life/api/v2/owoify?${query}`).then(res => res.json());
+    const res = await fetch(`https://nekos.life/api/v2/owoify?text=${query}`).then(res => res.json());
     await i.editReply({ content: res.owo });
   };
   // internal utilities
@@ -143,7 +143,6 @@ export default new class Fun extends Command {
   async fetchAndSend(i, url, path) {
     const res = await fetch(url).then(res => res.json());
     let data = path.split('.').reduce((acc, part) => acc[part], res);
-    if (!data?.endsWith(".")) data += "."; /* I'm annoyed by this */
     await i.editReply({ content: data });
   };
   get embed() {

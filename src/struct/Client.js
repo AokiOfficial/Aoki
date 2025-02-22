@@ -9,7 +9,6 @@ import Schedule from './Schedule.js';
 import AokiWebAPI from '../web/WebAPI.js';
 import DBL from "./DBL.js";
 import schema from '../assets/const/schema.js';
-import processEvents from '../assets/util/exceptions.js';
 
 class AokiClient extends Client {
   constructor(dev) {
@@ -29,24 +28,26 @@ class AokiClient extends Client {
         BaseGuildEmojiManager: 0,
         GuildBanManager: 0,
         GuildInviteManager: 0,
-        // limit cache to 200 guild members
-        // keep only the bot's own member object if limit is exceeded
-        GuildMemberManager: {
-          maxSize: 200,
-          keepOverLimit: member => member.id === this.user?.id
-        },
         GuildScheduledEventManager: 0,
         GuildStickerManager: 0,
+        // limit guild member cache to 100 per guild
+        GuildMemberManager: {
+          maxSize: 100,
+          // retain the bot's own member object when the limit is reached
+          keepOverLimit: member => member.id === this.user?.id
+        },
+        // limit message cache to 50 per channel
         MessageManager: {
-          maxSize: 200,
+          maxSize: 50,
           keepOverLimit: message => message.author.id === this.user?.id
         },
         PresenceManager: 0,
         StageInstanceManager: 0,
         ThreadManager: 0,
         ThreadMemberManager: 0,
+        // limit user cache to 150
         UserManager: {
-          maxSize: 200,
+          maxSize: 150,
           keepOverLimit: user => user.id === this.user?.id
         },
         VoiceStateManager: 0
@@ -73,14 +74,12 @@ class AokiClient extends Client {
     this.util.warn("Logging in...", "[Warn]");
   };
   /**
-   * Load commands
+   * Load all modules (commands, events and extenders)
    * @returns {Promise<void>}
    */
-  async loadCommands() {
+  async loadModules() {
+    // load commands
     const commands = [];
-
-    // lazy load command modules only when loadCommands is invoked
-    // for esbuild to include these in the bundle, the import paths must be static
     const loadCommandModules = async () => Promise.all([
       import('../cmd/anime.js'),
       import('../cmd/fun.js'),
@@ -89,17 +88,13 @@ class AokiClient extends Client {
       import('../cmd/utility.js'),
       import('../cmd/verify.js'),
     ]);
-    
     const commandModules = await loadCommandModules();
-
     for (const commandModule of commandModules) {
       const command = commandModule.default;
       this.commands.set(command.data.name, command);
       commands.push(command.data.toJSON());
     }
-
     const rest = new REST({ version: '10' }).setToken(this.dev ? process.env.TOKEN_DEV : process.env.TOKEN);
-
     if (this.dev) {
       rest.put(Routes.applicationGuildCommands(process.env.APPID_DEV, process.env.GUILD), { body: commands })
         .catch(console.error);
@@ -107,31 +102,54 @@ class AokiClient extends Client {
       rest.put(Routes.applicationCommands(process.env.APPID), { body: commands })
         .catch(console.error);
     }
-  }
 
-  /**
-   * Load events
-   * @returns {Promise<void>}
-   */
-  async loadEvents() {
+    // load events
     const loadEventModules = async () => Promise.all([
       import('../events/interactionCreate.js'),
       import('../events/messageCreate.js'),
       import('../events/ready.js'),
     ]);
     const eventModules = await loadEventModules();
-
     for (const eventModule of eventModules) {
       const event = eventModule.default;
       this.events.set(event.name, event);
-
       if (event.once) {
         this.once(event.name, (...args) => event.execute(this, ...args));
       } else {
         this.on(event.name, (...args) => event.execute(this, ...args));
       }
     }
+
+    // load extenders
+    const loadExtenderModules = async () => Promise.all([
+      import('../extends/user.js'),
+      import('../extends/guild.js'),
+    ]);
+    const extenderModules = await loadExtenderModules();
+    for (const extenderModule of extenderModules) {
+      const Extender = extenderModule.default;
+      new Extender(this).apply();
+    }
+    this.util.success("Loaded commands, events and extenders", "[Loader]");
+  };
+
+  /**
+   * Load database
+   * @returns {Promise<void>}
+   */
+  async loadDatabase() {
+    const url = process.env.MONGO_KEY;
+    this.dbClient = await MongoClient.connect(url, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
+    this.util.success("Loaded database", "[Loader]");
+    this.db = this.dbClient.db();
   }
+
   /**
    * Listen to internal exception throws
    * @param {Array} events Exception names
@@ -141,7 +159,7 @@ class AokiClient extends Client {
     for (const event of events) {
       process.on(event, (...args) => {
         if (config.ignore && typeof config.ignore === "boolean") return;
-        else return processEvents(event, args, this);
+        else return this.util.processException(event, args, this);
       });
     }
   };
@@ -151,7 +169,7 @@ class AokiClient extends Client {
    */
   onReady() {
     this.ready = true;
-    this.util.success(`Logged in as ${this.user.username}`, "[Client]");
+    this.util.success(`Loaded client: ${this.user.username}`, "[Loader]");
   };
   /**
    * Load everything
@@ -159,25 +177,15 @@ class AokiClient extends Client {
    */
   async init() {
     this.listenToProcess(['unhandledRejection', 'uncaughtException'], { ignore: false });
-    await this.loadCommands();
-    await this.loadEvents();
-
-    const url = process.env.MONGO_KEY;
-    this.dbClient = await MongoClient.connect(url, {
-      serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-      }
-    });
-    this.util.success("Connected to database", "[Database]");
-    this.db = this.dbClient.db();
-    
+    // load modules
+    await this.loadModules();
+    await this.loadDatabase();
+    // init settings
     await Promise.all(Object.values(this.settings).map(setting => setting.init()));
-    
+    // init web server
     new AokiWebAPI(this).serve();
-
-    this.util.success("Loaded commands, settings and web server", "[General]");
+    
+    this.util.success("Loaded settings and web server", "[Loader]");
   };
   /**
    * Log into client
