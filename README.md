@@ -21,20 +21,25 @@ You want to know more right now? Head to the [info file](/INFO.md), or [invite h
 To host the project with traditional Node.js, read below.
 
 ## Tech stacks
-Aoki is written in **JavaScript**. There are no plans to rewrite it into another language. Community rewrites are welcome, but they are **not official**.
+### Language
+Aoki is written in **JavaScript**. There are no plans to rewrite it into another language. Community rewrites are welcome, but they are not official.
 
-**CommonJS** is not supported. This project uses ESM.
+CommonJS is not supported. This project uses ESM.
 
+### Database
 Aoki uses **MongoDB**. She uses the `mongodb` library, but release v4.2 has support for `mongoose`. Both logics are interchargable, please check the [Client.js](/src/struct/Client.js) file for more info.
 
-Aoki **heavily relies** on APIs and external projects, and most redundant libraries are implemented as a single function in [Utilities.js](/src/struct/Utilities.js). This is why the project is very small in disk space size and codebase size. After building, the entire codebase and libraries weigh a stunning **2.102MB**.
-
+### Runtime
 Aoki officially supports Bun v1.2+. It is recommended to use Bun for the time being, because loading `.env` file won't be an issue and Bun has a built-in `serve()`, which is really fast, for web stuff.
 
 Aoki *technically* supports Node.js v22+ if you rewrite the [WebAPI.js](/src/web/WebAPI.js) file to use a different web library (such as `fastify`).
 
 If for some reason you cannot use Node.js v22+ and Bun but a lower version of Node.js, do the above and install `dotenv` to load your `.env` file before doing anything.
 
+### Project size
+Aoki **heavily relies** on APIs and external projects, and most redundant libraries are implemented as a single function in [Utilities.js](/src/struct/Utilities.js). This is why the project is very small in disk space size and codebase size. After building, the entire codebase and libraries weigh just a fraction more than 2MB.
+
+### Future-proof
 Check the [roadmap](https://github.com/AokiOfficial/Aoki/issues/6) for future planned implementations.
 
 ## Local development setup
@@ -42,23 +47,15 @@ Make sure you have Bun v1.2+ on your local machine. [Install it here](https://bu
 
 Place all the necessary keys required by first renaming the `.env.example` file to `.env`, and then fill it. **It is recommended that you use only the DEV variant of the keys.**
 
-Install all dependencies by doing
+Start the dev client by running this one-liner (which installs all dependencies and start it):
 ```bash
-bun i
-```
-If everything goes well, start the application by doing
-```bash
-npm run dev
+bun i && npm run dev
 ```
 For Node.js users, or if you prefer to have this running on Node.js, first make sure you [install it here](https://nodejs.org/en). Select Node 20+ to skip `dotenv` installation.
 
-Install all dependencies by doing
+Then, just change the installer and run it:
 ```bash
-npm i
-```
-Start the application by doing
-```bash
-node src/main
+npm i && npm run dev
 ```
 
 ## Project structure
@@ -74,13 +71,21 @@ aoki
 │   ├── ...
 │   ├── assets     # static JS files
 │   │   ├── const       # files rarely update
-│   │   └── util        # utilities & direct library port
+│   │   └── util        # heavy utilities
 │   ├── struct     # code structure files
-│   │   └── handlers    # extenders for Discord.js
+│   │   └── handlers    # handlers
 │   ├── events     # Discord.js events
+│   ├── extends    # function extenders
+│   ├── web        # web API (barebones)
 │   └── cmd        # main commands files
 └── 
 ```
+The project follows a class-based approach to commands, events and extenders. 
+- To make a new command, make a class extending [Command.js](/src/struct/handlers/Command.js).
+- To handle a new event, make a class extending [Event.js](/src/struct/handlers/Event.js).
+- To extend a new prototype, make a class extending [Extender.js](/src/struct/handlers/Extender.js).
+
+After that, to load the new files, statically import them in [Client.js](/src/struct/Client.js), inside the `loadModules` function.
 
 ## Code License & Contribution
 [GPL-3.0](/LICENSE).
