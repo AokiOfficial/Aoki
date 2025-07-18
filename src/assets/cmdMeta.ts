@@ -519,6 +519,10 @@ export const meta = {
         } as Locale
       },
       view: {
+        mappack: {
+          "en-US": "whether to make a mappack for this execution or not, default no.",
+          "vi": "có tạo mappack cho lệnh này không? mặc định là không."
+        },
         loc: {
           name: [
             ['en-US', 'view'],

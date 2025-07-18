@@ -115,6 +115,8 @@ export default class Approve extends SubCommand {
     if (existingMap) {
       // Update existing map
       existingMap.url = url;
+      existingMap.fullRecognizer = `${mapInfo.beatmapset.artist} - ${mapInfo.beatmapset.title} [${mapInfo.version}]`;
+      
       await guild.update({
         tournament: settings
       });

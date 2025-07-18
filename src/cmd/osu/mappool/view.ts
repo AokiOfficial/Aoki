@@ -6,17 +6,27 @@ import {
   Embed,
   Group,
   Locales,
-  SubCommand
+  Options,
+  SubCommand,
+  createBooleanOption
 } from "seyfert";
+
+const options = {
+  mappack: createBooleanOption({
+    description: 'whether to make a mappack for this execution or not, default no.',
+    description_localizations: meta.osu.mappool.view.mappack
+  })
+};
 
 @Declare({
   name: 'view',
   description: 'view the finalized mappool for the current round.'
 })
 @Locales(meta.osu.mappool.view.loc)
+@Options(options)
 @Group('mappool')
 export default class View extends SubCommand {
-  async run(ctx: CommandContext): Promise<void> {
+  async run(ctx: CommandContext<typeof options>): Promise<void> {
     const t = ctx.t.get(ctx.interaction.user.settings.language).osu.mappool.view;
     await ctx.deferReply();
 
@@ -78,7 +88,7 @@ export default class View extends SubCommand {
     // this feature is highly experimental (and very wasteful)
     // TODO: offload this to API server
     let mappackURL;
-    if (guild.settings.whitelistedForNewFeatures) {
+    if (guild.settings.whitelistedForNewFeatures && ctx.options.mappack) {
       mappackURL = await fetch(`${process.env.DB}/s3/generate`, {
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.INTERNAL_KEY}` },
@@ -130,7 +140,7 @@ export default class View extends SubCommand {
           od = mods.includes("HR")
             ? parseFloat((Math.floor(Math.min(beatmap.accuracy * 1.4, 10) * 100) / 100).toFixed(2)).toString()
             : mods.includes("DT")
-              ? parseFloat((Math.floor((50 - ((50 - 3 * beatmap.accuracy) / 1.5)) * 100) / 100).toFixed(2)).toString()
+              ? parseFloat((Math.floor(((50 - ((50 - 3 * beatmap.accuracy) / 1.5)) / 3) * 100) / 100).toFixed(2)).toString()
               : parseFloat((Math.floor(beatmap.accuracy * 100) / 100).toFixed(2)).toString();
 
           sr = attr
@@ -162,9 +172,29 @@ export default class View extends SubCommand {
     const highestSr = Math.max(...srValues);
     const lowestSr = Math.min(...srValues);
 
+    function sortBySlot(mapDetails: string[], desiredOrder: string[]): string[] {
+      return mapDetails.sort((a, b) => {
+        const getSlot = (str: string) => {
+          const match = str.match(/([A-Z]+[0-9]*)/);
+          return match ? match[1] : "";
+        };
+
+        const slotA = getSlot(a);
+        const slotB = getSlot(b);
+
+        const idxA = desiredOrder.indexOf(slotA);
+        const idxB = desiredOrder.indexOf(slotB);
+
+        return idxA - idxB;
+      });
+    };
+
+    // Use the function before creating the embed
+    const sortedMapDetails = sortBySlot(mapDetails, mappool.slots);
+
     const preDesc = [
       t.someInfo,
-      `- ${t.totalMaps(mapDetails.length)}`,
+      `- ${t.totalMaps(sortedMapDetails.length)}`,
       `- ${t.srRange(highestSr, lowestSr)}`,
       mappackURL ? `- ${t.mappack(mappackURL.url)}\n\n` : "\n"
     ].join("\n");
@@ -172,7 +202,7 @@ export default class View extends SubCommand {
     // Create a single embed with all maps
     const embed = new Embed()
       .setTitle(t.embedTitle(currentRound))
-      .setDescription(preDesc + mapDetails.join('\n'))
+      .setDescription(preDesc + sortedMapDetails.join('\n'))
       .setColor(10800862)
       .setTimestamp();
 

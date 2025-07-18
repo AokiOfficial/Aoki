@@ -16,6 +16,7 @@ import ViewSuggestions from "./mappool/view-suggestions";
 // Tourney commands
 import AddRole from "./tourney/add-role";
 import AddRound from "./tourney/add-round";
+import RemoveRound from "./tourney/remove-round";
 import Current from "./tourney/current";
 import Delete from "./tourney/delete";
 import Make from "./tourney/make";
@@ -53,6 +54,6 @@ import SetReplayChannel from "./tourney/set-replay-channel";
   TrackLicense,                View,                     Delete,
   VerifyArtist,                ViewSuggestions,          Make,
   Profile,                                               SetReplayChannel,
-  Set
+  Set,                                                   RemoveRound
 ])
 export default class OsuGame extends Command {};
