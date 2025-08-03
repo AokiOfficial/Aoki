@@ -185,8 +185,7 @@ export default class AokiClient extends Client {
     await Promise.all([
       this.loadDatabase(),
       this.requestV2Token(),
-      this.loadEssentials(),
-      Object.values(this.settings).map(async settings => await settings.init())
+      this.loadEssentials()
     ]);
     // Load default locale
     this.setServices({ langs: { default: 'en-US' } });

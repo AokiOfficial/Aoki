@@ -86,19 +86,17 @@ export default class View extends SubCommand {
 
     // we don't make one if the server is not beta
     // this feature is highly experimental (and very wasteful)
-    // TODO: offload this to API server
     let mappackURL;
     if (guild.settings.whitelistedForNewFeatures && ctx.options.mappack) {
-      mappackURL = await fetch(`${process.env.R2_SERVER}/s3/generate`, {
+      mappackURL = await fetch(process.env.R2_SERVER!, {
         method: "POST",
-        headers: { Authorization: `Bearer ${process.env.INTERNAL_KEY}` },
-        body: JSON.stringify({
-          maps: mappool.maps,
-          r2PublicBaseURL: "https://cdn.mewo.eu.org",
-          osuAPIv2Key: await ctx.client.requestV2Token()
-        })
-      }).then(async res => await res.json());
-    }
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.INTERNAL_KEY}`
+        },
+        body: JSON.stringify({ maps: mappool.maps })
+      }).then(async res => await res.json())
+    };
 
     // Fetch all beatmap details and create description
     const mapDetails = [];
