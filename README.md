@@ -26,13 +26,11 @@ For very technical and obscure details I learned with Seyfert, head over to [INS
 All technologies are still the same, except without Discord.js and with Seyfert.
 
 ## Disclaimer for self-hosters
-Aoki is becoming more difficult to self-host starting from this version where the main server split into different places to offload heavy works. Whatever you do from this version still stands under the impression that *you understand the code and its specifications*, and no support will be handed out to do this.
+Aoki is becoming more difficult to self-host starting from this version where the main server split into different places to offload heavy works. Whatever you do from this version still stands under the impression that *you understand the code and its specifications*.
 
-Aoki's API server is basically the old code mashed together and exposed through a Bun server like it normally does. The full source code of this part is going to be on a new repository and maintained by me frequently. The server contains Aoki's verification API and [Cloudflare R2](https://developers.cloudflare.com/r2/) handlers, which is basically an S3-compatible bucket for all your object storage, to implement a new functionality of [making mappacks for mappools](/src/struct/utils/OsuGame.ts).
+Her API server is currently messy, so the source will be kept private until I clean that up. Her new S3-compatible bucket, Cloudflare R2, is public [here](https://github.com/ProjectMewo/AokiR2). More info about what that is and what it's used for is over there.
 
 Both of these are on Cloudflare Workers, which has a very generous free tier. A poor developer's best friend to keep hobby projects alive is free stuff.
-
-It's also pretty difficult to make sure all of Aoki's dependencies are online at once, so in production use you should implement caching/similar behavior to fallback to something else.
 
 ## Local development setup
 Make sure you have Bun on your local machine. [Install it here](https://bun.sh). Seyfert also supports Node or whatever it does, check their docs, but I made it work with Bun.
