@@ -2,6 +2,11 @@
 
 This is a guide on how to work with the Aoki codebase in general, and how to combat the ambiguity of what Seyfert's state is right now through what I discovered through trial-and-error.
 
+This documentation was written on:
+- Seyfert v3.1.2
+- Aoki v4.5 (which is this branch)
+- 26 hours of coffee
+
 It assumes you have basic understandings of how Discord API for bots roughly works, and the appropriate TypeScript knowledge.
 
 For more realistic examples, refer to the actual files inside the project.
@@ -109,7 +114,7 @@ await client.langs!.set('', [{ name: 'en', file: EnLang}]);
 await client.components!.set('', client, [ButtonC]);
 ```
 
-Workers bundle your code using `esbuild`, which implies you actually *can*, in one way or another, bundle your code into a file and use it. But because that guide's section is so outdated - in fact, none of the method on the code above is usable as-is - it makes it pretty difficult to figure out what the hell you have to do.
+Workers bundle your code using `esbuild`, which implies you actually *can*, in one way or another, bundle your code into a file and use it. But because that guide's section is very outdated - apparently, none of the methods on the code above is usable as-is - it's hard to figure out what you have to do.
 
 This is what you're supposed to do for the commands:
 - If you're using any of these two decorators, `@GroupsT` and `@LocalesT`, remove them and use `@Groups` and `@Locales` instead. They are *dynamically loaded* and will fall back to nothing on build, causing Discord API errors about your command metadata:
@@ -155,7 +160,7 @@ path?: string;
 // --- cut ---
 if ('path' in file) // ...
 ```
-- Here comes the difficult to realize part. Because the code of the library assumes our keys are inside a property `default`, which is exactly what `import()` does, you need to use top-level await to import the file statically into the handler. The devastating part is that it does not tell you if it couldn't find the file, or you got this wrong and used normal `import` statement instead.
+- Here comes the difficult to realize part. Because the code of the library assumes our keys are inside a property `default`, which is what dynamic `import()` returns, you need to use top-level await to import the file statically into the handler. The devastating part is that it does not tell you if it couldn't find the file, or you got this wrong and used normal `import` statement instead.
 ```ts
 client.langs.set([
   { language: 'en-US', file: await import('/path/to/en-US.ts') },
