@@ -1,12 +1,15 @@
 # Implementing new stuff
 
-This is a guide on how to work with the Aoki codebase.
+This is a guide on how to work with the Aoki codebase in general, and how to combat the ambiguity of what Seyfert's state is right now through what I discovered through trial-and-error.
 
-It assumes you have basic understanding of how Discord API for bots roughly works, and appropriate TypeScript knowledge.
+It assumes you have basic understandings of how Discord API for bots roughly works, and the appropriate TypeScript knowledge.
 
 For more realistic examples, refer to the actual files inside the project.
 
 ## Table of Contents
+
+This is a fairly long read. Jump to where you want to see:
+
 - [Error handling](#error-handling)
 - [Locales](#locales)
 - [Database & API](#database--api)
@@ -152,7 +155,7 @@ path?: string;
 // --- cut ---
 if ('path' in file) // ...
 ```
-- Here comes the difficult to realize part. Because the code of the library assumes our keys are inside a property `default`, which is exactly what `import` does, you need to use top-level await to import the file statically into the handler. The devastating part is that it does not tell you if it couldn't find the file, or you got this wrong and used normal `import` statement instead.
+- Here comes the difficult to realize part. Because the code of the library assumes our keys are inside a property `default`, which is exactly what `import()` does, you need to use top-level await to import the file statically into the handler. The devastating part is that it does not tell you if it couldn't find the file, or you got this wrong and used normal `import` statement instead.
 ```ts
 client.langs.set([
   { language: 'en-US', file: await import('/path/to/en-US.ts') },
@@ -174,7 +177,7 @@ client.events.set([
 ```
 Seyfert also can't know if you have bundled your `seyfert.config` or not, so by default you are forced to include it in with the exposed token (not the `process.env`ed one if you don't include `.env`!)
 
-Finally (holy, not done?!), only after you remove the paths from your `seyfert.config` that you can finally bundle your code. Otherwise, Seyfert will trigger its search to something doesn't exist after bundle.
+Finally (holy, not done?!), only after you remove the paths from your `seyfert.config` that you can finally bundle your code. Otherwise, Seyfert will trigger its search to something that doesn't exist after bundle.
 ```ts
 // only leave this alone
 // other stuff, remove them all
@@ -184,7 +187,7 @@ locations: {
 ```
 Bundle your code. It should work now.
 
-All this took me 2 days to figure out.
+All this took me 48 hours to figure out.
 
 ## Commands
 
@@ -264,7 +267,7 @@ That way, you keep all the other file contents intact and commands will still be
 
 ## Extending built-in classes
 
-Sometimes you might have a need of a shorthand function, or a property accessor. Everything like this happens inside the [extenders folder](/src/struct/extenders/).
+Sometimes you might need shorthand functions, or property accessors. Everything like this happens inside the [extenders folder](/src/struct/extenders/).
 
 For instance, if you need to have some string inside the `CommandContext` through some specific property name, go into the file for that class in there (or create a new one if none exists), and add it in:
 
@@ -283,7 +286,7 @@ declare module 'seyfert' {
 export { specific_property_name };
 ```
 
-When you're done adding it there, you still need to put it inside Seyfert. You have only let the TypeScript server know it is *a valid value with type*, but Seyfert didn't catch up yet. To let it catch up, get into the `index.ts` file and use the ol' reliable `Object#defineProperties`:
+When you're done adding it there, you still need to put it inside Seyfert. You have only let the TypeScript server know what you wrote is a thing, but Seyfert didn't catch up yet. Get into the `index.ts` file and use the ol' reliable `Object#defineProperties`:
 
 ```ts
 // --- cut ---

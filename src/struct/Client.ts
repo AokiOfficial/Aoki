@@ -3,6 +3,7 @@ import { Client } from "seyfert";
 import { ActivityType, PresenceUpdateStatus } from "seyfert/lib/types";
 import Settings from "./Settings";
 import Schedule from "./Schedule";
+import { MongoClient, ServerApiVersion } from "mongodb";
 // Utility imports
 import AnilistUtil from "@utils/AniList";
 import ArrayUtil from "@utils/Array";
@@ -12,6 +13,7 @@ import ProfaneUtil from "@utils/Profane";
 import StringUtil from "@utils/String";
 import TimeUtil from "@utils/Time";
 import DBL from "@utils/DBL";
+import schema from "@assets/schema";
 // Command imports
 import Anime from "../cmd/anime";
 import Fun from "../cmd/fun";
@@ -31,7 +33,7 @@ export default class AokiClient extends Client {
       presence: () => ({
         status: PresenceUpdateStatus.Idle,
         activities: [{
-          name: "in development mode running Seyfert!",
+          name: "the 2nd dev stage!",
           type: ActivityType.Watching,
         }],
         since: Date.now(),
@@ -40,6 +42,8 @@ export default class AokiClient extends Client {
     });
     this.dev = process.argv.includes('--dev');
     this.schedule = new Schedule(this);
+    this.dbClient = null;
+    this.db = null;
     this.lastGuildCount = null;
     this.startTime = Date.now();
     this.ready = false;
@@ -48,10 +52,10 @@ export default class AokiClient extends Client {
       expires_at: 0
     };
     this.settings = {
-      users: new Settings("users"),
-      guilds: new Settings("guilds"),
-      schedules: new Settings("schedules"),
-      verifications: new Settings("verifications")
+      users: new Settings(this, "users", schema.users),
+      guilds: new Settings(this, "guilds", schema.guilds),
+      schedules: new Settings(this, "schedules", schema.schedules),
+      verifications: new Settings(this, "verifications", schema.verifications)
     };
     this.utils = {
       anilist: new AnilistUtil(this),
@@ -83,6 +87,25 @@ export default class AokiClient extends Client {
       lastUpdated: 0
     }
   }
+
+  /**
+   * Load database
+   * @returns {Promise<void>}
+   */
+  private async loadDatabase(): Promise<void> {
+    const url = process.env.DB!;
+    this.dbClient = await MongoClient.connect(url, {
+      serverApi: {
+        version: ServerApiVersion.v1,
+        strict: true,
+        deprecationErrors: true,
+      }
+    });
+    this.logger.info("Connected to MongoDB");
+    this.db = this.dbClient.db();
+    
+    await Promise.all(Object.values(this.settings).map(settings => settings.init()));
+  };
 
   /**
    * Request an osu! API v2 token, then saves it.
@@ -160,6 +183,7 @@ export default class AokiClient extends Client {
    */
   private async init(): Promise<void> {
     await Promise.all([
+      this.loadDatabase(),
       this.requestV2Token(),
       this.loadEssentials(),
       Object.values(this.settings).map(async settings => await settings.init())

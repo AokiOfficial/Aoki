@@ -89,7 +89,7 @@ export default class View extends SubCommand {
     // TODO: offload this to API server
     let mappackURL;
     if (guild.settings.whitelistedForNewFeatures && ctx.options.mappack) {
-      mappackURL = await fetch(`${process.env.DB}/s3/generate`, {
+      mappackURL = await fetch(`${process.env.R2_SERVER}/s3/generate`, {
         method: "POST",
         headers: { Authorization: `Bearer ${process.env.INTERNAL_KEY}` },
         body: JSON.stringify({

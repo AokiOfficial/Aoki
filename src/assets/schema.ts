@@ -50,13 +50,7 @@ export default {
         suggestions: [{
           slot: "",
           urls: []
-        }],
-        replays: [{
-          slot: "",
-          replayer: "",
-          messageUrl: ""
-        }],
-        replayChannelId: ""
+        }]
       }],
       roles: {
         host: [],

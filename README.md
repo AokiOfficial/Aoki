@@ -26,12 +26,11 @@ For very technical and obscure details I learned with Seyfert, head over to [INS
 All technologies are still the same, except without Discord.js and with Seyfert.
 
 ## Disclaimer for self-hosters
-Aoki is becoming highly difficult to self-host starting from this version where the main server split into different places to offload heavy works. Whatever you do from this version still stands under the impression that *you understand the code and its specifications*, and no support will be handed out to do this.
+Aoki is becoming more difficult to self-host starting from this version where the main server split into different places to offload heavy works. Whatever you do from this version still stands under the impression that *you understand the code and its specifications*, and no support will be handed out to do this.
 
-Aoki's API server is basically the old code mashed together and exposed through a Bun server like it normally does. The full source code of this part is going to be on a new repository and maintained by me frequently. The server contains:
-- Aoki's new [Cloudflare R2](https://developers.cloudflare.com/r2/), which is basically an S3-compatible bucket for all your object storage, to implement a new functionality of [making mappacks for mappools](/src/struct/utils/OsuGame.ts).
-- Aoki's database server. While maintaining the connection within the client is the preferred approach, I prefer moving it there for all the resources and only keep a cache copy. Later on, when Redis is a necessity, implementing that on top of this source code will be easier.
-- Most the heavy computing (creating zip files, OCR, etc.) is gradually moved to the more powerful server so Aoki's source code can be moved and hosted wherever I feel like putting her in.
+Aoki's API server is basically the old code mashed together and exposed through a Bun server like it normally does. The full source code of this part is going to be on a new repository and maintained by me frequently. The server contains Aoki's verification API and [Cloudflare R2](https://developers.cloudflare.com/r2/) handlers, which is basically an S3-compatible bucket for all your object storage, to implement a new functionality of [making mappacks for mappools](/src/struct/utils/OsuGame.ts).
+
+Both of these are on Cloudflare Workers, which has a very generous free tier. A poor developer's best friend to keep hobby projects alive is free stuff.
 
 It's also pretty difficult to make sure all of Aoki's dependencies are online at once, so in production use you should implement caching/similar behavior to fallback to something else.
 
@@ -53,7 +52,7 @@ This is a learning project pushed to production, use any code that makes sense t
 To contribute, simply make a fork of this repository, make your changes, then make a pull request. There is a template ready for a standard PR.
 
 To work with the codebase, specifically this branch, make sure:
-- You do not edit `tsconfig.tson` to make whatever you want works.
+- You do not edit `tsconfig.json` to make whatever you want works.
 - You document the code wherever relevant; i.e. stuff that will be hard to look at without it, if you're making a PR.
 - You keep the overall structure intact and consistent. Sync with other files if there is already one (or some) of the same format.
 - You stay sane and happy.

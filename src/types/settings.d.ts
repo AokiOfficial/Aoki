@@ -157,16 +157,6 @@ export interface Suggestion {
 }
 
 /**
- * @interface Replay
- * Represents a replay for a slot.
- */
-export interface Replay {
-  replayer: string;
-  slot: string;
-  messageUrl: string;
-}
-
-/**
  * @interface Mappool
  * Represents a mappool for a tournament.
  */
@@ -178,7 +168,6 @@ export interface Mappool {
     url: string;
     fullRecognizer: string;
   }>;
-  replays: Array<Replay>;
   suggestions: Array<Suggestion>;
   /**
    * The ID of the channel where replays for this round are sent.

@@ -3,7 +3,6 @@ import { Declare, Command, Options, Groups } from "seyfert";
 import Beatmap from "./beatmap";
 import CountryLeaderboard from "./country-leaderboard";
 import TimestampChannel from "./timestamp-channel";
-import TrackLicense from "./tourney/track-license";
 import VerifyArtist from "./tourney/verify-artist";
 import Profile from "./profile";
 import Set from "./set";
@@ -20,7 +19,6 @@ import RemoveRound from "./tourney/remove-round";
 import Current from "./tourney/current";
 import Delete from "./tourney/delete";
 import Make from "./tourney/make";
-import SetReplayChannel from "./tourney/set-replay-channel";
 
 @Declare({
   name: 'osu',
@@ -47,13 +45,11 @@ import SetReplayChannel from "./tourney/set-replay-channel";
   }
 })
 @Options([
-  // normal commands           mappool commands          tourney commands
-  Beatmap,                     Approve,                  AddRole,
-  CountryLeaderboard,          Replays,                  AddRound,
-  TimestampChannel,            Suggest,                  Current,
-  TrackLicense,                View,                     Delete,
-  VerifyArtist,                ViewSuggestions,          Make,
-  Profile,                                               SetReplayChannel,
-  Set,                                                   RemoveRound
+  Beatmap,                Approve,       AddRole,
+  CountryLeaderboard,     Replays,       AddRound,
+  TimestampChannel,       Suggest,       Current,
+  View,                   Delete,        VerifyArtist,
+  ViewSuggestions,        Make,          Profile,
+  Set,                    RemoveRound
 ])
 export default class OsuGame extends Command {};

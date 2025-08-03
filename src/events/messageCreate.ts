@@ -5,13 +5,6 @@ export default createEvent({
   async run(msg, client) {
     if (msg.author.bot || !msg.guildId) return;
     const guild = await client.guilds.fetch(msg.guildId);
-
-    const replayChannelId = guild.settings?.tournament?.mappools?.find(m => m.replayChannelId === msg.channelId)?.replayChannelId;
-    if (!replayChannelId) return;
-    await msg.client.utils.misc.replayRegistering(msg, msg.client);
-
-    // We ignore the process message permission for replay submission
-    // because of course that is not something intended
     if (!msg.author.settings.processMessagePermission) return;
 
     const prefixRegex = new RegExp(`^(?:(?:hey|yo),? aoki,? )|^<@!?${client.me?.id}>`, 'i');
