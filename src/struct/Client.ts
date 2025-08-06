@@ -198,6 +198,6 @@ export default class AokiClient extends Client {
    */
   public async login(): Promise<void> {
     await this.init();
-    return super.start().then(() => super.uploadCommands({ cachePath: '../cmd.json' }));
+    return super.start().then(() => super.uploadCommands());
   }
 }

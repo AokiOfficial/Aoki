@@ -3,6 +3,14 @@ import os from 'os';
 import * as pkg from "../../../package.json";
 import { meta } from "@assets/cmdMeta";
 
+// great for daemonized environments
+function shortenNumber(value: number): string {
+  if (value >= 1_000_000_000) return `${(value / 1_000_000_000).toFixed(1)}B`;
+  if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+  if (value >= 1_000) return `${(value / 1_000).toFixed(1)}k`;
+  return value.toString();
+}
+
 @Declare({
   name: "stats",
   description: "the nerdy statistics of how I'm working."
@@ -43,9 +51,9 @@ export default class Stats extends SubCommand {
       // Use cached data
       const cachedData = ctx.client.statsCache.data;
       const techField = ctx.client.utils.string.keyValueField({
-        [t.systemField.ram]: `${(cachedData.totalMem / 1024 / 1024).toFixed(2)}MB`,
-        [t.systemField.free]: `${(cachedData.freeMem / 1024 / 1024).toFixed(2)}MB`,
-        [t.systemField.totalUsed]: `${(cachedData.usedMem / 1024 / 1024).toFixed(2)}MB`,
+        [t.systemField.ram]: `${shortenNumber(cachedData.totalMem / 1024 / 1024)}MB`,
+        [t.systemField.free]: `${shortenNumber(cachedData.freeMem / 1024 / 1024)}MB`,
+        [t.systemField.totalUsed]: `${shortenNumber(cachedData.usedMem / 1024 / 1024)}MB`,
         [t.systemField.procLoad]: `${cachedData.processMemUsage.toFixed(2)}MB`,
         [t.systemField.cpuLoad]: `${cachedData.cpuLoad}%`,
         [t.systemField.sysUp]: `${(cachedData.uptime / 3600).toFixed(2)}h`
@@ -54,9 +62,9 @@ export default class Stats extends SubCommand {
       const appField = ctx.client.utils.string.keyValueField({
         [t.appField.cliVer]: cachedData.clientVersion,
         [t.appField.cliUp]: cachedData.clientUptime,
-        [t.appField.cmdCount]: `${cachedData.commands}`,
-        [t.appField.srvCount]: `${cachedData.servers}`,
-        [t.appField.usrCount]: `${cachedData.users}`,
+        [t.appField.cmdCount]: `${shortenNumber(cachedData.commands)}`,
+        [t.appField.srvCount]: `${shortenNumber(cachedData.servers)}`,
+        [t.appField.usrCount]: `${shortenNumber(cachedData.users)}`,
         [t.appField.usrOnSrvRatio]: `${cachedData.avgUsersPerServer}`
       }, 25);
 
@@ -127,9 +135,9 @@ export default class Stats extends SubCommand {
 
     // Create formatted fields
     const techField = ctx.client.utils.string.keyValueField({
-      [t.systemField.ram]: `${(totalMem / 1024 / 1024).toFixed(2)}MB`,
-      [t.systemField.free]: `${(freeMem / 1024 / 1024).toFixed(2)}MB`,
-      [t.systemField.totalUsed]: `${(usedMem / 1024 / 1024).toFixed(2)}MB`,
+      [t.systemField.ram]: `${shortenNumber(totalMem / 1024 / 1024)}MB`,
+      [t.systemField.free]: `${shortenNumber(freeMem / 1024 / 1024)}MB`,
+      [t.systemField.totalUsed]: `${shortenNumber(usedMem / 1024 / 1024)}MB`,
       [t.systemField.procLoad]: `${processMemUsage.toFixed(2)}MB`,
       [t.systemField.cpuLoad]: `${cpuLoad}%`,
       [t.systemField.sysUp]: `${(uptime / 3600).toFixed(2)}h`
@@ -138,9 +146,9 @@ export default class Stats extends SubCommand {
     const appField = ctx.client.utils.string.keyValueField({
       [t.appField.cliVer]: pkg.version,
       [t.appField.cliUp]: clientUptime,
-      [t.appField.cmdCount]: `${ctx.client.commands.values.length}`,
-      [t.appField.srvCount]: `${guilds.length}`,
-      [t.appField.usrCount]: `${userCount}`,
+      [t.appField.cmdCount]: `${shortenNumber(ctx.client.commands.values.length)}`,
+      [t.appField.srvCount]: `${shortenNumber(guilds.length)}`,
+      [t.appField.usrCount]: `${shortenNumber(userCount)}`,
       [t.appField.usrOnSrvRatio]: `${(userCount / guilds.length).toFixed(0)}`
     }, 25);
 
