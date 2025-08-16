@@ -17,7 +17,7 @@ const options = {
     required: true
   }),
   url: createStringOption({
-    description: 'the beatmap URL (must include difficulty ID)',
+    description: 'the beatmap URL (or custom map URL)',
     description_localizations: meta.osu.mappool.approve.url,
     required: true
   })
@@ -33,7 +33,8 @@ const options = {
 export default class Approve extends SubCommand {
   async run(ctx: CommandContext<typeof options>): Promise<void> {
     const t = ctx.t.get(ctx.interaction.user.settings.language).osu.mappool.approve;
-    const { slot, url } = ctx.options;
+    const url = ctx.options.url;
+    let slot = ctx.options.slot.toUpperCase();
 
     await ctx.deferReply();
 
@@ -89,47 +90,49 @@ export default class Approve extends SubCommand {
       });
     }
 
-    // Validate beatmap URL format
+    // Validate osu! URL format if it's an osu! map
     const fullUrlPattern = /^https?:\/\/osu\.ppy\.sh\/beatmapsets\/\d+#(?:osu|taiko|fruits|mania)\/\d+$/i;
     const shortUrlPattern = /^https?:\/\/osu\.ppy\.sh\/b\/\d+$/i;
 
-    if (!fullUrlPattern.test(url) && !shortUrlPattern.test(url)) {
-      return AokiError.USER_INPUT({
-        sender: ctx.interaction,
-        content: t.invalidUrl
-      });
-    }
+    let fullRecognizer = url; // Default to the provided URL
+    if (fullUrlPattern.test(url) || shortUrlPattern.test(url)) {
+      // if it passes the url test, it is an osu! url
+      // we can safely parse the output of this function
+      const diffId = ctx.client.utils.osu.extractDifficultyId(url)!;
+      const mapInfo = await ctx.client.utils.osu.fetchBeatmapInfo(ctx.client, diffId);
 
-    const diffId = ctx.client.utils.osu.extractDifficultyId(url);
-    const mapInfo = await ctx.client.utils.osu.fetchBeatmapInfo(ctx.client, diffId);
+      if (!mapInfo) {
+        return AokiError.API_ERROR({
+          sender: ctx.interaction,
+          content: t.fetchError
+        });
+      }
 
-    if (!mapInfo) {
-      return AokiError.API_ERROR({
-        sender: ctx.interaction,
-        content: t.fetchError
-      });
-    }
+      fullRecognizer = `${mapInfo.beatmapset.artist} - ${mapInfo.beatmapset.title} [${mapInfo.version}]`;
+    } else {
+      fullRecognizer = t.customMap;
+    };
 
     // Check if map already exists for this slot
     const existingMap = mappool.maps.find(m => m.slot === slot);
     if (existingMap) {
       // Update existing map
       existingMap.url = url;
-      existingMap.fullRecognizer = `${mapInfo.beatmapset.artist} - ${mapInfo.beatmapset.title} [${mapInfo.version}]`;
-      
+      existingMap.fullRecognizer = fullRecognizer;
+
       await guild.update({
         tournament: settings
       });
 
       await ctx.editOrReply({
-        content: t.mapUpdated(mapInfo.beatmapset.title, url, slot, currentRound)
+        content: t.mapUpdated(fullRecognizer, url, slot, currentRound)
       });
     } else {
       // Add new map
       mappool.maps.push({
         slot,
         url,
-        fullRecognizer: `${mapInfo.beatmapset.artist} - ${mapInfo.beatmapset.title} [${mapInfo.version}]`
+        fullRecognizer
       });
 
       await guild.update({
@@ -137,7 +140,7 @@ export default class Approve extends SubCommand {
       });
 
       await ctx.editOrReply({
-        content: t.mapAdded(mapInfo.beatmapset.title, url, slot, currentRound)
+        content: t.mapAdded(fullRecognizer, url, slot, currentRound)
       });
     }
   }

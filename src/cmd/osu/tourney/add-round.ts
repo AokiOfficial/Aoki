@@ -2,8 +2,8 @@ import { meta } from "@assets/cmdMeta";
 import AokiError from "@struct/AokiError";
 import {
   CommandContext,
-  createBooleanOption,
   createStringOption,
+  createBooleanOption,
   Declare,
   Group,
   Locales,
@@ -13,13 +13,18 @@ import {
 
 const options = {
   round: createStringOption({
-    description: 'the tournament round to add',
+    description: 'the round name',
     description_localizations: meta.osu.tourney.add_round.round,
     required: true
   }),
-  slots: createStringOption({
-    description: 'mappool slots separated by comma (e.g. NM1,NM2)',
-    description_localizations: meta.osu.tourney.add_round.slots,
+  mod_picks: createStringOption({
+    description: 'mod picks for the round (e.g. NM,HD,HR,DT)',
+    description_localizations: meta.osu.tourney.add_round.mod_picks,
+    required: true
+  }),
+  map_counts: createStringOption({
+    description: 'number of maps for each mod pick (e.g. 3,2,2,2)',
+    description_localizations: meta.osu.tourney.add_round.map_counts,
     required: true
   }),
   set_current: createBooleanOption({
@@ -39,7 +44,7 @@ const options = {
 export default class AddRound extends SubCommand {
   async run(ctx: CommandContext<typeof options>): Promise<void> {
     const t = ctx.t.get(ctx.interaction.user.settings.language).osu.tourney.addRound;
-    const { round, slots: slotsInput, set_current: setCurrent = false } = ctx.options;
+    const { round, mod_picks: modPicksInput, map_counts: mapCountsInput, set_current: setCurrent = false } = ctx.options;
 
     await ctx.deferReply();
 
@@ -53,32 +58,25 @@ export default class AddRound extends SubCommand {
       });
     }
 
-    // Since round is free input we need to validate input against profanity
-    if (await ctx.client.utils.profane.isProfane(round)) {
+    // Validate mod picks and map counts
+    const modPicks = modPicksInput.split(',').map(mod => mod.trim()).filter(mod => mod);
+    const mapCounts = mapCountsInput.split(',').map(count => parseInt(count.trim(), 10)).filter(count => !isNaN(count));
+
+    if (modPicks.length === 0 || mapCounts.length === 0 || modPicks.length !== mapCounts.length) {
       return AokiError.USER_INPUT({
         sender: ctx.interaction,
-        content: t.profane
+        content: t.invalidInput
       });
     }
 
-    // Check permission - only hosts, advisors, and mappoolers can add rounds
-    const permittedRoles = [
-      ...settings.roles.host,
-      ...settings.roles.advisor,
-      ...settings.roles.mappooler
-    ];
-    const userRoles = (await ctx.interaction.member!.roles.list()).map(role => role.id);
-    const hasPermittedRole = permittedRoles.some(roleId => userRoles.includes(roleId));
-
-    if (!hasPermittedRole) {
-      return AokiError.PERMISSION({
-        sender: ctx.interaction,
-        content: t.noPermission
-      });
-    }
-
-    // Parse slots
-    const slots = slotsInput.split(',').map(slot => slot.trim()).filter(slot => slot);
+    // Generate mappool slots
+    const slots: string[] = [];
+    modPicks.forEach((mod, index) => {
+      const count = mapCounts[index];
+      for (let i = 1; i <= count; i++) {
+        slots.push(`${mod}${i}`);
+      }
+    });
 
     if (slots.length === 0) {
       return AokiError.USER_INPUT({

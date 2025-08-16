@@ -102,7 +102,21 @@ export default class View extends SubCommand {
     const mapDetails = [];
     for (const map of mappool.maps) {
       try {
-        const beatmap = await ctx.client.utils.osu.fetchBeatmapInfo(ctx.client, ctx.client.utils.osu.extractDifficultyId(map.url));
+        const difficultyId = ctx.client.utils.osu.extractDifficultyId(map.url);
+        
+        if (!difficultyId) {
+          // Check if the URL is a Discord CDN URL
+          const discordCdnRegex = /^https:\/\/cdn\.discordapp\.com\//;
+          if (discordCdnRegex.test(map.url)) {
+            mapDetails.push(t.discordCdnMap(map.slot, map.url));
+          } else {
+            // Handle custom URLs
+            mapDetails.push(t.customMap(map.slot, map.url));
+          }
+          continue;
+        }
+
+        const beatmap = await ctx.client.utils.osu.fetchBeatmapInfo(ctx.client, difficultyId);
         if (beatmap) {
           const slot = map.slot;
           const artist = beatmap.beatmapset.artist_unicode;
@@ -110,7 +124,8 @@ export default class View extends SubCommand {
           const version = beatmap.version;
           const url = beatmap.url;
           let od, sr, bpm;
-          // taiko specific
+
+          // Taiko-specific attributes
           const diffAttr = async (diffId: string, mods: (number | string)[]) => {
             try {
               const response = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${diffId}/attributes`, {
@@ -128,12 +143,12 @@ export default class View extends SubCommand {
               return null;
             }
           };
-          // taiko specific
+
           const mods = [];
           if (map.slot.includes("HR")) mods.push("HR");
           if (map.slot.includes("DT") || map.slot.includes("NC")) mods.push("DT");
 
-          const attr = mods.length > 0 ? await diffAttr(ctx.client.utils.osu.extractDifficultyId(map.url), mods) : null;
+          const attr = mods.length > 0 ? await diffAttr(difficultyId, mods) : null;
 
           od = mods.includes("HR")
             ? parseFloat((Math.floor(Math.min(beatmap.accuracy * 1.4, 10) * 100) / 100).toFixed(2)).toString()
@@ -150,7 +165,6 @@ export default class View extends SubCommand {
             : parseFloat(beatmap.bpm.toFixed(2)).toString();
 
           const totalTime = Math.floor(beatmap.total_length / 60) + ":" + (beatmap.total_length % 60).toString().padStart(2, '0');
-          // end taiko specific
           mapDetails.push(t.mapDetails(slot, artist, title, version, url, od, sr, bpm, totalTime));
         } else {
           mapDetails.push(t.mapUnavailable(map.slot, map.url));

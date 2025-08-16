@@ -41,14 +41,20 @@ export default class OsuUtil {
   /**
    * Extract difficulty ID from a beatmap URL
    * @param url The beatmap URL to extract ID from
-   * @returns {string}
+   * @returns {string | null}
    */
-  public extractDifficultyId(url: string): string {
+  public extractDifficultyId(url: string): string | null {
+    if (!url.includes('osu.ppy.sh')) {
+      return null;
+    }
+
     if (url.includes('/b/')) {
       return url.split('/b/')[1].split('?')[0].split('#')[0];
-    } else {
+    } else if (url.includes('#') && url.split('#')[1].includes('/')) {
       return url.split('#')[1].split('/')[1];
     }
+
+    return null;
   };
 
   /**

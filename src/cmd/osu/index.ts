@@ -12,6 +12,8 @@ import Replays from "./mappool/replays";
 import Suggest from "./mappool/suggest";
 import View from "./mappool/view";
 import ViewSuggestions from "./mappool/view-suggestions";
+import Export from "./mappool/export";
+import Disprove from "./mappool/disprove";
 // Tourney commands
 import AddRole from "./tourney/add-role";
 import AddRound from "./tourney/add-round";
@@ -45,11 +47,11 @@ import Make from "./tourney/make";
   }
 })
 @Options([
-  Beatmap,                Approve,       AddRole,
+  Beatmap,                Approve,       AddRole,          Disprove,
   CountryLeaderboard,     Replays,       AddRound,
   TimestampChannel,       Suggest,       Current,
   View,                   Delete,        VerifyArtist,
   ViewSuggestions,        Make,          Profile,
-  Set,                    RemoveRound
+  Set,                    RemoveRound,   Export
 ])
 export default class OsuGame extends Command {};

@@ -354,7 +354,8 @@ export default {
         invalidUrl: 'Đồ ngốc, đó không phải là URL beatmap hợp lệ. Cung cấp URL đầy đủ (vd: <https://osu.ppy.sh/beatmapsets/1234#osu/5678>) hoặc URL rút gọn (vd: <https://osu.ppy.sh/b/5678>).',
         fetchError: 'O-oh, có gì đó không ổn. Cơ sở dữ liệu của tớ có thể đã chết. Chờ một chút, rồi thử lại nha?\n\nNếu không có gì thay đổi, sensei của tớ chắc làm gì đó sai rồi. Thử báo cáo bằng `/hỏi-tớ-về lỗi-của-tớ` nha.',
         mapUpdated: (title: string, url: string, slot: string, currentRound: string) => `Xong rồi. Đã cập nhật [${title}](${url}) cho **${slot}** trong mappool của ${currentRound}.`,
-        mapAdded: (title: string, url: string, slot: string, currentRound: string) => `Xong rồi. Đã thêm [${title}](${url}) cho **${slot}** vào mappool của ${currentRound}.`
+        mapAdded: (title: string, url: string, slot: string, currentRound: string) => `Xong rồi. Đã thêm [${title}](${url}) cho **${slot}** vào mappool của ${currentRound}.`,
+        customMap: "custom map"
       },
       replays: {
         name: 'xem-replay',
@@ -409,7 +410,25 @@ export default {
         someInfo: "Một vài thông tin thú vị về mappool này:",
         totalMaps: (maps: number) => `Tổng số map: **${maps}**`,
         srRange: (highest: number, lowest: number) => `Khoảng độ khó: **${lowest}★ - ${highest}★**`,
-        mappack: (url: string) => `📦 [**Link tải mappool**](${url})`
+        mappack: (url: string) => `📦 [**Link tải mappool**](${url})`,
+        customMap: (slot: string, url: string) => `**${slot}**: đây là map custom. **[nhấn để tải.](${url})**`,
+        discordCdnMap: (slot: string, url: string) => `**${slot}**: ${url}`
+      },
+      export: {
+        noTournament: 'Đồ ngốc, không có giải đấu nào tồn tại trong máy chủ này. Tạo một cái bằng `/tourney make` trước đi.',
+        noPermission: 'Hey! Cậu không có quyền xem mappool đâu. Chỉ host, cố vấn, người làm mappool và người test/replay mới được truy cập lệnh này.',
+        noActiveRound: 'Oh. Không có vòng nào đang hoạt động cho giải đấu này. Nhắc người tổ chức đặt vòng hiện tại bằng `/tourney current` trước nha.',
+        noMappool: (currentRound: string) => `Không tìm thấy định dạng mappool cho **${currentRound}**. Nhắc người tổ chức thiết lập mappool nha!`,
+        noMaps: (currentRound: string) => `Oh. Chưa có map nào được xác nhận cho mappool của ${currentRound}.`
+      },
+      disprove: {
+        noTournament: 'Đồ ngốc, không có giải đấu nào tồn tại trong máy chủ này. Tạo một cái bằng `/tourney make` trước đi.',
+        noPermission: 'Hey! Cậu không có quyền xem mappool đâu. Chỉ host, cố vấn, người làm mappool và người test/replay mới được truy cập lệnh này.',
+        noActiveRound: 'Oh. Không có vòng nào đang hoạt động cho giải đấu này. Nhắc người tổ chức đặt vòng hiện tại bằng `/tourney current` trước nha.',
+        noMappool: (currentRound: string) => `Không tìm thấy định dạng mappool cho **${currentRound}**. Nhắc người tổ chức thiết lập mappool nha!`,
+        noMaps: (currentRound: string) => `Oh. Chưa có map nào được xác nhận cho mappool của ${currentRound}.`,
+        invalidSlot: (slot: string, availableSlots: string[], currentRound: string) => `Slot **${slot}** không tồn tại trong mappool của **${currentRound}**. Các slot có sẵn: ${availableSlots.join(', ')}`,
+        mapRemoved: (slot: string, currentRound: string) => `Được rồi. Tớ đã bỏ **${slot}** ra khỏi mappool của **${currentRound}**.`
       }
     },
     tourney: {
@@ -440,7 +459,8 @@ export default {
         roundExists: (round: string) => `Oh. Một mappool cho ${round} đã tồn tại. Sử dụng \`/mappool add\` để thêm map vào đó.`,
         success: (round: string, slots: string[], setCurrent: boolean) =>
           `Xong rồi. Đã thêm ${round} với ${slots.length} slot: ${slots.join(', ')}.\n` +
-          (setCurrent ? `Đây hiện là vòng đấu hiện tại.` : `Sử dụng \`/tourney current ${round}\` để đặt đây là vòng hiện tại.`)
+          (setCurrent ? `Đây hiện là vòng đấu hiện tại.` : `Sử dụng \`/tourney current ${round}\` để đặt đây là vòng hiện tại.`),
+        invalidInput: 'Đồ ngốc. Số lượng mod pick phải khớp với số lượng map count (tức là nếu có 3 mod pick, thì phải có đủ 3 số lượng map count: NM,HD,HR --> 3,2,2), và không có cái nào được bỏ trống cả đâu.'
       },
       removeRound: {
         noTournament: 'Đồ ngốc, không có giải đấu nào tồn tại trong máy chủ này. Tạo một cái bằng `/tourney make` trước.',

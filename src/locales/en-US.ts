@@ -355,7 +355,8 @@ export default {
         invalidUrl: 'Baka, that\'s not a valid beatmap URL. Provide either a full URL (e.g., <https://osu.ppy.sh/beatmapsets/1234#osu/5678>) or a shortened URL (e.g., <https://osu.ppy.sh/b/5678>).',
         fetchError: 'O-oh, something didn\'t click. My database is probably dead. Wait a little, then try again.\n\nIf nothing changes after that, my sensei probably messed up. Try reporting this with `/my fault`.',
         mapUpdated: (title: string, url: string, slot: string, currentRound: string) => `Got it. Updated [${title}](${url}) for **${slot}** in the ${currentRound} mappool.`,
-        mapAdded: (title: string, url: string, slot: string, currentRound: string) => `Got it. Added [${title}](${url}) for **${slot}** to the ${currentRound} mappool.`
+        mapAdded: (title: string, url: string, slot: string, currentRound: string) => `Got it. Added [${title}](${url}) for **${slot}** to the ${currentRound} mappool.`,
+        customMap: "a custom map"
       },
       replays: {
         name: 'replays',
@@ -410,7 +411,25 @@ export default {
         someInfo: "Some interesting information about this mappool:",
         totalMaps: (maps: number) => `Total maps: **${maps}**`,
         srRange: (highest: number, lowest: number) => `Difficulty range: **${lowest}★ - ${highest}★**`,
-        mappack: (url: string) => `📦 [**Mappack Download**](${url})`
+        mappack: (url: string) => `📦 [**Mappack Download**](${url})`,
+        customMap: (slot: string, url: string) => `**${slot}**: this is a custom map. **[click to download.](${url})**`,
+        discordCdnMap: (slot: string, url: string) => `**${slot}**: ${url}`
+      },
+      export: {
+        noTournament: 'Baka, no tournament exists in this server. Create one with `/tourney make` first.',
+        noPermission: 'Hey! You do not have permission to view the mappool. Only hosts, advisors, mappoolers, and test/replayers can access this command.',
+        noActiveRound: 'Oh. There is no active round set for this tournament. Remind an organizer to set the current round first with `/tourney current`.',
+        noMappool: (currentRound: string) => `Didn\'t find any mappool format for **${currentRound}**. Remind your organizer to set up the mappool!`,
+        noMaps: (currentRound: string) => `Oh. No maps have been confirmed for the ${currentRound} mappool yet.`
+      },
+      disprove: {
+        noTournament: 'Baka, no tournament exists in this server. Create one with `/tourney make` first.',
+        noPermission: 'Hey! You do not have permission to view the mappool. Only hosts, advisors, mappoolers, and test/replayers can access this command.',
+        noActiveRound: 'Oh. There is no active round set for this tournament. Remind an organizer to set the current round first with `/tourney current`.',
+        noMappool: (currentRound: string) => `Didn\'t find any mappool format for **${currentRound}**. Remind your organizer to set up the mappool!`,
+        noMaps: (currentRound: string) => `Oh. No maps have been confirmed for the ${currentRound} mappool yet.`,
+        invalidSlot: (slot: string, availableSlots: string[], currentRound: string) => `The slot **${slot}** doesn't exist in the **${currentRound}** mappool. Available slots: ${availableSlots.join(', ')}`,
+        mapRemoved: (slot: string, currentRound: string) => `Got it. Removed **${slot}** from the **${currentRound}** mappool.`
       }
     },
     tourney: {
@@ -441,7 +460,8 @@ export default {
         roundExists: (round: string) => `Oh. A mappool for ${round} already exists. Use \`/mappool add\` to add maps to it.`,
         success: (round: string, slots: string[], setCurrent: boolean) =>
           `Got it. Added ${round} with ${slots.length} slots: ${slots.join(', ')}.\n` +
-          (setCurrent ? `This is now set as the current active round.` : `Use \`/tourney current ${round}\` to set this as the current round.`)
+          (setCurrent ? `This is now set as the current active round.` : `Use \`/tourney current ${round}\` to set this as the current round.`),
+        invalidInput: 'Baka. The amount of mod picks must match the amount of map counts, and both must be non-empty.'
       },
       current: {
         name: 'current',

@@ -533,7 +533,35 @@ export const meta = {
             ['vi', 'xem mappool đã chốt cho vòng hiện tại.']
           ]
         } as Locale
-      }
+      },
+      export: {
+        loc: {
+          name: [
+            ['en-US', 'export'],
+            ['vi', 'xuất']
+          ],
+          description: [
+            ['en-US', 'export the finalized mappool for this round.'],
+            ['vi', 'xuất mappool đã chốt cho vòng này.']
+          ]
+        } as Locale
+      },
+      disprove: {
+        slot: {
+          "en-US": "the name of the pick you want to remove.",
+          "vi": "tên của pick mà cậu muốn loại bỏ."
+        },
+        loc: {
+          name: [
+            ['en-US', 'disprove'],
+            ['vi', 'loại-bỏ']
+          ],
+          description: [
+            ['en-US', 'remove a pick from the approved list of the current mappool.'],
+            ['vi', 'loại bỏ một pick đã được duyệt từ mappool hiện tại.']
+          ]
+        } as Locale
+      },
     },
     tourney: {
       add_role: {
@@ -561,9 +589,13 @@ export const meta = {
           "en-US": 'the tournament round to add',
           "vi": 'vòng đấu giải đấu cậu muốn thêm'
         },
-        slots: {
-          "en-US": 'mappool slots separated by comma (e.g. NM1,NM2)',
-          "vi": 'các slot mappool được phân tách bằng dấu phẩy (ví dụ: NM1,NM2)'
+        mod_picks: {
+          "en-US": 'mod picks for the round (e.g. NM,HD,HR,DT)',
+          "vi": 'tất cả các lựa chọn mod của vòng này (ví dụ: NM,HD,HR,DT)'
+        },
+        map_counts: {
+          "en-US": 'number of maps for each mod pick (e.g. 3,2,2,2)',
+          "vi": 'số map của từng lựa chọn mod riêng biệt (ví dụ: 3,2,2,2)'
         },
         set_current: {
           "en-US": 'set this as the current active round',
