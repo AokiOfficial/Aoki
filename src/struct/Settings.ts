@@ -111,7 +111,7 @@ export default class Settings {
   * @param {String} id - The ID to lookup the cache.
   * @returns {Object} The document from the cache if available.
   */
-  getDefaults(id: string) {
+  getDefaults(id: string): object {
     return this.cache.get(id) || this.defaults;
   }
   /**

@@ -59,13 +59,13 @@ export default class AniSchedule {
   };
 
   private reInit(): void {
-    setTimeout(() => this.init(), 90000);
+    setTimeout(() => this.init(), 180000);
   }
 
   public async init(): Promise<void> {
     let schedules: ScheduleEntry[];
     try {
-      schedules = await this.client.settings.schedules.findAll({})
+      schedules = await this.client.db.collection("schedules").find({}).toArray()
         .then((docs: any) => docs.map((doc: any) => ({
           id: doc.id,
           anilistId: doc.anilistId,

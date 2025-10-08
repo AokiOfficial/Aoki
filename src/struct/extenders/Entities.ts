@@ -1,6 +1,6 @@
 import { Guild, User } from 'seyfert';
 import AokiClient from '../Client';
-import { GuildSettings, UserSettings, ScheduleData } from '@local-types/settings';
+import { GuildSettings, UserSettings, ScheduleData } from '@loctype/settings';
 import defSchemaSettings from '../../assets/schema';
 
 /** Guild-related functions */
