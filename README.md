@@ -15,29 +15,24 @@
 ## Information about this branch
 
 > [!NOTE]
-> This branch serves as a **proof-of-concept** of Aoki ported to [Seyfert](https://www.seyfert.dev). It is not stable and will not be so until Seyfert becomes more stable and better structured.
+> This branch serves as a **proof-of-concept** of Aoki ported to [Seyfert](https://www.seyfert.dev).
 
-***For you developers***, this branch is a [Seyfert](https://www.seyfert.dev) implementation of Aoki. It was rewritten once again to support a more modularized method of making commands and lifting the hassle of having to handle that part yourself; and lifting the hassle of handling languages yourself. Seyfert, conveniently, did that.
+***For you developers***, this branch is Aoki using [Seyfert](https://www.seyfert.dev) instead of Discord.js.
 
-However you don't get a lot of useful information on Seyfert, because it doesn't have a proper documentation. You have a [guide](https://docs.seyfert.dev) to work with, which is obviously quite insufficient (it took me a century to figure out how modals work here). This rewrite is just a **proof-of-concept**, it is not a fully cleaned up prototype to use in production.
+Seyfert is a pretty interesting and new library coming into play and competing with Discord.js. While it still has its own limitations (at least it's not an entire team that makes *outrageously* impractical decisions like Discord.js), what it offers do lift a significant amount of work for normal Discord.js developers.
 
-For very technical and obscure details I learned with Seyfert, head over to [INSTRUCTIONS.md](/INSTRUCTIONS.md).
+However you don't get a lot of useful information on Seyfert, because it doesn't have a proper documentation. You have a [guide](https://docs.seyfert.dev), which includes outdated information, along with its undocumented code to work with, that's it. Obviously that's quite insufficient, so when you read the code you might find more spaghetti.
 
-All technologies are still the same, except without Discord.js and with Seyfert.
+The library itself works and its philosophy does hold up. However, for very technical and obscure details I learned working this early into Seyfert, head over to [INSTRUCTIONS.md](/INSTRUCTIONS.md).
 
-## Disclaimer for self-hosters
-Aoki is becoming more difficult to self-host starting from this version where the main server split into different places to offload heavy works. Whatever you do from this version still stands under the impression that *you understand the code and its specifications*.
-
-Her API server is currently messy, so the source will be kept private until I clean that up. Her new S3-compatible bucket, Cloudflare R2, is public [here](https://github.com/ProjectMewo/AokiR2). More info about what that is and what it's used for is over there.
-
-Both of these are on Cloudflare Workers, which has a very generous free tier. A poor developer's best friend to keep hobby projects alive is free stuff.
+***For you end users***, why are you here anyway.
 
 ## Local development setup
-Make sure you have Bun on your local machine. [Install it here](https://bun.sh). Seyfert also supports Node or whatever it does, check their docs, but I made it work with Bun.
+Make sure you have Bun on your local machine, because Aoki will not run otherwise. [Install it here](https://bun.sh).
 
 Place all the necessary keys required by first renaming the `.env.example` file to `.env`, and then fill it. **It is recommended that you use only the DEV variant of the keys.**
 
-Start the dev client by running this one-liner (which installs all dependencies and start it):
+Start the dev client by running this one-liner (which installs 2 dependencies and start it):
 ```bash
 bun i && bun dev
 ```
@@ -50,7 +45,6 @@ This is a learning project pushed to production, use any code that makes sense t
 To contribute, simply make a fork of this repository, make your changes, then make a pull request. There is a template ready for a standard PR.
 
 To work with the codebase, specifically this branch, make sure:
-- You do not edit `tsconfig.json` to make whatever you want works.
 - You document the code wherever relevant; i.e. stuff that will be hard to look at without it, if you're making a PR.
 - You keep the overall structure intact and consistent. Sync with other files if there is already one (or some) of the same format.
 - You stay sane and happy.

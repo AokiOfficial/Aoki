@@ -92,14 +92,14 @@ choice_demonstration: createStringOption({
 The `SubCommand#respondWithLocalizedChoices` method is implemented as a shorthand for both getting the current focused value of the autocomplete field and responding to the input. You can read the implementation in [extenders/SubCommand.ts](/src/struct/extenders/SubCommand.ts).
 
 ## Database & API
-Aoki's database and API stuff from earlier v4.4 has recently been moved to a dedicated API to offload heavy tasks, like image processing with `sharp` and OCR with `tesseract.js`. You are free to move it back in because all logics are the same, just with the API difference.
+Aoki's API stuff for verification, osu! redirection and whatnot from earlier v4.4 has recently been moved to Cloudflare Workers, since I don't want to host a webserver inside Aoki's codebase. That's way too much hassle.
 
 Note that if you want to host the Seyfert side of things, the API is pretty much locked in there, and you wouldn't want to port it back to Seyfert. It is a pain.
 
-However you can have `pm2` on one server and host both the app and the API there, that's convenient and should be practiced.
-
 ## Bundling
-Seyfert makes it pretty difficult to bundle your code. Seriously. But not all hopes is lost, because when we get to their guide about Cloudflare Workers, which is [here](https://www.seyfert.dev/guide/recipes/cloudflare-workers) (very outdated), we can see some glimmer of hope.
+Seyfert makes it pretty difficult to bundle your code. Seriously. 
+
+Not all hope is lost, though, because when we get to their guide about Cloudflare Workers, which is [here](https://www.seyfert.dev/guide/recipes/cloudflare-workers) (very outdated), we can see something interesting.
 
 ```ts
 // Code snippet stripped from the guide
@@ -114,7 +114,7 @@ await client.langs!.set('', [{ name: 'en', file: EnLang}]);
 await client.components!.set('', client, [ButtonC]);
 ```
 
-Workers bundle your code using `esbuild`, which implies you actually *can*, in one way or another, bundle your code into a file and use it. But because that guide's section is very outdated - apparently, none of the methods on the code above is usable as-is - it's hard to figure out what you have to do.
+Workers bundle your code using `esbuild`, which in turn makes this code implies you actually *can*, in one way or another, bundle your code into a file and use it. But because that guide's section is so outdated - apparently, none of the methods on the code above is usable as-is - it's hard to figure out what you have to do.
 
 This is what you're supposed to do for the commands:
 - If you're using any of these two decorators, `@GroupsT` and `@LocalesT`, remove them and use `@Groups` and `@Locales` instead. They are *dynamically loaded* and will fall back to nothing on build, causing Discord API errors about your command metadata:
@@ -180,9 +180,11 @@ client.events.set([
   // ...more events
 ]);
 ```
+Or you might as well wrap this in an object mapper, that's faster.
+
 Seyfert also can't know if you have bundled your `seyfert.config` or not, so by default you are forced to include it in with the exposed token (not the `process.env`ed one if you don't include `.env`!)
 
-Finally (holy, not done?!), only after you remove the paths from your `seyfert.config` that you can finally bundle your code. Otherwise, Seyfert will trigger its search to something that doesn't exist after bundle.
+Finally, only after you remove the paths from your `seyfert.config` that you can finally bundle your code. Otherwise, Seyfert will trigger its search to something that doesn't exist after bundle.
 ```ts
 // only leave this alone
 // other stuff, remove them all
@@ -291,7 +293,7 @@ declare module 'seyfert' {
 export { specific_property_name };
 ```
 
-When you're done adding it there, you still need to put it inside Seyfert. You have only let the TypeScript server know what you wrote is a thing, but Seyfert didn't catch up yet. Get into the `index.ts` file and use the ol' reliable `Object#defineProperties`:
+Then define it to Seyfert. Get into the `index.ts` file and use `Object#defineProperties`:
 
 ```ts
 // --- cut ---
