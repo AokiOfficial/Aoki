@@ -1,5 +1,5 @@
 import { meta } from "@assets/cmdMeta";
-import { Beatmapset } from "@local-types/beatmapset";
+import { Beatmapset } from "@loctype/beatmapset";
 import AokiError from "@struct/AokiError";
 import AokiClient from "@struct/Client";
 import {

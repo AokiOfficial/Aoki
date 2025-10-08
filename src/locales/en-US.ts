@@ -1,4 +1,4 @@
-import { Mappool } from "@local-types/settings";
+import { Mappool } from "@loctype/settings";
 import { CommandContext, GuildRole } from "seyfert";
 
 export default {
@@ -312,7 +312,7 @@ export default {
         cmdCount: 'Commands',
         srvCount: 'Servers',
         usrCount: 'Users',
-        usrOnSrvRatio: 'Avg. User/Server'
+        usrOnSrvRatio: 'Avg. Usr/Srv'
       },
       desc: {
         linKern: 'Linux Kernel',

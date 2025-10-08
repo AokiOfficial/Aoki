@@ -1,6 +1,6 @@
 import AokiError from "@struct/AokiError";
 import Pagination from "@struct/Paginator";
-import GelbooruResponse from "@local-types/gelbooru";
+import GelbooruResponse from "@loctype/gelbooru";
 import { 
   CommandContext, 
   createStringOption, 

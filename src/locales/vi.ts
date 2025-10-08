@@ -1,4 +1,4 @@
-import { Mappool } from '@local-types/settings';
+import { Mappool } from '@loctype/settings';
 import type English from './en-US';
 import { CommandContext, GuildRole } from 'seyfert';
 

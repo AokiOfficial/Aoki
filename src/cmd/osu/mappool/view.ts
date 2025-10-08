@@ -6,27 +6,17 @@ import {
   Embed,
   Group,
   Locales,
-  Options,
-  SubCommand,
-  createBooleanOption
+  SubCommand
 } from "seyfert";
-
-const options = {
-  mappack: createBooleanOption({
-    description: 'whether to make a mappack for this execution or not, default no.',
-    description_localizations: meta.osu.mappool.view.mappack
-  })
-};
 
 @Declare({
   name: 'view',
   description: 'view the finalized mappool for the current round.'
 })
 @Locales(meta.osu.mappool.view.loc)
-@Options(options)
 @Group('mappool')
 export default class View extends SubCommand {
-  async run(ctx: CommandContext<typeof options>): Promise<void> {
+  async run(ctx: CommandContext): Promise<void> {
     const t = ctx.t.get(ctx.interaction.user.settings.language).osu.mappool.view;
     await ctx.deferReply();
 
@@ -83,20 +73,6 @@ export default class View extends SubCommand {
         content: t.noMaps(currentRound)
       });
     }
-
-    // we don't make one if the server is not beta
-    // this feature is highly experimental (and very wasteful)
-    let mappackURL;
-    if (guild.settings.whitelistedForNewFeatures && ctx.options.mappack) {
-      mappackURL = await fetch(process.env.R2_SERVER!, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.INTERNAL_KEY}`
-        },
-        body: JSON.stringify({ maps: mappool.maps })
-      }).then(async res => await res.json())
-    };
 
     // Fetch all beatmap details and create description
     const mapDetails = [];
@@ -207,8 +183,7 @@ export default class View extends SubCommand {
     const preDesc = [
       t.someInfo,
       `- ${t.totalMaps(sortedMapDetails.length)}`,
-      `- ${t.srRange(highestSr, lowestSr)}`,
-      mappackURL ? `- ${t.mappack(mappackURL.url)}\n\n` : "\n"
+      `- ${t.srRange(highestSr, lowestSr)}\n`,
     ].join("\n");
 
     // Create a single embed with all maps

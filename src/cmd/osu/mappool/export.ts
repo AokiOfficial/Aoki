@@ -73,9 +73,35 @@ export default class Export extends SubCommand {
       });
     }
 
+    // Sort maps by slot
+    function sortBySlot(mapDetails: string[], desiredOrder: string[]): string[] {
+      return mapDetails.sort((a, b) => {
+        const getSlot = (str: string) => {
+          const match = str.match(/([A-Z]+[0-9]*)/);
+          return match ? match[1] : "";
+        };
+
+        const slotA = getSlot(a);
+        const slotB = getSlot(b);
+
+        const idxA = desiredOrder.indexOf(slotA);
+        const idxB = desiredOrder.indexOf(slotB);
+
+        return idxA - idxB;
+      });
+    }
+
+    const sortedMaps = sortBySlot(
+      mappool.maps.map(map => map.slot),
+      mappool.slots
+    );
+
     // Create JSON list
-    const jsonList = mappool.maps.reduce((acc: Record<string, string>, map) => {
-      acc[map.slot] = map.url.split('/').pop()!;
+    const jsonList = sortedMaps.reduce((acc: Record<string, string>, slot) => {
+      const map = mappool.maps.find(m => m.slot === slot);
+      if (map) {
+        acc[slot] = map.url.split('/').pop()!;
+      }
       return acc;
     }, {} as Record<string, string>);
 

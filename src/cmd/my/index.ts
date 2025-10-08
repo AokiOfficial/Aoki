@@ -6,7 +6,6 @@ import Ping from "./ping";
 import Rights from "./rights";
 import Stats from "./stats";
 import Language from "./language";
-import Beta from "./beta";
 
 @Declare({
 	name: "my",
@@ -22,5 +21,5 @@ import Beta from "./beta";
 		['vi', 'các lệnh liên quan đến tớ hoặc phát triển của tớ.']
 	]
 })
-@Options([Fault, Info, Invite, Ping, Rights, Stats, Language, Beta])
+@Options([Fault, Info, Invite, Ping, Rights, Stats, Language])
 export default class My extends Command {};

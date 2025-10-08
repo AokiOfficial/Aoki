@@ -9,7 +9,7 @@ import {
   Locales
 } from "seyfert";
 import { User } from "@assets/graphql";
-import { UserData } from "@local-types/anilist";
+import { UserData } from "@loctype/anilist";
 import { meta } from "@assets/cmdMeta";
 
 const options = {

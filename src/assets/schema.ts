@@ -5,7 +5,7 @@ import {
   ScheduleData,
   UserSettings,
   VerificationSettings
-} from "@local-types/settings";
+} from "@loctype/settings";
 import { ColorResolvable } from "seyfert/lib/common";
 
 export default {
