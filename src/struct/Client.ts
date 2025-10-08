@@ -1,45 +1,13 @@
-// Essentials
-import { Client } from "seyfert";
-import { ActivityType, PresenceUpdateStatus } from "seyfert/lib/types";
+import { Client, ClientEvent } from "seyfert";
+import { MongoClient, ServerApiVersion } from "mongodb";
+import { utils, cmds, events } from "@core";
 import Settings from "./Settings";
 import Schedule from "./Schedule";
-import { MongoClient, ServerApiVersion } from "mongodb";
-// Utility imports
-import AnilistUtil from "@utils/AniList";
-import ArrayUtil from "@utils/Array";
-import MiscUtil from "@utils/Misc";
-import OsuUtil from "@utils/OsuGame";
-import ProfaneUtil from "@utils/Profane";
-import StringUtil from "@utils/String";
-import TimeUtil from "@utils/Time";
-import DBL from "@utils/DBL";
 import schema from "@assets/schema";
-// Command imports
-import Anime from "../cmd/anime";
-import Fun from "../cmd/fun";
-import My from "../cmd/my";
-import OsuGame from "../cmd/osu";
-import Utility from "../cmd/utility";
-import Verify from "../cmd/verify";
-// Events imports
-import interactionCreate from "../events/interactionCreate";
-import messageCreate from "../events/messageCreate";
-import botReady from "../events/botReady";
 
 export default class AokiClient extends Client {
   constructor() {
-    super({
-      allowedMentions: { parse: ['users'] },
-      presence: () => ({
-        status: PresenceUpdateStatus.Idle,
-        activities: [{
-          name: "the 2nd dev stage!",
-          type: ActivityType.Watching,
-        }],
-        since: Date.now(),
-        afk: false,
-      })
-    });
+    super({ allowedMentions: { parse: ['users'] } })
     this.dev = process.argv.includes('--dev');
     this.schedule = new Schedule(this);
     this.dbClient = null;
@@ -58,34 +26,15 @@ export default class AokiClient extends Client {
       verifications: new Settings(this, "verifications", schema.verifications)
     };
     this.utils = {
-      anilist: new AnilistUtil(this),
-      array: new ArrayUtil(),
-      misc: new MiscUtil(),
-      osu: new OsuUtil(),
-      profane: new ProfaneUtil(),
-      string: new StringUtil(),
-      time: new TimeUtil(),
-      dbl: new DBL(this)
+      anilist: new utils.AnilistUtil(this),
+      array: new utils.ArrayUtil(),
+      misc: new utils.MiscUtil(),
+      osu: new utils.OsuUtil(),
+      profane: new utils.ProfaneUtil(),
+      string: new utils.StringUtil(),
+      time: new utils.TimeUtil(),
+      dbl: new utils.DBL(this)
     };
-    this.statsCache = {
-      data: {
-        totalMem: 0,
-        freeMem: 0,
-        usedMem: 0,
-        processMemUsage: 0,
-        cpuLoad: 0,
-        uptime: 0,
-        clientVersion: "",
-        clientUptime: "",
-        commands: 0,
-        servers: 0,
-        users: 0,
-        avgUsersPerServer: 0,
-        description: "",
-        embedTimestamp: new Date(),
-      },
-      lastUpdated: 0
-    }
   }
 
   /**
@@ -101,9 +50,9 @@ export default class AokiClient extends Client {
         deprecationErrors: true,
       }
     });
-    this.logger.info("Connected to MongoDB");
+    this.logger.info("Connected to database");
     this.db = this.dbClient.db();
-    
+
     await Promise.all(Object.values(this.settings).map(settings => settings.init()));
   };
 
@@ -145,36 +94,20 @@ export default class AokiClient extends Client {
   };
 
   public async loadEssentials(): Promise<void> {
-    // Load commands, locales and events
+    // statically load cmds, locales and events
+    // this makes our project buildable
     // @ts-ignore
-    this.commands.set([Anime, Fun, My, OsuGame, Utility, Verify]);
+    this.commands.set([cmds.Anime, cmds.Fun, cmds.My, cmds.OsuGame, cmds.Utility, cmds.Verify]);
     this.langs.set([
       { name: 'en-US', file: await import('../locales/en-US') },
       { name: 'vi', file: await import('../locales/vi') }
     ]);
-    this.events.set([
-      {
-        data: {
-          name: 'interactionCreate',
-          once: false
-        },
-        run: (i: any) => interactionCreate.run(i, this, 1)
-      },
-      {
-        data: {
-          name: 'messageCreate',
-          once: false
-        },
-        run: (i: any) => messageCreate.run(i, this, 1)
-      },
-      {
-        data: {
-          name: 'botReady',
-          once: true
-        },
-        run: (i: any) => botReady.run(i, this, 1)
-      }
-    ]);
+    this.events.set(
+      Object.entries(events).map(([name, event]) => ({
+        data: { name, once: name === "botReady" },
+        run: (i: any) => event.run(i, this, 1),
+      })) as ClientEvent[],
+    );
   }
 
   /**

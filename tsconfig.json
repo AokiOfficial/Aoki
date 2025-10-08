@@ -26,10 +26,11 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@local-types/*": ["src/types/*"],
+      "@loctype/*": ["src/types/*"],
       "@utils/*": ["src/struct/utils/*"],
       "@struct/*": ["src/struct/*"],
-      "@assets/*": ["src/assets/*"]
+      "@assets/*": ["src/assets/*"],
+      "@core": ["src/core.ts"]
     }
   },
   "include": [
