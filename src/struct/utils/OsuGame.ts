@@ -1,9 +1,11 @@
+import { UsingClient } from "seyfert";
+
 /**
  * Utility class for osu!-specific operations
  */
 export default class OsuUtil {
   public rankEmotes: { [key: string]: string };
-  
+
   constructor() {
     this.rankEmotes = {
       XH: "<:xh:1184870634124226620>", X: "<:x:1184870631372750871>",
@@ -35,4 +37,43 @@ export default class OsuUtil {
     if (str == "mania") return 3;
     else return Number(str);
   }
+
+  /**
+   * Extract difficulty ID from a beatmap URL
+   * @param url The beatmap URL to extract ID from
+   * @returns {string | null}
+   */
+  public extractDifficultyId(url: string): string | null {
+    if (!url.includes('osu.ppy.sh')) {
+      return null;
+    }
+
+    if (url.includes('/b/')) {
+      return url.split('/b/')[1].split('?')[0].split('#')[0];
+    } else if (url.includes('#') && url.split('#')[1].includes('/')) {
+      return url.split('#')[1].split('/')[1];
+    }
+
+    return null;
+  };
+
+  /**
+   * Fetch a beatmap's information
+   * @param client The current instance of the client
+   * @param diffId The difficulty ID of the map
+   * @returns API response
+   */
+  public async fetchBeatmapInfo(client: UsingClient, diffId: string) {
+    try {
+      const response = await fetch(`https://osu.ppy.sh/api/v2/beatmaps/${diffId}`, {
+        headers: {
+          Authorization: `Bearer ${await client.requestV2Token()}`
+        }
+      });
+      return await response.json();
+    } catch (error) {
+      console.error(`Failed to fetch beatmap ${diffId}:`, error);
+      return null;
+    }
+  };
 }

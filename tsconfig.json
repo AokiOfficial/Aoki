@@ -2,9 +2,11 @@
   "compilerOptions": {
     "target": "esnext",
     "module": "esnext",
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "allowJs": true,
     "checkJs": false,
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
@@ -24,14 +26,16 @@
     "outDir": "dist",
     "baseUrl": ".",
     "paths": {
-      "@local-types/*": ["src/types/*"],
+      "@loctype/*": ["src/types/*"],
       "@utils/*": ["src/struct/utils/*"],
       "@struct/*": ["src/struct/*"],
+      "@assets/*": ["src/assets/*"],
+      "@core": ["src/core.ts"]
     }
   },
   "include": [
     "src",
-    "src/types/**/*"
+    "src/types/*"
   ],
   "exclude": ["node_modules"]
 }

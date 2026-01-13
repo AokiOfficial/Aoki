@@ -5,10 +5,12 @@ import {
   ScheduleData,
   UserSettings,
   VerificationSettings
-} from "@local-types/settings";
+} from "@loctype/settings";
+import { ColorResolvable } from "seyfert/lib/common";
 
 export default {
   users: {
+    language: "en-US",
     inGameName: "",
     defaultMode: 0,
     processMessagePermission: true,
@@ -21,7 +23,8 @@ export default {
   } as ScheduleData,
 
   guilds: {
-    timestampChannel: "",
+    timestampChannel: [],
+    whitelistedForNewFeatures: false,
     verification: {
       status: false,
       roleId: "",
@@ -30,7 +33,7 @@ export default {
       title: "",
       description: "",
       thumbnail: "",
-      color: ""
+      color: "" as ColorResolvable
     },
     tournament: {
       name: "",
@@ -47,13 +50,7 @@ export default {
         suggestions: [{
           slot: "",
           urls: []
-        }],
-        replays: [{
-          slot: "",
-          replayer: "",
-          messageUrl: ""
-        }],
-        replayChannelId: ""
+        }]
       }],
       roles: {
         host: [],

@@ -1,87 +1,80 @@
-import { Subcommand } from "@struct/handlers/Subcommand";
-import { 
-  ChatInputCommandInteraction, 
-  EmbedBuilder, 
-  version as DiscordVersion 
-} from "discord.js";
-import * as os from "os";
-import pkg from "../../../package.json";
+import { CommandContext, Declare, Embed, Locales, SubCommand } from "seyfert";
+import os from "os";
+import * as pkg from "../../../package.json";
+import { meta } from "@assets/cmdMeta";
 
-export default class Stats extends Subcommand {
-  constructor() {
-    super({
-      name: 'stats',
-      description: 'get the bot\'s statistics',
-      permissions: [],
-      options: []
-    });
-  }
-  
-  async execute(i: ChatInputCommandInteraction): Promise<void> {
-    // Check cache first
-    const cacheEntry = i.client.statsCache.get(i.user.id);
-    const cacheTTL = 10 * 60 * 1000; // 10 minutes
-    
-    if (cacheEntry && (Date.now() - cacheEntry.timestamp < cacheTTL)) {
-      await i.reply({ embeds: [cacheEntry.embed] });
-      return;
-    }
-    
+@Declare({
+  name: "stats",
+  description: "the nerdy statistics of how I'm working.",
+})
+@Locales(meta.my.stats.loc)
+export default class Stats extends SubCommand {
+  async run(ctx: CommandContext) {
+    const t = ctx.t.get(ctx.interaction.user.settings.language).my.stats;
+
     // Defer reply since gathering stats might take time
-    await i.deferReply();
-    
+    await ctx.deferReply();
+
     // Gather system stats
-    const totalMem: number = os.totalmem();
-    const freeMem: number = os.freemem();
-    const usedMem: number = totalMem - freeMem;
-    const memUsage: string = `${(usedMem / 1024 / 1024).toFixed(2)}MB`;
-    const cpuLoad: number = os.loadavg()[0];
-    const uptime: string = `${(os.uptime() / 3600).toFixed(2)}h`;
-    const processMemUsage: string = (process.memoryUsage().rss / 1024 / 1024).toFixed(2) + 'MB';
-    
-    // Create formatted fields
-    const techField = i.client.utils.string.keyValueField({
-      'RAM': `${(totalMem / 1024 / 1024).toFixed(2)}MB`,
-      'Free': `${(freeMem / 1024 / 1024).toFixed(2)}MB`,
-      'Used Total': memUsage,
-      'Process Use': processMemUsage,
-      'CPU Load': `${cpuLoad}%`,
-      'System Uptime': uptime
-    }, 25);
-    
-    const botField = i.client.utils.string.keyValueField({
-      'Client Version': pkg.version,
-      'My Uptime': i.client.utils.time.msToTimeString(i.client.uptime),
-      'Server Count': i.client.utils.string.commatize(i.client.guilds.cache.size),
-      'Channel Count': i.client.utils.string.commatize(i.client.channels.cache.size),
-      'Unique Users': i.client.utils.string.commatize(i.client.users.cache.size),
-      'Emoji Count': i.client.utils.string.commatize(i.client.emojis.cache.size)
-    }, 25);
-    
-    // Description with system info
-    const description: string = [
-      `- **Linux Kernel** v${os.release()}`,
-      `- **Node** ${process.version}`,
-      `- **Discord.js** v${DiscordVersion}`,
-      `- **CPU**: ${os.cpus()[0].model} \`[ ${os.cpus()[0].speed / 1000} GHz ]\``
+    const totalMemMB = os.totalmem() / 1024 / 1024;
+    const freeMemMB = os.freemem() / 1024 / 1024;
+    const usedMemMB = totalMemMB - freeMemMB;
+    const processMemUsageMB = process.memoryUsage().rss / 1024 / 1024;
+    const cpuLoad = os.loadavg()[0].toFixed(2);
+    const uptimeHours = (os.uptime() / 3600).toFixed(2);
+
+    const guilds = await ctx.client.guilds.list();
+    const userCount = await Promise.all(
+      guilds.map(async (guild) => (await guild.fetch()).memberCount || 0)
+    ).then((counts) => counts.reduce((a, b) => a + b, 0));
+
+    const clientUptime = ctx.client.utils.time.msToTimeString(Date.now() - ctx.client.startTime);
+
+    const description = [
+      `- **${t.desc.linKern}** v${os.release()}`,
+      `- **${t.desc.nodeVer}** ${process.version}`,
+      `- **${t.desc.seyfertVer}** v${pkg.dependencies.seyfert.replace("^", "")}`,
+      `- **${t.desc.cpuType}**: ${os.cpus()[0].model} \`[${(os.cpus()[0].speed / 1000).toFixed(2) || t.desc.unknownClockSpeed} GHz]\``,
     ].join("\n");
-    
+
+    // Create formatted fields
+    const techField = ctx.client.utils.string.keyValueField(
+      {
+        [t.systemField.ram]: `${totalMemMB.toFixed(2)}MB`,
+        [t.systemField.free]: `${freeMemMB.toFixed(2)}MB`,
+        [t.systemField.totalUsed]: `${usedMemMB.toFixed(2)}MB`,
+        [t.systemField.procLoad]: `${processMemUsageMB.toFixed(2)}MB`,
+        [t.systemField.cpuLoad]: `${cpuLoad}%`,
+        [t.systemField.sysUp]: `${uptimeHours}h`,
+      },
+      25
+    );
+
+    const appField = ctx.client.utils.string.keyValueField(
+      {
+        [t.appField.cliVer]: pkg.version,
+        [t.appField.cliUp]: clientUptime,
+        [t.appField.cmdCount]: `${ctx.client.commands.values.length}`,
+        [t.appField.srvCount]: `${guilds.length}`,
+        [t.appField.usrCount]: `${userCount}`,
+        [t.appField.usrOnSrvRatio]: `${(userCount / guilds.length).toFixed(2)}`,
+      },
+      25
+    );
+
     // Create embed
-    const embed = new EmbedBuilder()
+    const embed = new Embed()
       .setColor(10800862)
-      .setAuthor({ name: "Raw Statistics", iconURL: i.client.user!.displayAvatarURL() })
+      .setAuthor({ name: t.author, iconUrl: ctx.client.me!.avatarURL() })
       .setDescription(description)
-      .setFooter({ text: "Probably a moron" })
+      .setFooter({ text: t.footer })
       .addFields([
-        { name: 'System', value: techField, inline: true },
-        { name: 'Client', value: botField, inline: true }
+        { name: t.system, value: techField, inline: true },
+        { name: t.app, value: appField, inline: true },
       ])
       .setTimestamp();
 
-    // Store in cache
-    i.client.statsCache.set(i.user.id, { embed, timestamp: Date.now() });
-    
     // Send response
-    await i.editReply({ embeds: [embed] });
+    await ctx.editOrReply({ embeds: [embed] });
   }
 }
